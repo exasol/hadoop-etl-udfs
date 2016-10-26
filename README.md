@@ -35,7 +35,7 @@ Prerequisites:
 * EXASOL Advanced Edition (version 6.0 or newer)
 * JDK & Maven to build from source
 * Hadoop
-  * (Web)HCatalog: All EXASOL nodes need accesse to either the Hive Metastore Server (native Thrift interface) or to WebHCatalog
+  * (Web)HCatalog: All EXASOL nodes need access to either the Hive Metastore Server (native Thrift interface) or to WebHCatalog
   * (Web)HDFS: All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface or via WebHDFS
 
 Steps:
