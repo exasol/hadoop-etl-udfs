@@ -2,6 +2,18 @@
 
 [![Build Status](https://travis-ci.org/EXASOL/hadoop-etl-udfs.svg?branch=master)](https://travis-ci.org/EXASOL/hadoop-etl-udfs)
 
+
+###### Please note that this is an open source project which is officially supported by EXASOL. For any question, you can contact our support team.
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Deploying the Hadoop ETL UDFs](#deploying-the-hadoop-etl-udfs)
+3. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+4. [Building from Source](#building-from-source)
+5. [Kerberos Authentication](#kerberos-authentication)
+5. [Debugging](#debugging)
+
+
 ## Overview
 Hadoop ETL UDFs are the main way to load data from Hadoop into EXASOL (HCatalog tables on HDFS).
 
@@ -23,7 +35,7 @@ Prerequisites:
 * EXASOL Advanced Edition (version 6.0 or newer)
 * JDK & Maven to build from source
 * Hadoop
-  * (Web)HCatalog: All EXASOL nodes need accesse to either the Hive Metastore Server (native Thrift interface) or to WebHCatalog
+  * (Web)HCatalog: All EXASOL nodes need access to either the Hive Metastore Server (native Thrift interface) or to WebHCatalog
   * (Web)HDFS: All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface or via WebHDFS
 
 Steps:
