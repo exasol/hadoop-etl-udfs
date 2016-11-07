@@ -39,6 +39,7 @@ CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HIVE_TABLE_FILES(...) EMITS (...) AS
+%env LD_LIBRARY_PATH=/tmp/;
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHiveTableFiles;
 %jar /buckets/your-bucket-fs/your-bucket/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
 /

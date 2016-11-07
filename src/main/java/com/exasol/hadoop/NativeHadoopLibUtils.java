@@ -4,43 +4,43 @@ import com.exasol.utils.UdfUtils;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.util.Map;
 
 public class NativeHadoopLibUtils {
     
     public static void initHadoopNativeLib() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        final String nativeHadoopLibDir = "/tmp/hadoop_etl_libs/";
-        NativeHadoopLibUtils.createDirIfNotExists(nativeHadoopLibDir);
+        // This path must exist at program startup and must be in LD_LIBRARY_PATH. Otherwise the dynamic linker seems to ignore it
+        final String nativeHadoopLibDir = "/tmp/";
         NativeHadoopLibUtils.writeNativeHadoopLibs(nativeHadoopLibDir);
         NativeHadoopLibUtils.addDirToJavaLibraryPath(nativeHadoopLibDir);
+        printEnv();
     }
 
-    private static void createDirIfNotExists(String dir) {
-        File dirFile = new File(dir);
-        if (!dirFile.exists()) {
-            try {
-                dirFile.mkdir();
-            }
-            catch(SecurityException se){
-                throw se;
-            }
+    private static void printEnv() {
+        Map<String, String> env = System.getenv();
+        System.out.println("ENV:");
+        for (String envName : env.keySet()) {
+            System.out.format("- %s=%s%n",
+                    envName,
+                    env.get(envName));
         }
     }
 
     private static void writeNativeHadoopLibs(String targetLibDir) {
         try {
-            writeNativeHadoopLib("libhadoop.so", targetLibDir);
-            writeNativeHadoopLib("libsnappy.so", targetLibDir);
+            writeNativeHadoopLib("libhadoop.so", "libhadoop.so", targetLibDir);
+            // libhadoop.so does a dlopen("libsnappy.so.1"), so we have to use the same filename here
+            writeNativeHadoopLib("libsnappy.so", "libsnappy.so.1", targetLibDir);
         } catch (Exception e) {
             System.out.println("Error writing the native Hadoop libraries from resources to tmp: " + e.toString());
             e.printStackTrace();
         }
     }
     
-    private static void writeNativeHadoopLib(String resourceName, String targetPath) throws Exception {
-        File dirFile = new File(targetPath + resourceName);
+    private static void writeNativeHadoopLib(String resourceName, String targetFileName, String targetPath) throws Exception {
+        File dirFile = new File(targetPath + targetFileName);
         if (dirFile.exists()) {
-            // TODO Improve this so that Hadoop native lib can be updated
-            return;
+            throw new RuntimeException("Error writing resource " + targetPath + targetFileName + " for native Hadoop libraries (file already exists)");
         }
         InputStream inStream = null;
         OutputStream outStream = null;
@@ -52,7 +52,7 @@ public class NativeHadoopLibUtils {
 
             int readBytes;
             byte[] buffer = new byte[4096];
-            outStream = new FileOutputStream(targetPath + resourceName, false);
+            outStream = new FileOutputStream(targetPath + targetFileName, false);
             while ((readBytes = inStream.read(buffer)) > 0) {
                 outStream.write(buffer, 0, readBytes);
             }
