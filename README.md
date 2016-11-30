@@ -40,7 +40,7 @@ Prerequisites:
 
 Steps:
 * Build the library for your Hadoop version from source (see section below).
-* Upload the jar to a bucket of your choice. This will allow using the jar in the UDFs. See https://github.com/EXASOL/script-language-plugins#authentication-uploading-and-deleting-files for how to use BucketFS.
+* Upload the jar to a bucket of your choice. This will allow using the jar in the UDFs. See the user manual for how to use BucketFS.
 * Run the following statements in EXASOL to create the UDFs:
 ```
 CREATE SCHEMA ETL;
