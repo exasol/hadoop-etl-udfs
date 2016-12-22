@@ -45,7 +45,7 @@ public class ImportHCatTable {
                     if (!first) {
                         emitsBuilder.append(",");
                     }
-                    emitsBuilder.append(colName + " " + importSpec.getSubselectColumnSqlTypes().get(i));
+                    emitsBuilder.append("\"" + colName + "\" " + importSpec.getSubselectColumnSqlTypes().get(i));
                     first = false;
                 }
                 emitsBuilder.append(")");
