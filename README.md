@@ -124,7 +124,6 @@ Parameter           | Value
 **AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
 **DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below.
-**SELECTED_COLUMNS**   | This parameter specifies which colummns of a table should be loaded. For example, ```'1,3'``` specifies that only data from the first and third columns should be loaded. The default value ```''``` means all columns should be loaded.
 
 
 
