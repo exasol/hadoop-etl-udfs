@@ -32,11 +32,16 @@ The features in detail:
 ## Deploying the Hadoop ETL UDFs
 
 Prerequisites:
-* EXASOL Advanced Edition (version 6.0 or newer)
+* EXASOL Advanced Edition (version 6.0 or newer) or Free Small Business Edition.
 * JDK & Maven to build from source
-* Hadoop
-  * (Web)HCatalog: All EXASOL nodes need access to either the Hive Metastore Server (native Thrift interface) or to WebHCatalog
-  * (Web)HDFS: All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface or via WebHDFS
+* Connectivity from EXASOL to Hadoop: Make sure that following Hadoop services can be accessed from EXASOL. In case of problems please use an [UDF to check the connectivity](https://www.exasol.com/support/browse/SOL-307).
+  * Hive Metastore or WebHCatalog: All EXASOL nodes need access to either the Hive Metastore Server (recommended) or to WebHCatalog.
+    * The Hive Metastore is typically running on port ```9083``` of the Hive Metastore server (```hive.metastore.uris``` property in Hive). It uses a native Thrift API, which is faster compared to WebHCatalog.
+    * The WebHCatalog server (formerly called Templeton) is typically running on port ```50111``` on a single server (```templeton.port``` property).
+  * HDFS or WebHDFS/HttpFS: All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface (recommended) or via the http REST API (WebHDFS or HttpFS)
+    * HDFS (recommended): The namenode service typically runs on port ```8020``` (```fs.defaultFS``` property), the datanode service on port ```50010``` (```dfs.datanode.address``` property).
+    * WebHDFS: The namenode service for WebHDFS typically runs on port ```50070``` on each namenode (```dfs.namenode.http-address``` property), and on port ```50075``` (```dfs.datanode.http.address``` property) on each datanode.
+    * HttpFS: Alternatively to WebHDFS you can use HttpFS, exposing the same REST API as WebHDFS. It typically runs on port ```14000``` of each namenode. The disadvantage compared to WebHDFS is that all data are streamed through a single service, whereas webHDFS redirects to the datanodes for the data transfer.
 
 Steps:
 * Build the library for your Hadoop version from source (see section below).
@@ -110,7 +115,7 @@ Parameter           | Value
 ------------------- | -----------
 **HCAT_DB**         | HCatalog Database Name. E.g. ```'default'```
 **HCAT_TABLE**      | HCatalog Table Name. E.g. ```'sample_07'```.
-**HCAT_ADDRESS**    | (Web)HCatalog Address. E.g. ```'thrift://hive-metastore-host:9083'``` if you want to use the native Thrift interface of the Hive Metastore (recommended), or ```'webhcat-host:50111'``` if you want to use webHCatalog. The port for webHCatalog defined in the Hadoop ```templeton.port``` setting.
+**HCAT_ADDRESS**    | (Web)HCatalog Address. E.g. ```'thrift://hive-metastore-host:9083'``` if you want to use the Hive Metastore (recommended), or ```'webhcat-host:50111'``` if you want to use WebHCatalog. Make sure EXASOL can connect to these services (see prerequisites above).
 **HDFS_USER**       | Username for HDFS authentication. E.g. ```'hdfs'```, or ```'hdfs/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
 
 ### Optional Parameters
@@ -120,7 +125,7 @@ Parameter           | Value
 **PARALLELISM**     | Degree of Parallelism, i.e. the maximum number of parallel JVM instances to be started for loading data. ```nproc()```, which is the total number of nodes in the EXASOL cluster, is a good default value.
 **PARTITIONS**      | Partition Filter. E.g. ```'part1=2015-01-01/part2=EU'```. This parameter specifies which partitions should be loaded. For example, ```'part1=2015-01-01'``` will only load data with value ```2015-01-01``` for the partition ```part1```. Multiple partitions can be separated by ```/```. You can specify multiple comma-separated filters, e.g. ```'part1=2015-01-01/part2=EU, part1=2015-01-01/part2=UK'```. The default value ```''``` means all partitions should be loaded. Multiple values for a single partition are not supported(e.g. ```'part1=2015-01-01/part1=2015-01-02'```).
 **OUTPUT_COLUMNS**  | Specification of the desired columns to output, e.g. ```'col1, col2.field1, col3.field1[0]'```. Supports simple [JsonPath](http://goessner.net/articles/JsonPath/) expressions: 1. dot operator, to access fields in a struct or map data type and 2. subscript operator (brackets) to access elements in an array data type. The JsonPath expressions can be arbitrarily nested.
-**HDFS_URL**        | (Web)HDFS URL. E.g. ```'webhdfs://webhdfs-host:14000'``` or ```'hdfs://hdfs-namenode:8020'```. This parameter overwrites the HDFS URL retrieved from HCatalog. Use this if you want to use WebHDFS instead of the native HDFS interface, or if you need to overwrite it with another hdfs address (e.g. because HCatalog returns a non fully-qualified hostname unreachable from EXASOL).
+**HDFS_URL**        | HDFS/WebHDFS/HttpFS URL. E.g. ```'webhdfs://hdfs-namenode:50070'``` (WebHDFS) ```'webhdfs://hdfs-namenode:14000'``` (HttpFS) or ```'hdfs://hdfs-namenode:8020'``` (native HDFS). This parameter overwrites the HDFS URL retrieved from HCatalog. Use this if you want to use WebHDFS instead of the native HDFS interface, or if you need to overwrite it with another HDFS address (e.g. because HCatalog returns a non fully-qualified hostname unreachable from EXASOL). Make sure EXASOL can connect to the specified HDFS service (see prerequisites above).
 **AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
 **DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below.
