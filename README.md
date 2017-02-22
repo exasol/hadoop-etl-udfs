@@ -11,7 +11,7 @@
 3. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
 4. [Building from Source](#building-from-source)
 5. [Kerberos Authentication](#kerberos-authentication)
-5. [Debugging](#debugging)
+6. [Debugging](#debugging)
 
 
 ## Overview
@@ -42,6 +42,7 @@ Prerequisites:
     * HDFS (recommended): The namenode service typically runs on port ```8020``` (```fs.defaultFS``` property), the datanode service on port ```50010``` (```dfs.datanode.address``` property).
     * WebHDFS: The namenode service for WebHDFS typically runs on port ```50070``` on each namenode (```dfs.namenode.http-address``` property), and on port ```50075``` (```dfs.datanode.http.address``` property) on each datanode.
     * HttpFS: Alternatively to WebHDFS you can use HttpFS, exposing the same REST API as WebHDFS. It typically runs on port ```14000``` of each namenode. The disadvantage compared to WebHDFS is that all data are streamed through a single service, whereas webHDFS redirects to the datanodes for the data transfer.
+  * Kerberos: If your Hadoop uses Kerberos authentication, the UDFs will authenticate using a keytab file. Each EXASOL node needs access to the Kerberos KDC (key distribution center), running on port ```88```. The KDC is configured in the kerberos config file which is used for the authentication, as described in the [Kerberos Authentication](#kerberos-authentication) section.
 
 Steps:
 * Build the library for your Hadoop version from source (see section below).
@@ -83,8 +84,9 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
 ```
 
 
-
 ## Using the Hadoop ETL UDFs
+
+The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](#kerberos-authentication) section.
 
 Run the following query to show the contents of the HCatalog table sample_07.
 ```sql
