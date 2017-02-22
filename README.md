@@ -35,12 +35,12 @@ Prerequisites:
 * EXASOL Advanced Edition (version 6.0 or newer) or Free Small Business Edition.
 * JDK & Maven to build from source
 * Connectivity from EXASOL to Hadoop: Make sure that following Hadoop services can be accessed from EXASOL. In case of problems please use an [UDF to check the connectivity](https://www.exasol.com/support/browse/SOL-307).
-  * Hive Metastore or WebHCatalog: All EXASOL nodes need access to either the Hive Metastore Server (recommended) or to WebHCatalog.
+  * All EXASOL nodes need access to either the Hive Metastore (recommended) or to WebHCatalog:
     * The Hive Metastore is typically running on port ```9083``` of the Hive Metastore server (```hive.metastore.uris``` property in Hive). It uses a native Thrift API, which is faster compared to WebHCatalog.
-    * The WebHCatalog server (formerly called Templeton) is typically running on port ```50111``` on a single server (```templeton.port``` property).
-  * HDFS or WebHDFS/HttpFS: All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface (recommended) or via the http REST API (WebHDFS or HttpFS)
-    * HDFS (recommended): The namenode service typically runs on port ```8020``` (```fs.defaultFS``` property), the datanode service on port ```50010``` (```dfs.datanode.address``` property).
-    * WebHDFS: The namenode service for WebHDFS typically runs on port ```50070``` on each namenode (```dfs.namenode.http-address``` property), and on port ```50075``` (```dfs.datanode.http.address``` property) on each datanode.
+    * The WebHCatalog server (formerly called Templeton) is typically running on port ```50111``` on a certain server (```templeton.port``` property).
+  * All EXASOL nodes need access to the namenode and all datanodes, either via the native HDFS interface (recommended) or via the http REST API (WebHDFS or HttpFS)
+    * HDFS (recommended): The namenode service typically runs on port ```8020``` (```fs.defaultFS``` property), the datanode service on port ```50010``` or ```1004``` in Kerberos environments (```dfs.datanode.address``` property).
+    * WebHDFS: The namenode service for WebHDFS typically runs on port ```50070``` on each namenode (```dfs.namenode.http-address``` property), and on port ```50075``` (```dfs.datanode.http.address``` property) on each datanode. If you use https, the ports are ```50470``` for the namenode (```dfs.namenode.https-address```) and ```50475``` for the datanode (```dfs.datanode.https. address```).
     * HttpFS: Alternatively to WebHDFS you can use HttpFS, exposing the same REST API as WebHDFS. It typically runs on port ```14000``` of each namenode. The disadvantage compared to WebHDFS is that all data are streamed through a single service, whereas webHDFS redirects to the datanodes for the data transfer.
   * Kerberos: If your Hadoop uses Kerberos authentication, the UDFs will authenticate using a keytab file. Each EXASOL node needs access to the Kerberos KDC (key distribution center), running on port ```88```. The KDC is configured in the kerberos config file which is used for the authentication, as described in the [Kerberos Authentication](#kerberos-authentication) section.
 
