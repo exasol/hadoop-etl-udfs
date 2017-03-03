@@ -62,6 +62,7 @@ public class HiveMetastoreService {
         StorageDescriptor sd = table.getSd();
         String location = sd.getLocation();
         String inputFormat = sd.getInputFormat();
+        String outputFormat = sd.getOutputFormat();
         String serDeClass = sd.getSerdeInfo().getSerializationLib();
         List<FieldSchema> cols = sd.getCols();
         List<HCatTableColumn> columns = new ArrayList<>();
@@ -74,7 +75,7 @@ public class HiveMetastoreService {
             serDeParameters.add(new HCatSerDeParameter(key, parameters.get(key)));
         }
         client.close();
-        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, serDeClass, serDeParameters);
+        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, outputFormat, serDeClass, serDeParameters);
     }
 
 }

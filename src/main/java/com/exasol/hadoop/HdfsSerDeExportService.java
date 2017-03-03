@@ -1,551 +1,223 @@
 package com.exasol.hadoop;
 
-import com.exasol.ExaIterator;
-import com.exasol.hadoop.hcat.HCatSerDeParameter;
-import com.exasol.hadoop.hcat.HCatTableColumn;
-import com.exasol.hadoop.hcat.WebHCatJsonParser;
-import com.exasol.hadoop.kerberos.KerberosCredentials;
-import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
-import com.exasol.jsonpath.*;
+import java.net.URI;
+import java.security.PrivilegedExceptionAction;
+import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
+import javax.json.JsonValue.ValueType;
+
+import com.exasol.hadoop.hcat.HCatTableMetadata;
+import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.utils.UdfUtils;
-import org.apache.commons.codec.binary.Hex;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.common.type.HiveChar;
-import org.apache.hadoop.hive.common.type.HiveDecimal;
-import org.apache.hadoop.hive.common.type.HiveVarchar;
-import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.ql.io.RCFile;
+import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDe;
-import org.apache.hadoop.hive.serde2.objectinspector.*;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
+import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
+import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
+import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
+import org.apache.hadoop.hive.serde2.columnar.ColumnarStruct;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.security.UserGroupInformation;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObjectBuilder;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.security.PrivilegedExceptionAction;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.*;
+import com.exasol.ExaIterator;
+import org.datanucleus.store.types.backed.*;
 
 /**
- * Retrieves files from (web)HDFS and decodes them using the appropriate Hadoop InputFormat and Hive SerDe.
- * 
- * TODO org.apache.hadoop.hive.serde2.SerDe is deprecated and should be replaced with org.apache.hadoop.hive.serde2.AbstractSerDe
- * Problem: Some SerDes like OrcInputFormat support only deprecated SerDe class (not AbstractSerDe)
+ * org.apache.hadoop.mapred is old, ...mapreduce is new. However, mapred was undeprecated
+ * http://stackoverflow.com/questions/7598422/is-it-better-to-use-the-mapred-or-the-mapreduce-package-to-create-a-hadoop-job
+ *
+ * Note that org.apache.hadoop.hive.serde is the deprecated old SerDe library. Please look at org.apache.hadoop.hive.serde2 for the latest version.
+ * https://cwiki.apache.org/confluence/display/Hive/DeveloperGuide#DeveloperGuide-HiveSerDe
+ *
+ * Missing features (ordered by priority):
+ * TODO Re-enable single file import
+ * TODO Run tests with many different datatypes, partitions, compression, etc.
+ * TODO Understand security workarounds. Test Kerberos.
+ * TODO Reintroduce column selection during import (deserialize only selected columns)
+ * TODO Return partitions with correct data types (or give option to do so)
+ * TODO Make Export generic (to use any kind of SerDe)
+ *
+ * Refactoring:
+ * TODO Write Unit Tests
+ * TODO Make ExaIterator (and all other classes) available as Interface
+ *
  */
-public class HdfsSerDeImportService {
-    public static void importFiles(
-            final List<String> files,
-            String inputFormatClassName,
-            String serDeClassName,
-            String serdeParametersJson,
-            String colInfoJson,
-            String partitionColumnsJson,
-            final String outputColumnsSpec,
-            final String hdfsServer,
-            final String hdfsUser,
-            final boolean useKerberos,
-            final KerberosCredentials kerberosCredentials,
-            final ExaIterator ctx) throws Exception {
+public class HdfsSerDeExportService {
 
-        System.out.println("----------\nStarted importing files\n----------");
-        UdfUtils.printClassPath();
-        
-        try {
-            System.out.println("read column info");
-            final List<HCatTableColumn> columns = WebHCatJsonParser.parseColumnArray(colInfoJson);
-            final List<HCatTableColumn> partitionColumns = WebHCatJsonParser.parseColumnArray(partitionColumnsJson);
-            final List<HCatSerDeParameter> serDeParameters = WebHCatJsonParser.parseSerDeParameters(serdeParametersJson);
+    // TODO Refactor and remove this
+    private static List<Integer> cols = null;
+    private static int numCols = 0;
 
-            // Parse Output Column Spec
-            final List<OutputColumnSpec> outputColumns = outputColumnsSpec.isEmpty() ?
-                    OutputColumnSpecUtil.generateDefaultOutputSpecification(columns, partitionColumns)
-                    : OutputColumnSpecUtil.parseOutputSpecification(outputColumnsSpec, columns, partitionColumns);
-            
-            // We need the native hadoop libraries for snappy.
-            NativeHadoopLibUtils.initHadoopNativeLib();
-
-            System.out.println("run import");
-            final InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatClassName);
-            final SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
-            
-            UserGroupInformation ugi = useKerberos ?
-                    KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
-            ugi.doAs(new PrivilegedExceptionAction<Void>() {
-                public Void run() throws Exception {
-                    final Configuration conf = new Configuration();
-                    if (useKerberos) {
-                        conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                    }
-                    final FileSystem fs = FileSystem.get(new URI(hdfsServer), conf);
-                    for (String file : files) {
-                        importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServer, hdfsUser, columns, outputColumns, useKerberos, ctx);
-                    }
-                    return null;
-                }
-            });
-        } catch (Exception ex ) {
-            System.out.println(UdfUtils.traceToString(ex));
-            throw ex;
-        }
-    }
-
-    public static void importFile(
-            final FileSystem fs,
-            final String file,
-            final List<HCatTableColumn> partitionColumns,
-            final InputFormat<?, ?> inputFormat,
-            final SerDe serde,
-            final List<HCatSerDeParameter> serDeParameters,
+    public static void exportToTable (
             final String hdfsUrl,
             final String hdfsUser,
-            final List<HCatTableColumn> columns,
-            final List<OutputColumnSpec> outputColumns,
-            final boolean useKerberos,
-            final ExaIterator ctx) throws Exception {
-        System.out.println("----------\nStarted importGeneric()\n----------");
-        System.out.println("- file: " + file);
-        System.out.println("- partitionColumns: " + partitionColumns);
-        System.out.println("- serDeParameters: " + serDeParameters);
-        System.out.println("- hdfsUrl: " + hdfsUrl);
-        System.out.println("- hdfsUser: " + hdfsUser);
-        System.out.println("- columnInfo: " + columns);
-        System.out.println("- outputColumns: " + outputColumns);
-        System.out.println("- useKerberos: " + useKerberos);
-        
+            final String file,
+            final HCatTableMetadata tableMeta) throws Exception {
+
+        System.out.println("----------\nStarted Export Table To Hive\n----------");
+
+        // See
+        // https://ballsandbins.wordpress.com/2014/10/26/jdbc-storage-handler-for-hive-part-i/
+        // https://cwiki.apache.org/confluence/display/Hive/SerDe
+        // Process
+        // - Hive row/record object: This is what Hive operators work with, but to interpret it you need an ObjectInspector (which might deserialize from the internal representation)
+        // - ObjectInspector: A (probably configured) ObjectInspector instance stands for
+        //   a specific (Hive) type and a specific way to store the data of that type in the memory (as a Hive row object)
+        // - StructObjectInspector: Has special method isSettable
+        // - PrimitiveObjectInspector:
+        // - StringObjectInspector extends PrimitiveObjectInspector
+        // - StructField: Returned by StructObjectInspector.getAllStructFieldRefs(). Contains field ObjectInspector and name (and comment)
+        // - SerDe: interface SerDe extends Deserializer, Serializer
+        //   Deserializer.deserialize(Writable): Call Deserializer.getObjectInspector() afterwards to get the ObjectInspector for returned object. Representation/ObjectInspector is hardcoded in Deserializer.
+        //   Serializer.serialize(Object, ObjectInspector): does not matter which row (Object) representation we use as input, as long as we pass the according ObjectInspector! I.e. does not need to be the ObjectInspector returned by the deserializer
+        // - Outputformat: Each OutputFormat has a RecordWriter. key is ignored during import, and so probably can be set to null. value contains the output of SerDe.serialize
+        //
+
         final Properties props = new Properties();
         final Configuration conf = new Configuration();
-        if (useKerberos) {
-            conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-        }
-        for (HCatSerDeParameter prop : serDeParameters) {
-            System.out.println("Add serde prop " + prop.getName() + ": " + prop.getValue());
-            props.put(prop.getName(), prop.getValue());
-        }
-        initProperties(props, conf, columns, outputColumns);
-        serde.initialize(conf, props);
-
-        FileStatus fileStatus = fs.getFileStatus(new Path(file));
-        System.out.println("importing file: " + fileStatus.getPath());
-        InputSplit split = new FileSplit(fileStatus.getPath(), 0, fileStatus.getLen(), (String[]) null);
-        CompressionCodecFactory codecs = new org.apache.hadoop.io.compress.CompressionCodecFactory(conf);
-        ArrayList<Class> codecList = new ArrayList();
-        try {
-            codecList.add(Class.forName("com.hadoop.compression.lzo.LzoCodec"));
-        } catch (ClassNotFoundException ex) { /* LZO not supported */ }
-        try {
-            codecList.add(Class.forName("com.hadoop.compression.lzo.LzopCodec"));
-        } catch (ClassNotFoundException ex) { /* LZOP not supported */ }
-        if (!codecList.isEmpty())
-            CompressionCodecFactory.setCodecClasses(conf, codecList);
-        JobConf job = new JobConf(conf);
-        RecordReader rr = inputFormat.getRecordReader(split, job, Reporter.NULL);
-        StructObjectInspector oi = (StructObjectInspector) serde.getObjectInspector();
-        List<? extends StructField> fieldRefs = oi.getAllStructFieldRefs();
-        Object[] objs = new Object[outputColumns.size()];
-        String decodedFilePath = URLDecoder.decode(file, "UTF-8"); // Convert from URL encoding. TODO Probably we should only do this for webHDFS
-        setPartitionValues(decodedFilePath, columns.size(), partitionColumns, outputColumns, objs);
-        Object key = rr.createKey();
-        Writable value = (Writable) rr.createValue();
-        JsonBuilderFactory jsonFactory = Json.createBuilderFactory(null);
-        Map<Integer, List<OutputColumnSpec>> outColsForColumns = OutputColumnSpecUtil.getOutputSpecsForColumns(outputColumns);
-        while (rr.next(key, value)) {
-            // In complex type hierarchies with null values, some columns might not be set, so we have to set manually.
-            // TODO Find a better which is optimized for the case where we have to nullify only the fields which were not already overwritten.
-            for (OutputColumnSpec outCol : outputColumns) {
-                if (outCol.getColumnPosition() < columns.size()) {
-                    objs[outCol.getResultPosition()] = null;
+        HdfsSerDeImportService.initProperties(props, conf, tableMeta.getColumns(), Lists.<OutputColumnSpec>newArrayList());
+        final int numColumns = tableMeta.getColumns().size();
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
+            public Void run() throws Exception {
+                final OutputFormat<?, ?> outputFormat = (OutputFormat<?, ?>) UdfUtils.getInstanceByName(tableMeta.getOutputFormatClass());
+                SerDe serDe = (SerDe) UdfUtils.getInstanceByName(tableMeta.getSerDeClass());
+                //ColumnarSerDe serDe = new ColumnarSerDe();
+                conf.set(JobContext.TASK_OUTPUT_DIR, "dummy");
+                conf.set(org.apache.hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR, "dummy");
+                serDe.initialize(conf, props);
+                // TODO not yet generic
+                RCFileOutputFormat.setColumnNumber(conf, tableMeta.getColumns().size());
+                System.out.println("Open HDFS file system: " + hdfsUrl);
+                FileSystem fs = FileSystem.get(new URI(hdfsUrl), conf);
+                System.out.println("Create Writer for file: " + file);
+                RecordWriter writer = outputFormat.getRecordWriter(fs, new JobConf(conf), file,null);
+                System.out.println("After writer");
+                ObjectInspector objInsp = serDe.getObjectInspector();
+                System.out.println("ObjectInspector: " + objInsp.getClass().getName());
+                StructObjectInspector structObjIns = (StructObjectInspector)objInsp;
+                for (StructField structField : structObjIns.getAllStructFieldRefs()) {
+                    System.out.println("- ObjectInspector field " + structField.getFieldName() + ": " + structField.getFieldObjectInspector().getClass().getName());
                 }
+                List<Object> row = new ArrayList<>();
+                row.add(1);  // artistid
+                row.add("artistname"); // artistname
+                row.add(2001);  // year
+                BytesRefArrayWritable brawCols = new BytesRefArrayWritable(numColumns);
+                // Emit single row
+                brawCols.set(1, new BytesRefWritable(((String)row.get(1)).getBytes("UTF-8")));
+                cols = new ArrayList<Integer>(numColumns);
+                for (int i = 0; i < numColumns; i++) {
+                    cols.add(i);
+                }
+                ColumnarStruct cs = new ColumnarStruct(objInsp, cols, new Text("NULL"));
+                cs.init(brawCols);
+                writer.write(null, (BytesRefArrayWritable) serDe.serialize(cs, objInsp)); // key ignored, at least for RCFileOutputFormat.getRecordWriter
+                // Emit single row end
+                writer.close(null);
+                return null;
             }
-            Object row = serde.deserialize(value);
-            for (int i=0; i<columns.size(); i++) {
-                if (!outColsForColumns.containsKey(i)) {
-                    continue;   // this column is not emitted => skip
-                }
-                try {
-                    Object fieldData = oi.getStructFieldData(row, fieldRefs.get(i));
-                    List<JsonPathElement> curPath = new ArrayList<>();
-                    visitTree(fieldData, fieldRefs.get(i).getFieldObjectInspector(), curPath, outColsForColumns.get(i), objs, jsonFactory);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    // This is a fix for Hive Versions earlier 2.0 which don't have this path: https://issues.apache.org/jira/browse/HIVE-12475
-                    // This can be reproduced by creating a Parquet table, inserting data, and afterwards adding columns.
-                    // Then, when reading the files created before the columns were added, you get the Exception.
-                    objs[i] = null;
-                } catch (Exception e) {
-                    throw new RuntimeException("Unhandled exception while getting column " + i, e);
-                }
-            }
-            ctx.emit(objs);
-        }
-        rr.close();
+        }); // security workaround
     }
 
-    private static void visitTree(
-            Object data,
-            ObjectInspector objInspector,
-            List<JsonPathElement> curPath,
-            List<OutputColumnSpec> outputColumns,
-            Object[] outRow,
-            JsonBuilderFactory jsonFactory) {
-        if (data == null) {
-            // If we have vectorized processing, we should go further visiting the tree via ObjectInspector (if any of the elements in the array has a non-null value)
-            return;
-        }
-        
-        // Shall we output exactly this path?
-        for (OutputColumnSpec spec : outputColumns) {
-            if (spec.getPath().equals(curPath)) {
-                switch (objInspector.getCategory()) {
-                case PRIMITIVE:
-                    // We reached a leaf. Path should match completely (We could show an error if there are deeper paths for this subtree)
-                    outRow[spec.getResultPosition()] = getJavaObjectFromPrimitiveData(data, objInspector);
-                    break;
-                case LIST:
-                    outRow[spec.getResultPosition()] = getJsonArrayFromFieldData(data, objInspector, jsonFactory).build().toString();
-                    break;
-                case MAP:
-                case STRUCT:
-                case UNION:
-                    outRow[spec.getResultPosition()] = getJsonObjectFromFieldData(data, objInspector, jsonFactory).build().toString();
-                    break;
-                }
-            }
-        }
+    public static void exportTableToRCFile (
+            final String hdfsUrl,
+            String hdfsUser,
+            final String file,
+            final List<Map.Entry<String, String>> columnInfo,
+            final List<Integer> selectedColumns,
+            final int firstCol,
+            final ExaIterator ctx) throws Exception {
 
-        // Stop recursion if we reached a leaf
-        if (objInspector.getCategory() == Category.PRIMITIVE) {
-            return;
-        }
-        
-        // Special case UNION: We might have multiple nested unions and should resolve them.
-        while (objInspector.getCategory() == Category.UNION) {
-            // Type may vary for each row, we have to be careful. If we vectorize and we find a union we have to set vector size to 1.
-            UnionObjectInspector oi = (UnionObjectInspector)objInspector;
-            byte tag = oi.getTag(data);
-            objInspector = oi.getObjectInspectors().get(tag);
-        }
+        System.out.println("----------\nStarted Export Table To Hive\n----------");
 
-        // Check if we need to go deeper, i.e. if there is any output column with a path below the current path
-        // We could make this more intelligent, to check where we need to go down below.
-        boolean needGoDown = false;
-        for (OutputColumnSpec spec : outputColumns) {
-            if (OutputColumnSpecUtil.leftIsPrefixOfRightPath(curPath, spec.getPath())) {
-                needGoDown = true;
-            }
-        }
-        if (!needGoDown) {
-            return;
-        }
-
-        // Go deeper in the data type hierarchy if required
-        switch (objInspector.getCategory()) {
-        case LIST: {
-            ListObjectInspector oi = (ListObjectInspector)objInspector;
-            List<?> list = oi.getList(data);
-            ObjectInspector elementInsp = oi.getListElementObjectInspector();
-            for (int i=0; i<list.size(); i++) {
-                Object elementData = list.get(i);
-                if (elementData == null) {
-                    continue;
+        final Properties props = new Properties();
+        final Configuration conf = new Configuration();
+        initProperties(props, conf, columnInfo, selectedColumns);
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
+            public Void run() throws Exception {
+                ColumnarSerDe rc = new ColumnarSerDe();
+                rc.initialize(conf, props);
+                RCFileOutputFormat.setColumnNumber(conf, numCols);
+                System.out.println("Open HDFS file system: " + hdfsUrl);
+                FileSystem fs = FileSystem.get(new URI(hdfsUrl), conf);
+                System.out.println("Create Writer for file: " + file);
+                RCFile.Writer writer = new RCFile.Writer(fs, conf, new Path(file));
+                System.out.println("After writer");
+                if (ctx.size() > 0) {
+                    BytesRefArrayWritable brawCols = new BytesRefArrayWritable(numCols);
+                    ObjectInspector objInsp = rc.getObjectInspector();
+                    do {
+                        for (int i = 0; i < numCols; i++) {
+                            String col = ctx.getString(i + firstCol);
+                            if (col != null)
+                                brawCols.set(i, new BytesRefWritable(col.getBytes("UTF-8")));
+                            else
+                                brawCols.set(i, null);
+                        }
+                        ColumnarStruct row = new ColumnarStruct(objInsp, cols, new Text("NULL"));
+                        row.init(brawCols);
+                        writer.append((BytesRefArrayWritable) rc.serialize(row, objInsp));
+                    } while (ctx.next());
                 }
-                curPath.add(new JsonPathListIndexElement(i));
-                visitTree(elementData, elementInsp, curPath, outputColumns, outRow, jsonFactory);
-                curPath.remove(curPath.size()-1);
+                writer.close();
+                ctx.emit("Rows affected: " + ctx.size());
+                return null;
             }
-            break;
-        }
-        case MAP: {
-            MapObjectInspector oi = (MapObjectInspector)objInspector;
-            Map<?, ?> mapData = oi.getMap(data);
-            ObjectInspector keyInspector = oi.getMapKeyObjectInspector();
-            for (Map.Entry<?, ?> mapEntryData : mapData.entrySet()) {
-                if (keyInspector.getCategory() != Category.PRIMITIVE) {
-                    throw new RuntimeException("Hive map key is not a primitive type: " + keyInspector.getCategory());
-                }
-                String key = getJavaObjectFromFieldData(mapEntryData.getKey(), keyInspector).toString();
-                curPath.add(new JsonPathFieldElement(key));
-                visitTree(mapEntryData.getValue(), oi.getMapValueObjectInspector(), curPath, outputColumns, outRow, jsonFactory);
-                curPath.remove(curPath.size()-1);
-            }
-            break;
-        }
-        case STRUCT: {
-            StructObjectInspector oi = (StructObjectInspector)objInspector;
-            List<? extends StructField> structFields = oi.getAllStructFieldRefs();
-            List<?> structFieldsData = oi.getStructFieldsDataAsList(data);
-            for (int i = 0; i < structFields.size(); i++) {
-                StructField field = structFields.get(i);
-                String name = field.getFieldName();
-                curPath.add(new JsonPathFieldElement(name));
-                visitTree(structFieldsData.get(i), field.getFieldObjectInspector(), curPath, outputColumns, outRow, jsonFactory);
-                curPath.remove(curPath.size()-1);
-            }
-            break;
-        }
-        case PRIMITIVE:
-        case UNION:
-        default: {
-            throw new RuntimeException("Unexpected category " + objInspector.getCategory() + ", should never happen");
-        }
-        }
+        }); // security workaround
     }
 
-    private static Object getJavaObjectFromPrimitiveData(Object data, ObjectInspector objInsp) {
-        assert(objInsp.getCategory() == Category.PRIMITIVE);
-        if (data == null) {
-            return null;
-        }
-        Object obj = ObjectInspectorUtils.copyToStandardJavaObject(data, objInsp);
-        if (obj instanceof HiveDecimal) {
-            obj = ((HiveDecimal) obj).bigDecimalValue();
-        } else if (obj instanceof HiveVarchar || obj instanceof HiveChar) {
-            obj = obj.toString();
-        } else if (obj instanceof byte[]) {
-            obj = Hex.encodeHexString((byte[]) obj);
-        }
-        return obj;
-    }
-
-    private static void initProperties(
-            Properties props,
-            Configuration conf,
-            List<HCatTableColumn> columns,
-            List<OutputColumnSpec> outputColumns) throws Exception {
+    public static void initProperties(Properties props, Configuration conf, List<Map.Entry<String, String>> columnInfo, List<Integer> selectedColumns) throws Exception {
         String colNames = "";
         String colTypes = "";
-        for (HCatTableColumn colInfo : columns) {
-            colNames += colInfo.getName() + ",";
-            colTypes += colInfo.getDataType() + ",";
+        for (Map.Entry<String, String> colInfo : columnInfo) {
+            colNames += colInfo.getKey() + ",";
+            colTypes += colInfo.getValue() + ",";
         }
         if (colNames.length() > 0)
             colNames = colNames.substring(0, colNames.length() - 1);
         if (colTypes.length() > 0)
             colTypes = colTypes.substring(0, colTypes.length() - 1);
-        props.put(serdeConstants.LIST_COLUMNS, colNames);
-        props.put(serdeConstants.LIST_COLUMN_TYPES, colTypes);
-        props.put(serdeConstants.SERIALIZATION_NULL_FORMAT, "NULL");
-        // Fix for Avro (NullPointerException if null)
-        if (props.getProperty("columns.comments") == null) {
-            props.put("columns.comments", "");
-        }
-        // Pushdown projection if we don't need all columns
-        Set<Integer> requiredColumns = new HashSet<>();
-        for (OutputColumnSpec spec : outputColumns) {
-            if (spec.getColumnPosition() < columns.size()) {
-                requiredColumns.add(spec.getColumnPosition());
-            }
-        }
-        if (requiredColumns.size() < columns.size()) {
-            ColumnProjectionUtils.appendReadColumns(conf, new ArrayList<>(requiredColumns));
-        }
-    }
+        props.put(Constants.LIST_COLUMNS, colNames);
+        props.put(Constants.LIST_COLUMN_TYPES, colTypes);
+        props.put(Constants.SERIALIZATION_NULL_FORMAT, "NULL");
 
-    private static Object getJavaObjectFromFieldData(Object data, ObjectInspector objInsp) {
-        if (data == null) {
-            return null;
-        }
-        if (objInsp.getCategory() == Category.PRIMITIVE) {
-            Object obj = ObjectInspectorUtils.copyToStandardJavaObject(data, objInsp);
-            if (obj instanceof HiveDecimal) {
-                obj = ((HiveDecimal) obj).bigDecimalValue();
-            } else if (obj instanceof HiveVarchar || obj instanceof HiveChar) {
-                obj = obj.toString();
-            } else if (obj instanceof byte[]) {
-                obj = Hex.encodeHexString((byte[]) obj);
-            }
-            return obj;
-        } else if (objInsp.getCategory() == Category.LIST) {
-            return getJsonArrayFromFieldData(data, objInsp, Json.createBuilderFactory(null)).build().toString();
-        } else {
-            return getJsonObjectFromFieldData(data, objInsp, Json.createBuilderFactory(null)).build().toString();
-        }
-    }
-
-    private static JsonArrayBuilder getJsonArrayFromFieldData(Object data, ObjectInspector objInsp, JsonBuilderFactory jsonFactory) {
-        JsonArrayBuilder jab = jsonFactory.createArrayBuilder();
-        ListObjectInspector oi = (ListObjectInspector) objInsp;
-        List<?> list = oi.getList(data);
-        ObjectInspector elemInsp = oi.getListElementObjectInspector();
-        for (Object obj : list) {
-            if (obj == null)
-                jab.addNull();
-            else if (elemInsp.getCategory() == Category.PRIMITIVE) {
-                Object o = getJavaObjectFromPrimitiveData(obj, elemInsp);
-                if (o instanceof Integer || o instanceof Short || o instanceof Byte)
-                    jab.add((Integer) o);
-                else if (o instanceof Long)
-                    jab.add((Long) o);
-                else if (o instanceof Float || o instanceof Double)
-                    jab.add((Double) o);
-                else if (o instanceof BigDecimal)
-                    jab.add((BigDecimal) o);
-                else if (o instanceof Boolean)
-                    jab.add((Boolean) o);
-                else
-                    jab.add(o.toString());
-            }
-            else if (elemInsp.getCategory() == Category.LIST) {
-                jab.add(getJsonArrayFromFieldData(obj, elemInsp, jsonFactory));
-            }
-            else {
-                jab.add(getJsonObjectFromFieldData(obj, elemInsp, jsonFactory));
-            }
-        }
-        return jab;
-    }
-
-    private static JsonObjectBuilder getJsonObjectFromFieldData(Object data, ObjectInspector objInsp, JsonBuilderFactory jsonFactory) {
-        JsonObjectBuilder job = jsonFactory.createObjectBuilder();
-        switch (objInsp.getCategory()) {
-        case MAP:
-        {
-            MapObjectInspector oi = (MapObjectInspector) objInsp;
-            Map<?, ?> map = oi.getMap(data);
-            ObjectInspector keyInsp = oi.getMapKeyObjectInspector();
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (keyInsp.getCategory() != Category.PRIMITIVE)
-                    throw new RuntimeException("Hive map key is not a primitve type: " + keyInsp.getCategory());
-                String key = getJavaObjectFromFieldData(entry.getKey(), keyInsp).toString();
-                addJsonObjectPair(job, key, entry.getValue(), oi.getMapValueObjectInspector(), jsonFactory);
-            }
-            break;
-        }
-        case STRUCT:
-        {
-            StructObjectInspector oi = (StructObjectInspector) objInsp;
-            List<? extends StructField> structFields = oi.getAllStructFieldRefs();
-            List<?> structValues = oi.getStructFieldsDataAsList(data);
-            int size = structFields.size();
-            for (int i = 0; i < size; i++) {
-                StructField field = structFields.get(i);
-                String name = field.getFieldName();
-                addJsonObjectPair(job, name, structValues.get(i), field.getFieldObjectInspector(), jsonFactory);
-            }
-            break;
-        }
-        case UNION:
-        {
-            UnionObjectInspector oi = (UnionObjectInspector) objInsp;
-            byte tag = oi.getTag(data);
-            addJsonObjectPair(job, Byte.toString(tag), oi.getField(data), oi.getObjectInspectors().get(tag), jsonFactory);
-            break;
-        }
-        default:
-            throw new RuntimeException("Unexpected Hive type: " + objInsp.getCategory());
-        }
-        return job;
-    }
-
-    private static void addJsonObjectPair(JsonObjectBuilder job, String key, Object obj, ObjectInspector objInsp, JsonBuilderFactory jsonFactory) {
-        if (obj == null)
-            job.addNull(key);
-        else if (objInsp.getCategory() == Category.PRIMITIVE) {
-            Object o = getJavaObjectFromFieldData(obj, objInsp);
-            if (o instanceof Integer)
-                job.add(key, (Integer) o);
-            else if (o instanceof Byte)
-                job.add(key, (Byte) o);
-            else if (o instanceof Short)
-                job.add(key, (Short) o);
-            else if (o instanceof Long)
-                job.add(key, (Long) o);
-            else if (o instanceof Float)
-                job.add(key, (Float) o);
-            else if (o instanceof Double)
-                job.add(key, (Double) o);
-            else if (o instanceof BigDecimal)
-                job.add(key, (BigDecimal) o);
-            else if (o instanceof Boolean)
-                job.add(key, (Boolean) o);
-            else
-                job.add(key, o.toString());
-        }
-        else if (objInsp.getCategory() == Category.LIST) {
-            job.add(key, getJsonArrayFromFieldData(obj, objInsp, jsonFactory));
+        if (selectedColumns.size() > 0) {
+            ColumnProjectionUtils.appendReadColumns(conf, selectedColumns);
+            cols = selectedColumns;
+            numCols = cols.size();
         }
         else {
-            job.add(key, getJsonObjectFromFieldData(obj, objInsp, jsonFactory));
-        }
-    }
-
-    private static void setPartitionValues(String file, int numRegularColumns, List<HCatTableColumn> partitionColumns, List<OutputColumnSpec> outputColumns, Object[] objs) throws Exception {
-        for (OutputColumnSpec outputColumn : outputColumns) {
-            if (outputColumn.getColumnPosition() >= numRegularColumns) {
-                HCatTableColumn partitionColumn = partitionColumns.get(outputColumn.getColumnPosition()-numRegularColumns);
-                String partName = partitionColumn.getName();
-                String partPrefix = "/" + partName + "=";
-                int partIdx = file.indexOf(partPrefix);
-                if (partIdx < 0) {
-                    throw new RuntimeException("Hive partition '" + partName + "' could not be found in path: " + file);
-                }
-                partIdx += partPrefix.length();
-                int slashIdx = file.indexOf('/', partIdx);
-                if (slashIdx < 0) {
-                    throw new RuntimeException("End of value for Hive partition '" + partName + "' could not be found in path: " + file);
-                }
-                String value = file.substring(partIdx, slashIdx);
-                objs[outputColumn.getResultPosition()] = getJavaObjectFromHiveString(value, partitionColumn.getDataType());
+            numCols = columnInfo.size();
+            cols = new ArrayList<Integer>(numCols);
+            for (int i = 0; i < numCols; i++) {
+                cols.add(i);
             }
         }
-    }
-
-    private static Object getJavaObjectFromHiveString(String value, String type) throws Exception {
-        Object obj;
-        if (type.indexOf("(") > 0)
-            type = type.substring(0, type.indexOf("("));
-        if (type.indexOf("<") > 0)
-            type = type.substring(0, type.indexOf("<"));
-        String javaType = WebHdfsAndHCatService.getJavaType(type);
-        if (javaType == null)
-            throw new RuntimeException("Hive type '" + type + "' is unsupported for partitions");
-        switch (javaType) {
-        case "java.lang.String":
-            obj = value;
-            break;
-        case "java.lang.Byte":
-            obj = Byte.valueOf(value);
-            break;
-        case "java.lang.Short":
-            obj = Short.valueOf(value);
-            break;
-        case "java.lang.Integer":
-            obj = Integer.valueOf(value);
-            break;
-        case "java.lang.Long":
-            obj = Long.valueOf(value);
-            break;
-        case "java.lang.Float":
-            obj = Float.valueOf(value);
-            break;
-        case "java.lang.Double":
-            obj = Double.valueOf(value);
-            break;
-        case "java.math.BigDecimal":
-            obj = new BigDecimal(value);
-            break;
-        case "java.sql.Timestamp":
-            obj = Timestamp.valueOf(value);
-            break;
-        case "java.sql.Date":
-            obj = Date.valueOf(value);
-            break;
-        case "java.lang.Boolean":
-            obj = Boolean.valueOf(value);
-            break;
-        default:
-            throw new RuntimeException("Hive type '" + type + "' is unsupported for partitions");
-        }
-        return obj;
     }
 }

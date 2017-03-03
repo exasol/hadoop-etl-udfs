@@ -15,15 +15,17 @@ public class HCatTableMetadata {
     private List<HCatTableColumn> partitionColumns = new ArrayList<>();
     private String tableType = "";          // E.g. "MANAGED_TABLE" or "EXTERNAL_TABLE"
     private String inputFormatClass = "";   // E.g. "org.apache.hadoop.hive.ql.io.RCFileInputFormat"
+    private String outputFormatClass = "";
     private String serDeClass = "";         // E.g. "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe"
     private List<HCatSerDeParameter> serDeParameters = new ArrayList<>();
     
-    public HCatTableMetadata(String hdfsLocation, List<HCatTableColumn> columns, List<HCatTableColumn> partitionColumns, String tableType, String inputFormatClass, String serDeClass, List<HCatSerDeParameter> serDeParameters) {
+    public HCatTableMetadata(String hdfsLocation, List<HCatTableColumn> columns, List<HCatTableColumn> partitionColumns, String tableType, String inputFormatClass, String outputFormatClass, String serDeClass, List<HCatSerDeParameter> serDeParameters) {
         this.hdfsLocation = hdfsLocation;
         this.columns = columns;
         this.partitionColumns = partitionColumns;
         this.tableType = tableType;
         this.inputFormatClass = inputFormatClass;
+        this.outputFormatClass = outputFormatClass;
         this.serDeClass = serDeClass;
         this.serDeParameters = serDeParameters;
     }
@@ -36,6 +38,7 @@ public class HCatTableMetadata {
                 "\npartitionColumns: " + partitionColumns +
                 "\ntableType: " + tableType +
                 "\ninputFormatClass: " + inputFormatClass +
+                "\noutputFormatClass: " + outputFormatClass +
                 "\nserDeClass: " + serDeClass +
                 "\nserDeParameters: " + serDeParameters;
         return sb;
@@ -96,7 +99,11 @@ public class HCatTableMetadata {
     public String getInputFormatClass() {
         return inputFormatClass;
     }
-    
+
+    public String getOutputFormatClass() {
+        return outputFormatClass;
+    }
+
     public String getSerDeClass() {
         return serDeClass;
     }

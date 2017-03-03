@@ -317,7 +317,7 @@ public class HdfsSerDeImportService {
         return obj;
     }
 
-    private static void initProperties(
+    static void initProperties(
             Properties props,
             Configuration conf,
             List<HCatTableColumn> columns,
