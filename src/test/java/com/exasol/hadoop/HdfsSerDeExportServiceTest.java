@@ -11,12 +11,14 @@ public class HdfsSerDeExportServiceTest {
         // Obtain table metadata
         // albums_rc
         String table = "albums_rc"; // works to a certain point
-        String hiveMetastoreURL = "thrift://localhost:9083";
         //String table = "albums";
+        String hiveMetastoreURL = "thrift://localhost:9083";
+        //String hdfsURL = "hdfs://localhost:50070";
+        String hdfsURL = "hdfs://localhost:8020/user/hive/warehouse/albums_rc";
         HCatTableMetadata tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, "default", table, false, "");
         System.out.println("tableMeta: " + tableMeta);
 
-        HdfsSerDeExportService.exportToTable("hdfs://localhost:50070", "hdfs", "dummyfile2", tableMeta);
+        HdfsSerDeExportService.exportToTable(hdfsURL, "hdfs", "dummyfile3", tableMeta);
     }
 
 }
