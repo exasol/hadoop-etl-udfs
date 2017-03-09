@@ -29,7 +29,7 @@ The features in detail:
 
 ## Getting Started
 
-Before you can start using the Hadoop ETL UDFs you have to deploy the UDF scripts in your EXASOL database.
+Before you can start using the Hadoop ETL UDFs you have to deploy the UDFs in your EXASOL database.
 Please follow the [step-by-step deployment guide](doc/deployment-guide.md).
 
 

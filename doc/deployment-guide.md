@@ -1,6 +1,6 @@
 ## Deploying the Hadoop ETL UDFs Step By Step
 
-Run the following steps to deploy your UDF scripts:
+Run the following steps to deploy your UDFs:
 
 ### 1. Prerequisites:
 * EXASOL Advanced Edition (version 6.0 or newer) or Free Small Business Edition.
@@ -13,7 +13,7 @@ Run the following steps to deploy your UDF scripts:
     * HDFS (recommended): The namenode service typically runs on port ```8020``` (```fs.defaultFS``` property), the datanode service on port ```50010``` or ```1004``` in Kerberos environments (```dfs.datanode.address``` property).
     * WebHDFS: The namenode service for WebHDFS typically runs on port ```50070``` on each namenode (```dfs.namenode.http-address``` property), and on port ```50075``` (```dfs.datanode.http.address``` property) on each datanode. If you use https, the ports are ```50470``` for the namenode (```dfs.namenode.https-address```) and ```50475``` for the datanode (```dfs.datanode.https. address```).
     * HttpFS: Alternatively to WebHDFS you can use HttpFS, exposing the same REST API as WebHDFS. It typically runs on port ```14000``` of each namenode. The disadvantage compared to WebHDFS is that all data are streamed through a single service, whereas webHDFS redirects to the datanodes for the data transfer.
-  * Kerberos: If your Hadoop uses Kerberos authentication, the UDFs will authenticate using a keytab file. Each EXASOL node needs access to the Kerberos KDC (key distribution center), running on port ```88```. The KDC is configured in the kerberos config file which is used for the authentication, as described in the [Kerberos Authentication](#kerberos-authentication) section.
+  * Kerberos: If your Hadoop uses Kerberos authentication, the UDFs will authenticate using a keytab file. Each EXASOL node needs access to the Kerberos KDC (key distribution center), running on port ```88```. The KDC is configured in the kerberos config file which is used for the authentication, as described in the [Kerberos Authentication](#5-kerberos-authentication) section.
 
 ### 2. Building from Source
 
@@ -112,7 +112,7 @@ First, obtain the following information:
 
 In order for the UDFs to have access to the necessary Kerberos information, a CONNECTION object must be created in EXASOL. Storing the Kerberos information in CONNECTION objects provides the ability to set the accessibility of the Kerberos authentication data (especially the keytab) for users. The ```TO``` field is left empty, the Kerberos principal is stored in the ```USER``` field, and the Kerberos configuration and keytab are stored in the ```IDENTIFIED BY``` field (base64 format) along with an internal key to identify the CONNECTION as a Kerberos CONNECTION.
 
-In order to simplify the creation of Kerberos CONNECTION objects, the [create_kerberos_conn.py](tools/create_kerberos_conn.py) Python script has been provided. The script requires 4 arguments:
+In order to simplify the creation of Kerberos CONNECTION objects, the [create_kerberos_conn.py](../tools/create_kerberos_conn.py) Python script has been provided. The script requires 4 arguments:
 * CONNECTION name
 * Kerberos principal
 * Kerberos configuration file path
