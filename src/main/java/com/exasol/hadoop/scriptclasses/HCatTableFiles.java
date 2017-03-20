@@ -1,7 +1,5 @@
 package com.exasol.hadoop.scriptclasses;
 
-import java.util.List;
-
 import com.exasol.ExaConnectionInformation;
 import com.exasol.ExaIterator;
 import com.exasol.ExaMetadata;
@@ -11,6 +9,8 @@ import com.exasol.hadoop.hcat.WebHCatJsonSerializer;
 import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
+
+import java.util.List;
 
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name as the main class.
@@ -77,7 +77,7 @@ public class HCatTableFiles {
             kerberosCredentials);
         
         // Check table type (must be managed or external, no view or index tables)
-        String tableType = tableMeta.getTableType().toUpperCase();
+        String tableType = tableMeta.getTableType();
         if (!tableType.equals("MANAGED_TABLE") && !tableType.equals("EXTERNAL_TABLE") ) {
             throw new RuntimeException("Table type " + tableType + " is not supported. Only managed and external tables are supported.");
         }

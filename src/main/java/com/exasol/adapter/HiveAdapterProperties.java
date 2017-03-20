@@ -6,20 +6,13 @@ import com.exasol.ExaMetadata;
 
 import java.util.*;
 
-/**
- * Created by np on 1/25/2017.
- */
 public class HiveAdapterProperties {
 
-    static final String PROP_CATALOG_NAME = "CATALOG_NAME";
     static final String PROP_SCHEMA_NAME = "HCAT_DB";
     static final String PROP_TABLE_NAME = "HCAT_TABLE";
     static final String PROP_CONNECTION_ADDRESS = "HCAT_ADDRESS";
     static final String PROP_USERNAME = "HDFS_USER";
     static final String PROP_CONNECTION_NAME = "CONNECTION_NAME";
-    static final String PROP_IS_LOCAL = "IS_LOCAL";
-    static final String PROP_AUTH_TYPE = "AUTH_TYPE";
-    static final String PROP_KERBEROS_CONNECTION = "AUTH_KERBEROS_CONNECTION";
     static final String PROP_TABLES = "TABLE_FILTER";
 
 
@@ -30,10 +23,6 @@ public class HiveAdapterProperties {
         } else {
             return defaultValue;
         }
-    }
-
-    public static String getCatalog(Map<String, String> properties) {
-        return getProperty(properties, PROP_CATALOG_NAME, "");
     }
 
     public static String getSchema(Map<String, String> properties) {
@@ -78,10 +67,6 @@ public class HiveAdapterProperties {
             String user = properties.get(PROP_USERNAME);
             return new ExaConnectionInformationHdfs(connectionAddress, user, null);
         }
-    }
-
-    public static boolean isLocal(Map<String, String> properties) {
-        return getProperty(properties, PROP_IS_LOCAL, "").toUpperCase().equals("TRUE");
     }
 
     public static class ExaConnectionInformationHdfs implements ExaConnectionInformation {
@@ -139,7 +124,6 @@ public class HiveAdapterProperties {
                 || newProperties.containsKey(PROP_CONNECTION_NAME)
                 || newProperties.containsKey(PROP_USERNAME)
                 || newProperties.containsKey(PROP_SCHEMA_NAME)
-                || newProperties.containsKey(PROP_CATALOG_NAME)
                 || newProperties.containsKey(PROP_TABLES);
     }
 

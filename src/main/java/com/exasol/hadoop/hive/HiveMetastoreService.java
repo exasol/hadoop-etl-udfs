@@ -1,32 +1,22 @@
 package com.exasol.hadoop.hive;
 
+import com.exasol.hadoop.hcat.HCatSerDeParameter;
+import com.exasol.hadoop.hcat.HCatTableColumn;
+import com.exasol.hadoop.hcat.HCatTableMetadata;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.thrift.TException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.thrift.TException;
-
-import com.exasol.hadoop.hcat.HCatSerDeParameter;
-import com.exasol.hadoop.hcat.HCatTableColumn;
-import com.exasol.hadoop.hcat.HCatTableMetadata;
-
 public class HiveMetastoreService {
 
-    /**
-     * We use the HiveMetaStoreClient API to access the Hive Metastore Thrift Server.
-     * Good example: https://github.com/apache/falcon/blob/master/common/src/main/java/org/apache/falcon/catalog/HiveCatalogService.java
-     * There is an alternative higher level API, which does not deliver enough metadata: org.apache.hive.hcatalog.api.HCatClient (new version of org.apache.hcatalog.api.HCatClient)
-     */
-    public static HCatTableMetadata getTableMetadata(String hiveMetastoreUrl, String dbName, String tableName, boolean useKerberos, String kerberosPrinciple) {
-        
+
+    public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple){
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
         hiveConf.set("hive.metastore.local", "false");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
@@ -36,12 +26,21 @@ public class HiveMetastoreService {
             hiveConf.set("hive.metastore.kerberos.principal", kerberosPrinciple);
             hiveConf.set("hive.metastore.sasl.enabled", "true");
         }
-        HiveMetaStoreClient client;
         try {
-          client = new HiveMetaStoreClient(hiveConf);
+            return new HiveMetaStoreClient(hiveConf);
         } catch (MetaException e) {
-          throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
+            throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
         }
+    }
+
+    /**
+     * We use the HiveMetaStoreClient API to access the Hive Metastore Thrift Server.
+     * Good example: https://github.com/apache/falcon/blob/master/common/src/main/java/org/apache/falcon/catalog/HiveCatalogService.java
+     * There is an alternative higher level API, which does not deliver enough metadata: org.apache.hive.hcatalog.api.HCatClient (new version of org.apache.hcatalog.api.HCatClient)
+     */
+    public static HCatTableMetadata getTableMetadata(String hiveMetastoreUrl, String dbName, String tableName, boolean useKerberos, String kerberosPrinciple) {
+
+        HiveMetaStoreClient client = getHiveMetastoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
         Table table;
         try {
           table = client.getTable(dbName, tableName);

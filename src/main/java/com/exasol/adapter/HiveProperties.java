@@ -6,9 +6,6 @@ import com.exasol.adapter.sql.ScalarFunction;
 
 import java.util.*;
 
-/**
- * Created by np on 2/7/2017.
- */
 public class HiveProperties {
 
     protected static Set<ScalarFunction> omitParenthesesMap = new HashSet<>();
@@ -44,11 +41,7 @@ public class HiveProperties {
         cap.supportLiteral(LiteralCapability.STRING);
 
         cap.supportPredicate(PredicateCapability.EQUAL);
-        cap.supportPredicate(PredicateCapability.BETWEEN);
         cap.supportPredicate(PredicateCapability.IN_CONSTLIST);
-        cap.supportPredicate(PredicateCapability.IS_NULL);
-        cap.supportPredicate(PredicateCapability.IS_NOT_NULL);
-
         return cap;
     }
 

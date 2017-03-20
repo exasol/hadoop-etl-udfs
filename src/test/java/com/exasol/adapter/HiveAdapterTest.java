@@ -48,7 +48,7 @@ public class HiveAdapterTest {
             }
         };
 
-        SchemaMetadata schemaMetadata = HiveAdapter.readMetadata(schemaMetadataInfo, connectionInfo,null);
+        SchemaMetadata schemaMetadata = HiveAdapter.readMetadata(schemaMetadataInfo, connectionInfo,null,null);
 
         long numTables = 11;
         assertEquals(numTables, schemaMetadata.getTables().size());

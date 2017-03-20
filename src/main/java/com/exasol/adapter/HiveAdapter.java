@@ -12,10 +12,10 @@ import com.exasol.adapter.request.*;
 import com.exasol.adapter.sql.SqlSelectList;
 import com.exasol.adapter.sql.SqlStatementSelect;
 import com.exasol.adapter.sql.SqlTable;
+import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.exasol.utils.UdfUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 
@@ -25,29 +25,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by np on 1/24/2017.
- */
 public class HiveAdapter {
 
     public static String adapterCall(ExaMetadata meta, String input) throws Exception {
         String result = "";
         try {
             AdapterRequest request = new RequestJsonParser().parseRequest(input);
-            final ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
 
             switch (request.getType()) {
                 case CREATE_VIRTUAL_SCHEMA:
-                    CreateVirtualSchemaRequest virtualSchemaRequest = (CreateVirtualSchemaRequest) request;
-                    SchemaMetadata schemaMetadata = readMetadata(virtualSchemaRequest.getSchemaMetadataInfo(), connection, null,null);
-                    result = ResponseJsonSerializer.makeCreateVirtualSchemaResponse(schemaMetadata);
+                    result = handleCreateVirtualSchema((CreateVirtualSchemaRequest) request, meta);
                     break;
                 case DROP_VIRTUAL_SCHEMA:
                     result = handleDropVirtualSchema();
                     break;
 
                 case SET_PROPERTIES:
-                    result = handleSetProperty((SetPropertiesRequest)request, meta);
+                    result = handleSetProperty((SetPropertiesRequest) request, meta);
                     break;
 
                 case REFRESH:
@@ -71,12 +65,12 @@ public class HiveAdapter {
         }
     }
 
-    static SchemaMetadata readMetadata(SchemaMetadataInfo schemaMetaInfo, ExaConnectionInformation connection, List<String> tableNames,String newSchema) throws SQLException {
+    static SchemaMetadata readMetadata(SchemaMetadataInfo schemaMetaInfo, ExaConnectionInformation connection, List<String> tableNames, String newSchema) throws SQLException {
         String databaseName = newSchema;
-       if(newSchema==null) {
-          databaseName = HiveAdapterProperties.getSchema(schemaMetaInfo.getProperties());
-       }
-        HiveMetaStoreClient hiveMetastoreClient = HiveAdapterUtils.getHiveMetastoreClient(connection);
+        if (newSchema == null) {
+            databaseName = HiveAdapterProperties.getSchema(schemaMetaInfo.getProperties());
+        }
+        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()), HiveAdapterProperties.getConnectionName(schemaMetaInfo.getProperties()));
         if (tableNames == null) {
             try {
                 tableNames = hiveMetastoreClient.getAllTables(databaseName);
@@ -85,13 +79,19 @@ public class HiveAdapter {
             }
         }
         List<TableMetadata> tables = new ArrayList<>();
-        if(tableNames!=null) {
+        if (tableNames != null) {
             for (String tableName : tableNames) {
-                Table table = HiveAdapterUtils.getHiveTable(hiveMetastoreClient, tableName, databaseName);
-                tables.add(HiveAdapterUtils.getTableMetadataFromHCatTableMetadata(tableName.toUpperCase(), HiveAdapterUtils.getHCatTableMetadata(table)));
+                Table table = HiveTableInformation.getHiveTable(hiveMetastoreClient, tableName, databaseName);
+                tables.add(HiveTableInformation.getTableMetadataFromHCatTableMetadata(tableName.toUpperCase(), HiveTableInformation.getHCatTableMetadata(table)));
             }
         }
         return new SchemaMetadata("", tables);
+    }
+
+    private static String handleCreateVirtualSchema(CreateVirtualSchemaRequest request, ExaMetadata meta) throws SQLException {
+        final ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
+        SchemaMetadata schemaMetadata = readMetadata(request.getSchemaMetadataInfo(), connection, null, null);
+        return ResponseJsonSerializer.makeCreateVirtualSchemaResponse(schemaMetadata);
     }
 
     private static String handleDropVirtualSchema() {
@@ -103,9 +103,9 @@ public class HiveAdapter {
         ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
         if (request.isRefreshForTables()) {
             List<String> tables = request.getTables();
-            remoteMeta = readMetadata(request.getSchemaMetadataInfo(), connection, tables,null);
+            remoteMeta = readMetadata(request.getSchemaMetadataInfo(), connection, tables, null);
         } else {
-            remoteMeta = readMetadata(request.getSchemaMetadataInfo(), connection, null,null);
+            remoteMeta = readMetadata(request.getSchemaMetadataInfo(), connection, null, null);
         }
         return ResponseJsonSerializer.makeRefreshResponse(remoteMeta);
     }
@@ -119,43 +119,43 @@ public class HiveAdapter {
     private static String handlePushdownRequest(PushdownRequest request, ExaMetadata exaMeta) throws SQLException {
         SchemaMetadataInfo meta = request.getSchemaMetadataInfo();
         // Generate SQL pushdown query
-        SqlGenerationContext context = new SqlGenerationContext(HiveAdapterProperties.getCatalog(meta.getProperties()), HiveAdapterProperties.getSchema(meta.getProperties()), HiveAdapterProperties.isLocal(meta.getProperties()));
         SqlStatementSelect selectStatement = (SqlStatementSelect) request.getSelect();
         SqlSelectList selectList = selectStatement.getSelectList();
         SqlTable fromTable = selectStatement.getFromClause();
         String tableName = fromTable.getName();
         ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(meta.getProperties(), exaMeta);
 
-        HiveMetaStoreClient hiveMetastoreClient = HiveAdapterUtils.getHiveMetastoreClient(connection);
-        Table table = HiveAdapterUtils.getHiveTable(hiveMetastoreClient, tableName, HiveAdapterProperties.getSchema(meta.getProperties()));
-        List<FieldSchema> partitions = table.getPartitionKeys();
-        List<String> partitionColumns = new ArrayList<>();
-        for (FieldSchema partition : partitions) {
-            partitionColumns.add(partition.getName());
-        }
+        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()), HiveAdapterProperties.getConnectionName(meta.getProperties()));
+        Table table = HiveTableInformation.getHiveTable(hiveMetastoreClient, tableName, HiveAdapterProperties.getSchema(meta.getProperties()));
+        SqlGenerator sqlGenerator = new SqlGenerator();
+        String selectListPart = selectList.accept(sqlGenerator);
+        SqlGeneratorForWhereClause sqlGeneratorForWhereClause = new SqlGeneratorForWhereClause();
+        String whereClause = HiveQueryGenerator.getWhereClause(selectStatement, sqlGeneratorForWhereClause);
 
-        SqlGenerator sqlGenerator = new SqlGenerator(context);
-        String selectPart = selectList.accept(sqlGenerator);
-        SqlGeneratorForWhereClause sqlGeneratorForWhereClause = new SqlGeneratorForWhereClause(context,partitionColumns);
-        String secondPartOfQuery = HiveAdapterUtils.getSecondPartOfStatement(selectStatement,sqlGenerator,sqlGeneratorForWhereClause);
-
-        String selectedColumnsString="";
-        if(!sqlGenerator.loadAllColumns || !sqlGeneratorForWhereClause.loadAllColumns){
+        String outputColumnsString = "";
+        String selectedColumsString = "";
+        if (!sqlGenerator.loadAllColumns || !sqlGeneratorForWhereClause.loadAllColumns) {
+            Set<String> outputColumns = sqlGenerator.getOutputColumns();
+            Set<String> outputColumnsInWhere = sqlGeneratorForWhereClause.getOutputColumns();
             Set<String> selectedColumns = sqlGenerator.getSelectedColumns();
             Set<String> selectedColumnsInWhere = sqlGeneratorForWhereClause.getSelectedColumns();
-            for(String col: selectedColumnsInWhere){
+            for (String col : outputColumnsInWhere) {
+                outputColumns.add(col);
+            }
+            for (String col : selectedColumnsInWhere) {
                 selectedColumns.add(col);
             }
 
-           selectedColumnsString = StringUtils.join(selectedColumns, ",");
+            outputColumnsString = StringUtils.join(outputColumns, ",");
+            selectedColumsString = StringUtils.join(selectedColumns, ",");
         }
         String partitionString = "";
-        if(!sqlGeneratorForWhereClause.loadAllPartitions) {
+        if (!sqlGeneratorForWhereClause.loadAllPartitions) {
             partitionString = StringUtils.join(sqlGeneratorForWhereClause.getSelectedPartitions(), "/");
         }
 
 
-        String importSql = HiveAdapterUtils.getOutputSql(meta, table, partitionString, selectedColumnsString, selectPart,secondPartOfQuery, connection);
+        String importSql = HiveQueryGenerator.getOutputSql(meta, table, partitionString.toLowerCase(), outputColumnsString,selectedColumsString.toUpperCase(), selectListPart.toUpperCase(), whereClause, connection);
 
         return ResponseJsonSerializer.makePushdownResponse(importSql);
     }
@@ -169,7 +169,7 @@ public class HiveAdapter {
             ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(newSchemaMeta, exaMeta);
             List<String> tableFilter = HiveAdapterProperties.getTableFilter(newSchemaMeta);
             String newSchema = HiveAdapterProperties.getSchema(newSchemaMeta);
-            SchemaMetadata remoteMeta = readMetadata(request.getSchemaMetadataInfo(),connection,tableFilter,newSchema);
+            SchemaMetadata remoteMeta = readMetadata(request.getSchemaMetadataInfo(), connection, tableFilter, newSchema);
             return ResponseJsonSerializer.makeSetPropertiesResponse(remoteMeta);
         }
         return ResponseJsonSerializer.makeSetPropertiesResponse(null);
