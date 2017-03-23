@@ -83,19 +83,24 @@ public class HdfsSerDeExportService {
         // See
         // https://ballsandbins.wordpress.com/2014/10/26/jdbc-storage-handler-for-hive-part-i/
         // https://cwiki.apache.org/confluence/display/Hive/SerDe
+        // http://www.congiu.com/a-json-readwrite-serde-for-hive/
+        //
         // Process
         // - Hive row/record object: This is what Hive operators work with, but to interpret it you need an ObjectInspector (which might deserialize from the internal representation)
         // - ObjectInspector: A (probably configured) ObjectInspector instance stands for
         //   a specific (Hive) type and a specific way to store the data of that type in the memory (as a Hive row object)
+        //   When you want to access the real values, in a standardized format, Objectinspectors act as a deserializer
         // - StructObjectInspector: Has special method isSettable
-        // - PrimitiveObjectInspector:
+        // - PrimitiveObjectInspector: getJavaPrimitiveClass() and getPrimitiveJavaObject()
         // - StringObjectInspector extends PrimitiveObjectInspector
         // - StructField: Returned by StructObjectInspector.getAllStructFieldRefs(). Contains field ObjectInspector and name (and comment)
         // - SerDe: interface SerDe extends Deserializer, Serializer
-        //   Deserializer.deserialize(Writable): Call Deserializer.getObjectInspector() afterwards to get the ObjectInspector for returned object. Representation/ObjectInspector is hardcoded in Deserializer.
+        //   Deserializer.deserialize(Writable):
+        //     Deserializes Writable to a format which then used internally by Hive operators. Hive operators don't work with deserialized object directly, but only through ObjectInspector
+        //     Call Deserializer.getObjectInspector() afterwards to get the ObjectInspector for returned object.
+        //     Representation/ObjectInspector is hardcoded in Deserializer.
         //   Serializer.serialize(Object, ObjectInspector): does not matter which row (Object) representation we use as input, as long as we pass the according ObjectInspector! I.e. does not need to be the ObjectInspector returned by the deserializer
         // - Outputformat: Each OutputFormat has a RecordWriter. key is ignored during import, and so probably can be set to null. value contains the output of SerDe.serialize
-        //
 
         final Properties props = new Properties();
         final Configuration conf = new Configuration();
