@@ -78,7 +78,7 @@ public class HCatTableFiles {
         
         // Check table type (must be managed or external, no view or index tables)
         String tableType = tableMeta.getTableType();
-        if (!tableType.equals("MANAGED_TABLE") && !tableType.equals("EXTERNAL_TABLE") ) {
+        if (!tableType.equalsIgnoreCase("MANAGED_TABLE") && !tableType.equalsIgnoreCase("EXTERNAL_TABLE") ) {
             throw new RuntimeException("Table type " + tableType + " is not supported. Only managed and external tables are supported.");
         }
 
@@ -86,7 +86,7 @@ public class HCatTableFiles {
         // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
         String hdfsAddressToUse = (hdfsAddressFromUser.isEmpty()) ?
                 tableMeta.getHdfsAddress() : hdfsAddressFromUser;
-        
+
         List<String> filePaths = HdfsService.getFilesFromTable(
                 hdfsAndHCatUser,
                 tableMeta.getHdfsTableRootPath(),
