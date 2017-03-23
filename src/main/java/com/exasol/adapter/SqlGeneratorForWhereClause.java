@@ -42,7 +42,7 @@ public class SqlGeneratorForWhereClause extends SqlGenerator {
 
 
     @Override
-    public String visit(SqlSelectList selectList) {
+    public String visit(SqlSelectList selectList) throws AdapterException {
         List<String> selectElement = new ArrayList<>();
         if (selectList.isRequestAnyColumn()) {
             // The system requested any column
@@ -71,7 +71,7 @@ public class SqlGeneratorForWhereClause extends SqlGenerator {
     }
 
     @Override
-    public String visit(SqlPredicateEqual predicate) {
+    public String visit(SqlPredicateEqual predicate) throws AdapterException {
 
         SqlNode leftNode = predicate.getLeft();
         SqlNode rightNode = predicate.getRight();
@@ -102,7 +102,7 @@ public class SqlGeneratorForWhereClause extends SqlGenerator {
     }
 
     @Override
-    public String visit(SqlPredicateInConstList predicate) {
+    public String visit(SqlPredicateInConstList predicate) throws AdapterException {
         List<String> argumentsSql = new ArrayList<>();
         List<String> argumentsSqlOnlyValue = new ArrayList<>();
         boolean isListOfStrings = true;
