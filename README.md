@@ -80,7 +80,7 @@ Parameter           | Value
 **HDFS_URL**        | HDFS/WebHDFS/HttpFS URL. E.g. ```'webhdfs://hdfs-namenode:50070'``` (WebHDFS) ```'webhdfs://hdfs-namenode:14000'``` (HttpFS) or ```'hdfs://hdfs-namenode:8020'``` (native HDFS). This parameter overwrites the HDFS URL retrieved from HCatalog. Use this if you want to use WebHDFS instead of the native HDFS interface, or if you need to overwrite it with another HDFS address (e.g. because HCatalog returns a non fully-qualified hostname unreachable from EXASOL). Make sure EXASOL can connect to the specified HDFS service (see prerequisites above).
 **AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
-**DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below.
+**DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below. 
 
 
 ## Debugging
