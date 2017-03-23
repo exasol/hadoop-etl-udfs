@@ -2,6 +2,7 @@ package com.exasol.adapter;
 
 import com.exasol.adapter.metadata.ColumnMetadata;
 import com.exasol.adapter.metadata.DataType;
+import com.exasol.adapter.metadata.MetadataException;
 import com.exasol.adapter.metadata.TableMetadata;
 import com.exasol.hadoop.hcat.HCatSerDeParameter;
 import com.exasol.hadoop.hcat.HCatTableColumn;
@@ -85,7 +86,7 @@ public class HiveTableInformation {
     }
 
 
-    public static TableMetadata getTableMetadataFromHCatTableMetadata(String tableName, HCatTableMetadata hcatTableMetadata) {
+    public static TableMetadata getTableMetadataFromHCatTableMetadata(String tableName, HCatTableMetadata hcatTableMetadata) throws MetadataException {
         List<ColumnMetadata> columns = new ArrayList<ColumnMetadata>();
         List<HCatTableColumn> partitionColumns = hcatTableMetadata.getPartitionColumns();
         addColumsToList(columns,hcatTableMetadata.getColumns(),false);

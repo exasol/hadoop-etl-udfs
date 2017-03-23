@@ -1,6 +1,7 @@
 package com.exasol.adapter;
 
 import com.exasol.ExaConnectionInformation;
+import com.exasol.adapter.metadata.MetadataException;
 import com.exasol.adapter.metadata.SchemaMetadata;
 import com.exasol.adapter.metadata.SchemaMetadataInfo;
 import com.exasol.adapter.metadata.TableMetadata;
@@ -18,7 +19,7 @@ public class HiveAdapterTest {
 
     @Test
     @Ignore
-    public void testReadMetadata() throws SQLException {
+    public void testReadMetadata() throws SQLException, MetadataException {
 
         String hiveDB = "xperience";
 

@@ -5,6 +5,7 @@ import com.exasol.ExaMetadata;
 import com.exasol.adapter.capabilities.Capabilities;
 import com.exasol.adapter.json.RequestJsonParser;
 import com.exasol.adapter.json.ResponseJsonSerializer;
+import com.exasol.adapter.metadata.MetadataException;
 import com.exasol.adapter.metadata.SchemaMetadata;
 import com.exasol.adapter.metadata.SchemaMetadataInfo;
 import com.exasol.adapter.metadata.TableMetadata;
@@ -59,13 +60,17 @@ public class HiveAdapter {
             }
 
             return result;
-        } catch (Exception ex) {
+        }
+        catch (AdapterException ex){
+            throw ex;
+        }
+        catch (Exception ex) {
             String stacktrace = UdfUtils.traceToString(ex);
             throw new Exception("Error in Adapter: " + ex.getMessage() + "\nStacktrace: " + stacktrace + "\nFor following request: " + input + "\nResponse: " + result);
         }
     }
 
-    static SchemaMetadata readMetadata(SchemaMetadataInfo schemaMetaInfo, ExaConnectionInformation connection, List<String> tableNames, String newSchema) throws SQLException {
+    static SchemaMetadata readMetadata(SchemaMetadataInfo schemaMetaInfo, ExaConnectionInformation connection, List<String> tableNames, String newSchema) throws SQLException, MetadataException {
         String databaseName = newSchema;
         if (newSchema == null) {
             databaseName = HiveAdapterProperties.getSchema(schemaMetaInfo.getProperties());
@@ -88,7 +93,7 @@ public class HiveAdapter {
         return new SchemaMetadata("", tables);
     }
 
-    private static String handleCreateVirtualSchema(CreateVirtualSchemaRequest request, ExaMetadata meta) throws SQLException {
+    private static String handleCreateVirtualSchema(CreateVirtualSchemaRequest request, ExaMetadata meta) throws SQLException, MetadataException {
         final ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
         SchemaMetadata schemaMetadata = readMetadata(request.getSchemaMetadataInfo(), connection, null, null);
         return ResponseJsonSerializer.makeCreateVirtualSchemaResponse(schemaMetadata);
@@ -98,7 +103,7 @@ public class HiveAdapter {
         return ResponseJsonSerializer.makeDropVirtualSchemaResponse();
     }
 
-    private static String handleRefresh(RefreshRequest request, ExaMetadata meta) throws SQLException {
+    private static String handleRefresh(RefreshRequest request, ExaMetadata meta) throws SQLException, MetadataException {
         SchemaMetadata remoteMeta;
         ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
         if (request.isRefreshForTables()) {
@@ -116,7 +121,7 @@ public class HiveAdapter {
     }
 
 
-    private static String handlePushdownRequest(PushdownRequest request, ExaMetadata exaMeta) throws SQLException {
+    private static String handlePushdownRequest(PushdownRequest request, ExaMetadata exaMeta) throws SQLException, AdapterException {
         SchemaMetadataInfo meta = request.getSchemaMetadataInfo();
         // Generate SQL pushdown query
         SqlStatementSelect selectStatement = (SqlStatementSelect) request.getSelect();
@@ -161,7 +166,7 @@ public class HiveAdapter {
     }
 
 
-    private static String handleSetProperty(SetPropertiesRequest request, ExaMetadata exaMeta) throws SQLException {
+    private static String handleSetProperty(SetPropertiesRequest request, ExaMetadata exaMeta) throws SQLException, MetadataException {
         Map<String, String> changedProperties = request.getProperties();
         Map<String, String> newSchemaMeta = HiveAdapterProperties.getNewProperties(
                 request.getSchemaMetadataInfo().getProperties(), changedProperties);

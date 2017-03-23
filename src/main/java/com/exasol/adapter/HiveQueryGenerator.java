@@ -33,7 +33,7 @@ public class HiveQueryGenerator {
                 " FROM SCRIPT ADAPTERSCHEMA.IMPORT_HCAT_TABLE WITH " + credentialsAndConn +")" + secondPart;
     }
 
-    public static String getWhereClause(SqlStatementSelect select,SqlGeneratorForWhereClause sqlGeneratorForWhereClause){
+    public static String getWhereClause(SqlStatementSelect select,SqlGeneratorForWhereClause sqlGeneratorForWhereClause) throws AdapterException {
         String sql = "";
         if (select.hasFilter()) {
             sql +=" WHERE ";
