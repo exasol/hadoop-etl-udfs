@@ -17,6 +17,14 @@ public class HiveMetastoreService {
 
 
     public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple){
+        try {
+            return checkHiveMetaStoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
+        } catch (MetaException e) {
+            throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
+        }
+    }
+
+    public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple) throws MetaException {
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
         hiveConf.set("hive.metastore.local", "false");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
@@ -26,11 +34,7 @@ public class HiveMetastoreService {
             hiveConf.set("hive.metastore.kerberos.principal", kerberosPrinciple);
             hiveConf.set("hive.metastore.sasl.enabled", "true");
         }
-        try {
-            return new HiveMetaStoreClient(hiveConf);
-        } catch (MetaException e) {
-            throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
-        }
+        return new HiveMetaStoreClient(hiveConf);
     }
 
     /**
