@@ -14,6 +14,7 @@ public class HiveAdapterProperties {
     static final String PROP_USERNAME = "HDFS_USER";
     static final String PROP_CONNECTION_NAME = "CONNECTION_NAME";
     static final String PROP_TABLES = "TABLE_FILTER";
+    static final String PROP_HDFS_URL = "HDFS_URL";
 
 
 
@@ -27,6 +28,10 @@ public class HiveAdapterProperties {
 
     public static String getSchema(Map<String, String> properties) {
         return getProperty(properties, PROP_SCHEMA_NAME, "");
+    }
+
+    public static String getHdfsUrls(Map<String, String> properties){
+        return getProperty(properties, PROP_HDFS_URL, "");
     }
 
     public static String getTableName(Map<String, String> properties) {
@@ -74,6 +79,7 @@ public class HiveAdapterProperties {
         private String address;
         private String user;        // can be null
         private String password;    // can be null
+
 
         public ExaConnectionInformationHdfs(String address, String user, String password) {
             this.address = address;
@@ -124,7 +130,8 @@ public class HiveAdapterProperties {
                 || newProperties.containsKey(PROP_CONNECTION_NAME)
                 || newProperties.containsKey(PROP_USERNAME)
                 || newProperties.containsKey(PROP_SCHEMA_NAME)
-                || newProperties.containsKey(PROP_TABLES);
+                || newProperties.containsKey(PROP_TABLES)
+                || newProperties.containsKey(PROP_HDFS_URL);
     }
 
 

@@ -28,6 +28,9 @@ public class HiveQueryGenerator {
             credentialsAndConn += " AUTH_TYPE = 'kerberos'";
             credentialsAndConn += " AUTH_KERBEROS_CONNECTION = '" + HiveAdapterProperties.getConnectionName(meta.getProperties()) + "'";
         }
+        if(HiveAdapterProperties.getHdfsUrls(meta.getProperties()) != ""){
+            credentialsAndConn += " HDFS_URL = '" + HiveAdapterProperties.getHdfsUrls(meta.getProperties()) + "'";
+        }
 
         return  "SELECT " + selectListPart  + " FROM (IMPORT INTO (" + selectedColumnsString + ")" +
                 " FROM SCRIPT ADAPTERSCHEMA.IMPORT_HCAT_TABLE WITH " + credentialsAndConn +")" + secondPart;

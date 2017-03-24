@@ -4,6 +4,7 @@ import com.exasol.ExaIterator;
 import com.exasol.hadoop.hcat.HCatSerDeParameter;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.WebHCatJsonParser;
+import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.jsonpath.*;
@@ -30,8 +31,8 @@ import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObjectBuilder;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.URLDecoder;
 import java.security.PrivilegedExceptionAction;
 import java.sql.Date;
@@ -53,7 +54,7 @@ public class HdfsSerDeImportService {
             String colInfoJson,
             String partitionColumnsJson,
             final String outputColumnsSpec,
-            final String hdfsServer,
+            final List<String> listOfHdfsUrls,
             final String hdfsUser,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
@@ -88,9 +89,9 @@ public class HdfsSerDeImportService {
                     if (useKerberos) {
                         conf.set("dfs.namenode.kerberos.principal", hdfsUser);
                     }
-                    final FileSystem fs = FileSystem.get(new URI(hdfsServer), conf);
+                    final FileSystem fs = HdfsService.getFileSystem(listOfHdfsUrls,conf);
                     for (String file : files) {
-                        importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServer, hdfsUser, columns, outputColumns, useKerberos, ctx);
+                        importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, listOfHdfsUrls, hdfsUser, columns, outputColumns, useKerberos, ctx);
                     }
                     return null;
                 }
@@ -108,7 +109,7 @@ public class HdfsSerDeImportService {
             final InputFormat<?, ?> inputFormat,
             final SerDe serde,
             final List<HCatSerDeParameter> serDeParameters,
-            final String hdfsUrl,
+            final List<String> hdfsUrls,
             final String hdfsUser,
             final List<HCatTableColumn> columns,
             final List<OutputColumnSpec> outputColumns,
@@ -118,7 +119,7 @@ public class HdfsSerDeImportService {
         System.out.println("- file: " + file);
         System.out.println("- partitionColumns: " + partitionColumns);
         System.out.println("- serDeParameters: " + serDeParameters);
-        System.out.println("- hdfsUrl: " + hdfsUrl);
+        System.out.println("- hdfsUrl: " + org.apache.commons.lang.StringUtils.join(hdfsUrls, ","));
         System.out.println("- hdfsUser: " + hdfsUser);
         System.out.println("- columnInfo: " + columns);
         System.out.println("- outputColumns: " + outputColumns);
@@ -135,8 +136,14 @@ public class HdfsSerDeImportService {
         }
         initProperties(props, conf, columns, outputColumns);
         serde.initialize(conf, props);
-
-        FileStatus fileStatus = fs.getFileStatus(new Path(file));
+        FileStatus fileStatus = null;
+        try {
+            fileStatus = fs.getFileStatus(new Path(file));
+        }
+        catch (IOException ex){
+            FileSystem newFileSystem = HdfsService.getFileSystem(hdfsUrls,conf);
+            fileStatus = newFileSystem.getFileStatus(new Path(file));
+        }
         System.out.println("importing file: " + fileStatus.getPath());
         InputSplit split = new FileSplit(fileStatus.getPath(), 0, fileStatus.getLen(), (String[]) null);
         CompressionCodecFactory codecs = new org.apache.hadoop.io.compress.CompressionCodecFactory(conf);

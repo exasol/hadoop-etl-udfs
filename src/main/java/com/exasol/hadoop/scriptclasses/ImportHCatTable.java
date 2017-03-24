@@ -2,9 +2,7 @@ package com.exasol.hadoop.scriptclasses;
 
 import com.exasol.ExaImportSpecification;
 import com.exasol.ExaMetadata;
-import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.google.common.base.Joiner;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,7 @@ public class ImportHCatTable {
         String parallelism = getParameter(params, "PARALLELISM", "nproc()");
         String partitions = getParameter(params, "PARTITIONS", "");
         String outputColumnsSpec = getParameter(params, "OUTPUT_COLUMNS", "");
-        String hdfsURL = getParameter(params, "HDFS_URL", "");
+        String hdfsURLs = getParameter(params, "HDFS_URL", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
@@ -64,9 +62,6 @@ public class ImportHCatTable {
         
         // Argument list
         List<String> hcatUDFArgs = new ArrayList<>();
-
-        String [] hdfsUrls = hdfsURL.split(",");
-
         hcatUDFArgs.add("'" + hcatDB + "'");
         hcatUDFArgs.add("'" + hcatTable + "'");
         hcatUDFArgs.add("'" + hCatAddress + "'");
@@ -74,7 +69,7 @@ public class ImportHCatTable {
         hcatUDFArgs.add(parallelism);
         hcatUDFArgs.add("'" + partitions + "'");
         hcatUDFArgs.add("'" + outputColumnsSpec + "'");
-     //  hcatUDFArgs.add("'" + hdfsURL + "'");
+        hcatUDFArgs.add("'" + hdfsURLs + "'");
         hcatUDFArgs.add("'" + authenticationType + "'");
         hcatUDFArgs.add("'" + kerberosConnection + "'");
         hcatUDFArgs.add("'" + debugAddress + "'");
@@ -93,20 +88,6 @@ public class ImportHCatTable {
         importUDFArgs.add("output_columns");
         importUDFArgs.add("debug_address");
 
-        boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
-        boolean connectionSuccess = false;
-        int counter = 0;
-        while(!connectionSuccess && hdfsUrls.length>counter) {
-            try {
-                HiveMetastoreService.checkHiveMetaStoreClient(hdfsUrls[counter], useKerberos, kerberosConnection);
-                connectionSuccess = true;
-                addHdfsUrlToUdfArgs(hcatUDFArgs,hdfsUrls,counter);
-            } catch (MetaException e) {
-               connectionSuccess = false;
-            }
-            counter++;
-        }
-
         String sql = "SELECT"
                 + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(" + Joiner.on(", ").join(importUDFArgs) + ")"
                 + emitsSpec
@@ -116,11 +97,6 @@ public class ImportHCatTable {
 
         return sql;
     }
-
-    private static void addHdfsUrlToUdfArgs(List<String> hcatUDFArgs,String[] hdfsUrls,int counter){
-        hcatUDFArgs.add(7,"'" + hdfsUrls[counter] + "'");
-    }
-
     
     private static String getMandatoryParameter(Map<String, String> params, String key) {
         if (!params.containsKey(key)) {
