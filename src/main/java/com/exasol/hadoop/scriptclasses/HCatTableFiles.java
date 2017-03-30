@@ -11,7 +11,7 @@ import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,7 +42,13 @@ public class HCatTableFiles {
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
         String hdfsAddressesFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
-        List<String> listOfHdfsAddresses = Arrays.asList(hdfsAddressesFromUser.split(","));
+        List<String> listOfHdfsAddresses = new ArrayList<>();
+        if(!hdfsAddressesFromUser.equals("")) {
+            String[] additionalHdfsAddresses = hdfsAddressesFromUser.split(",");
+            for(int i=0; i<additionalHdfsAddresses.length; i++){
+               listOfHdfsAddresses.add(additionalHdfsAddresses[i]);
+            }
+        }
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         boolean useKerberos = authType.equalsIgnoreCase("kerberos");
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
