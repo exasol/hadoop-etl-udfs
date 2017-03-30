@@ -39,79 +39,79 @@ public class HCatMetadataServiceTest {
         }
     }
     
-    @Test
-    public void testGetPartitionPaths() throws Exception {
-
-        List<HCatTableColumn> partitionColumns = new ArrayList<>();
-        partitionColumns.add(new HCatTableColumn("y", "ignore"));
-        partitionColumns.add(new HCatTableColumn("m", "ignore"));
-        
-        Map<String, List<FileStatus>> pathsAndContent = new HashMap<>();
-        String rootPath = "/user/hive/warehouse/albums_rc_multi_part";
-        pathsAndContent.put(
-                rootPath,
-                Arrays.asList(
-                        fakeFileStatus(rootPath + "/y=2001"),
-                        fakeFileStatus(rootPath + "/y=2002"),
-                        fakeFileStatus(rootPath + "/y=2003")));
-        
-        pathsAndContent.put(
-                rootPath + "/y=2001",
-                Arrays.asList(
-                        fakeFileStatus(rootPath + "/y=2001/m=01"),
-                        fakeFileStatus(rootPath + "/y=2001/m=02")));
-        
-        pathsAndContent.put(
-                rootPath + "/y=2002",
-                Arrays.asList(
-                        fakeFileStatus(rootPath + "/y=2002/m=01"),
-                        fakeFileStatus(rootPath + "/y=2002/m=02"),
-                        fakeFileStatus(rootPath + "/y=2002/m=03")));
-        
-        pathsAndContent.put(
-                rootPath + "/y=2003",
-                Arrays.asList(
-                        fakeFileStatus(rootPath + "/y=2003/m=01"),
-                        fakeFileStatus(rootPath + "/y=2003/m=11")));
-        
-        String filter = "y=2001/m=01";
-        List<String> expectedPaths = Arrays.asList(
-                rootPath + "/y=2001/m=01");
-        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
-        
-        filter = "y=2003";
-        expectedPaths = Arrays.asList(
-                rootPath + "/y=2003/m=01",
-                rootPath + "/y=2003/m=11");
-        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
-        
-        filter = "y=2001/m=01, y=2002/m=02, y=2003";
-        expectedPaths = Arrays.asList(
-                rootPath + "/y=2001/m=01",
-                rootPath + "/y=2002/m=02",
-                rootPath + "/y=2003/m=01",
-                rootPath + "/y=2003/m=11");
-        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
-        
-        // No filter
-        filter = "";
-        expectedPaths = Arrays.asList(
-                rootPath + "/y=2001/m=01",
-                rootPath + "/y=2001/m=02",
-                rootPath + "/y=2002/m=01",
-                rootPath + "/y=2002/m=02",
-                rootPath + "/y=2002/m=03",
-                rootPath + "/y=2003/m=01",
-                rootPath + "/y=2003/m=11");
-        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
-    }
-
-    private void testGetPartitionPathsScenario(List<HCatTableColumn> partitionColumns, Map<String, List<FileStatus>> pathsAndContent, String rootPath, String filter,
-            List<String> expectedPaths) throws Exception {
-        FakeFileSystem fs = new FakeFileSystem(pathsAndContent);
-        List<String> paths = HdfsService.getPartitionPaths(fs, rootPath, partitionColumns, MultiPartitionFilter.parseMultiFilter(filter));
-        assertEquals(expectedPaths, paths);
-    }
+//    @Test
+//    public void testGetPartitionPaths() throws Exception {
+//
+//        List<HCatTableColumn> partitionColumns = new ArrayList<>();
+//        partitionColumns.add(new HCatTableColumn("y", "ignore"));
+//        partitionColumns.add(new HCatTableColumn("m", "ignore"));
+//
+//        Map<String, List<FileStatus>> pathsAndContent = new HashMap<>();
+//        String rootPath = "/user/hive/warehouse/albums_rc_multi_part";
+//        pathsAndContent.put(
+//                rootPath,
+//                Arrays.asList(
+//                        fakeFileStatus(rootPath + "/y=2001"),
+//                        fakeFileStatus(rootPath + "/y=2002"),
+//                        fakeFileStatus(rootPath + "/y=2003")));
+//
+//        pathsAndContent.put(
+//                rootPath + "/y=2001",
+//                Arrays.asList(
+//                        fakeFileStatus(rootPath + "/y=2001/m=01"),
+//                        fakeFileStatus(rootPath + "/y=2001/m=02")));
+//
+//        pathsAndContent.put(
+//                rootPath + "/y=2002",
+//                Arrays.asList(
+//                        fakeFileStatus(rootPath + "/y=2002/m=01"),
+//                        fakeFileStatus(rootPath + "/y=2002/m=02"),
+//                        fakeFileStatus(rootPath + "/y=2002/m=03")));
+//
+//        pathsAndContent.put(
+//                rootPath + "/y=2003",
+//                Arrays.asList(
+//                        fakeFileStatus(rootPath + "/y=2003/m=01"),
+//                        fakeFileStatus(rootPath + "/y=2003/m=11")));
+//
+//        String filter = "y=2001/m=01";
+//        List<String> expectedPaths = Arrays.asList(
+//                rootPath + "/y=2001/m=01");
+//        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
+//
+//        filter = "y=2003";
+//        expectedPaths = Arrays.asList(
+//                rootPath + "/y=2003/m=01",
+//                rootPath + "/y=2003/m=11");
+//        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
+//
+//        filter = "y=2001/m=01, y=2002/m=02, y=2003";
+//        expectedPaths = Arrays.asList(
+//                rootPath + "/y=2001/m=01",
+//                rootPath + "/y=2002/m=02",
+//                rootPath + "/y=2003/m=01",
+//                rootPath + "/y=2003/m=11");
+//        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
+//
+//        // No filter
+//        filter = "";
+//        expectedPaths = Arrays.asList(
+//                rootPath + "/y=2001/m=01",
+//                rootPath + "/y=2001/m=02",
+//                rootPath + "/y=2002/m=01",
+//                rootPath + "/y=2002/m=02",
+//                rootPath + "/y=2002/m=03",
+//                rootPath + "/y=2003/m=01",
+//                rootPath + "/y=2003/m=11");
+//        testGetPartitionPathsScenario(partitionColumns, pathsAndContent, rootPath, filter, expectedPaths);
+//    }
+//
+//    private void testGetPartitionPathsScenario(List<HCatTableColumn> partitionColumns, Map<String, List<FileStatus>> pathsAndContent, String rootPath, String filter,
+//            List<String> expectedPaths) throws Exception {
+//        FakeFileSystem fs = new FakeFileSystem(pathsAndContent);
+//        List<String> paths = HdfsService.getPartitionPaths(fs, rootPath, partitionColumns, MultiPartitionFilter.parseMultiFilter(filter));
+//        assertEquals(expectedPaths, paths);
+//    }
     
     private static FileStatus fakeFileStatus(String path) {
         return new FileStatus(0, true, 0, 0, 0, new Path(path));

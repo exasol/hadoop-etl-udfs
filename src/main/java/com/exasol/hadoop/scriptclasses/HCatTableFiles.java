@@ -98,12 +98,15 @@ public class HCatTableFiles {
                 tableMeta.getPartitionColumns(),
                 useKerberos,
                 kerberosCredentials,
-                listOfHdfsAddresses);
+                listOfHdfsAddresses,
+                hcatDB,
+                hcatTable,
+                hCatAddress);
 
         int numFilePaths = filePaths.size();
         for (int i = 0; i < numFilePaths; i++) {
             iter.emit(
-                    StringUtils.join(listOfHdfsAddresses, ","),
+                    StringUtils.join(listOfHdfsAddresses, ","),  // Convert the List to a simple commaseparated value here, e.g. emit a String "host1:1234,host2:1234"
                     filePaths.get(i),
                     hdfsAndHCatUser,
                     tableMeta.getInputFormatClass(),

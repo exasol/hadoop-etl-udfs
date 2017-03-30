@@ -49,4 +49,20 @@ public class MultiPartitionFilter {
         }
         return true;
     }
+
+    public static List<String> parseMultiFilterToStrings(String filter){
+        List<String> partitionFilters = new ArrayList<>();
+        if (filter == null || filter.isEmpty()) {
+            return partitionFilters;
+        }
+        String[] filterSpecs = filter.split(",");
+        for (String filterSpec : filterSpecs) {
+            String[] filterParts = filterSpec.split("/");
+            for (String filterPart : filterParts) {
+                String[] keyValue = filterPart.trim().split("=");
+                partitionFilters.add(keyValue[0] + "=\"" + keyValue[1] + "\"");
+            }
+        }
+        return partitionFilters;
+    }
 }

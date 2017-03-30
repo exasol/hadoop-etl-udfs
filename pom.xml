@@ -28,8 +28,14 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
-	</repositories>
-
+		<repository>
+			<id>hcatalog.client</id>
+			<url>https://mvnrepository.com/artifact/org.apache.hive.hcatalog/hive-webhcat-java-client</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	 </repositories>
 	<profiles>
 		<profile>
 			<id>cloudera</id>
@@ -140,6 +146,11 @@
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-exec</artifactId>
+			<version>${hive.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-webhcat-java-client</artifactId>
 			<version>${hive.version}</version>
 		</dependency>
 		<!--
