@@ -54,7 +54,7 @@ public class HdfsSerDeImportService {
             String colInfoJson,
             String partitionColumnsJson,
             final String outputColumnsSpec,
-            final List<String> listOfHdfsUrls,
+            final List<String> hdfsUrls,
             final String hdfsUser,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
@@ -89,9 +89,9 @@ public class HdfsSerDeImportService {
                     if (useKerberos) {
                         conf.set("dfs.namenode.kerberos.principal", hdfsUser);
                     }
-                    final FileSystem fs = HdfsService.getFileSystem(listOfHdfsUrls,conf);
+                    FileSystem fs = HdfsService.getFileSystem(hdfsUrls,conf);
                     for (String file : files) {
-                        importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, listOfHdfsUrls, hdfsUser, columns, outputColumns, useKerberos, ctx);
+                        fs = importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsUrls, hdfsUser, columns, outputColumns, useKerberos, ctx);
                     }
                     return null;
                 }
@@ -102,8 +102,11 @@ public class HdfsSerDeImportService {
         }
     }
 
-    public static void importFile(
-            final FileSystem fs,
+    /**
+     * @return In case of an HA failover, this method might connect to a different namenode, which is then returned
+     */
+    public static FileSystem importFile(
+            FileSystem fs,
             final String file,
             final List<HCatTableColumn> partitionColumns,
             final InputFormat<?, ?> inputFormat,
@@ -137,12 +140,14 @@ public class HdfsSerDeImportService {
         initProperties(props, conf, columns, outputColumns);
         serde.initialize(conf, props);
         FileStatus fileStatus = null;
+        // If there is a HA namenode failover while UDFs are running, it will probably crash here when retrieving the files from namenode.
+        // In case of a crash, we call {@HdfsService#getFileSystem} which will get the available namenode (or it fails because all are down)
         try {
             fileStatus = fs.getFileStatus(new Path(file));
         }
-        catch (IOException ex){
-            FileSystem newFileSystem = HdfsService.getFileSystem(hdfsUrls,conf);
-            fileStatus = newFileSystem.getFileStatus(new Path(file));
+        catch (IOException ex) {
+            fs = HdfsService.getFileSystem(hdfsUrls,conf);
+            fileStatus = fs.getFileStatus(new Path(file));
         }
         System.out.println("importing file: " + fileStatus.getPath());
         InputSplit split = new FileSplit(fileStatus.getPath(), 0, fileStatus.getLen(), (String[]) null);
@@ -196,6 +201,7 @@ public class HdfsSerDeImportService {
             ctx.emit(objs);
         }
         rr.close();
+        return fs;
     }
 
     private static void visitTree(

@@ -42,11 +42,11 @@ public class HCatTableFiles {
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
         String hdfsAddressesFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
-        List<String> listOfHdfsAddresses = new ArrayList<>();
+        List<String> hdfsAddresses = new ArrayList<>();
         if(!hdfsAddressesFromUser.equals("")) {
             String[] additionalHdfsAddresses = hdfsAddressesFromUser.split(",");
             for(int i=0; i<additionalHdfsAddresses.length; i++){
-               listOfHdfsAddresses.add(additionalHdfsAddresses[i]);
+                hdfsAddresses.add(additionalHdfsAddresses[i]);
             }
         }
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
@@ -93,8 +93,8 @@ public class HCatTableFiles {
 
         // If the user defined an webHDFS URL (e.g. "webhdfs://domain.namenode:50070" or "hdfs://namenode:8020") we use this and ignore the hdfs URL returned from HCat (e.g. "hdfs://namenode:8020")
         // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
-        if(listOfHdfsAddresses.isEmpty()){
-            listOfHdfsAddresses.add(tableMeta.getHdfsAddress());
+        if(hdfsAddresses.isEmpty()){
+            hdfsAddresses.add(tableMeta.getHdfsAddress());
         }
 
         List<String> filePaths = HdfsService.getFilesFromTable(
@@ -104,12 +104,12 @@ public class HCatTableFiles {
                 tableMeta.getPartitionColumns(),
                 useKerberos,
                 kerberosCredentials,
-                listOfHdfsAddresses);
+                hdfsAddresses);
 
         int numFilePaths = filePaths.size();
         for (int i = 0; i < numFilePaths; i++) {
             iter.emit(
-                    StringUtils.join(listOfHdfsAddresses, ","),
+                    StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
                     hdfsAndHCatUser,
                     tableMeta.getInputFormatClass(),
