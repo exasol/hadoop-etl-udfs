@@ -9,7 +9,9 @@ import com.exasol.hadoop.hcat.WebHCatJsonSerializer;
 import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
+import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,7 +41,14 @@ public class HCatTableFiles {
         // Optional parameters
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
-        String hdfsAddressFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
+        String hdfsAddressesFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
+        List<String> hdfsAddresses = new ArrayList<>();
+        if(!hdfsAddressesFromUser.equals("")) {
+            String[] additionalHdfsAddresses = hdfsAddressesFromUser.split(",");
+            for(int i=0; i<additionalHdfsAddresses.length; i++){
+                hdfsAddresses.add(additionalHdfsAddresses[i]);
+            }
+        }
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         boolean useKerberos = authType.equalsIgnoreCase("kerberos");
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
@@ -84,8 +93,9 @@ public class HCatTableFiles {
 
         // If the user defined an webHDFS URL (e.g. "webhdfs://domain.namenode:50070" or "hdfs://namenode:8020") we use this and ignore the hdfs URL returned from HCat (e.g. "hdfs://namenode:8020")
         // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
-        String hdfsAddressToUse = (hdfsAddressFromUser.isEmpty()) ?
-                tableMeta.getHdfsAddress() : hdfsAddressFromUser;
+        if(hdfsAddresses.isEmpty()){
+            hdfsAddresses.add(tableMeta.getHdfsAddress());
+        }
 
         List<String> filePaths = HdfsService.getFilesFromTable(
                 hdfsAndHCatUser,
@@ -94,12 +104,12 @@ public class HCatTableFiles {
                 tableMeta.getPartitionColumns(),
                 useKerberos,
                 kerberosCredentials,
-                hdfsAddressToUse);
+                hdfsAddresses);
 
         int numFilePaths = filePaths.size();
         for (int i = 0; i < numFilePaths; i++) {
             iter.emit(
-                    hdfsAddressToUse,
+                    StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
                     hdfsAndHCatUser,
                     tableMeta.getInputFormatClass(),

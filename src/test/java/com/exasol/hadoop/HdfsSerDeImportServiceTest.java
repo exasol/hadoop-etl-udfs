@@ -3,6 +3,7 @@ package com.exasol.hadoop;
 import com.exasol.ExaIterator;
 import com.exasol.hadoop.hcat.HCatSerDeParameter;
 import com.exasol.hadoop.hcat.HCatTableColumn;
+import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.jsonpath.OutputColumnSpecUtil;
 import com.exasol.utils.UdfUtils;
@@ -12,7 +13,6 @@ import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.mapred.InputFormat;
 import org.junit.Test;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,13 +76,14 @@ public class HdfsSerDeImportServiceTest {
         String hdfsUser = "hdfs";
         boolean useKerberos = false;
         
-        String hdfsServer = "file:///";
+        List<String> hdfsServers = new ArrayList<>();
+        hdfsServers.add("file:///");
         final Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(new URI(hdfsServer), conf);
+        FileSystem fs = HdfsService.getFileSystem(hdfsServers,conf);
         
         InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatClassName);
         SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
-        HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServer, hdfsUser, columns, outputColumns, useKerberos, ctx);
+        HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, ctx);
     }
     
     private List<HCatTableColumn> getSample07Columns() {

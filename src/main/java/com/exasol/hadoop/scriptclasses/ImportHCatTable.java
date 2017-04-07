@@ -1,12 +1,12 @@
 package com.exasol.hadoop.scriptclasses;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.exasol.ExaImportSpecification;
 import com.exasol.ExaMetadata;
 import com.google.common.base.Joiner;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name
@@ -27,7 +27,7 @@ public class ImportHCatTable {
         String parallelism = getParameter(params, "PARALLELISM", "nproc()");
         String partitions = getParameter(params, "PARTITIONS", "");
         String outputColumnsSpec = getParameter(params, "OUTPUT_COLUMNS", "");
-        String hdfsURL = getParameter(params, "HDFS_URL", "");
+        String hdfsURLs = getParameter(params, "HDFS_URL", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
@@ -69,7 +69,7 @@ public class ImportHCatTable {
         hcatUDFArgs.add(parallelism);
         hcatUDFArgs.add("'" + partitions + "'");
         hcatUDFArgs.add("'" + outputColumnsSpec + "'");
-        hcatUDFArgs.add("'" + hdfsURL + "'");
+        hcatUDFArgs.add("'" + hdfsURLs + "'");
         hcatUDFArgs.add("'" + authenticationType + "'");
         hcatUDFArgs.add("'" + kerberosConnection + "'");
         hcatUDFArgs.add("'" + debugAddress + "'");

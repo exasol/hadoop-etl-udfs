@@ -1,14 +1,15 @@
 package com.exasol.hadoop.scriptclasses;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.exasol.ExaConnectionInformation;
 import com.exasol.ExaIterator;
 import com.exasol.ExaMetadata;
 import com.exasol.hadoop.HdfsSerDeImportService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name as the main class.
@@ -35,8 +36,9 @@ public class ImportHiveTableFiles {
         String colInfo = iter.getString(PARAM_IDX_COLUMNS);
         String partInfo = iter.getString(PARAM_IDX_PARTITIONS);
         String serdeProps = iter.getString(PARAM_IDX_SERDE_PROPS);
-        String hdfsServer = iter.getString(PARAM_IDX_HDFS_ADDRESS);
+        String hdfsServerUrls = iter.getString(PARAM_IDX_HDFS_ADDRESS);
         String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
+        List<String> hdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
 
         // Optional: Kerberos authentication
         boolean useKerberos = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "").equalsIgnoreCase("kerberos");
@@ -74,6 +76,6 @@ public class ImportHiveTableFiles {
         do {
             files.add(iter.getString(PARAM_IDX_FILE));
         } while (iter.next());
-        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, hdfsServer, hdfsUser, useKerberos, kerberosCredentials, iter);
+        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, hdfsAddresses, hdfsUser, useKerberos, kerberosCredentials, iter);
     }
 }
