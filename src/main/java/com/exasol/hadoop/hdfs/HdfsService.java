@@ -12,9 +12,9 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.HCatPartition;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,25 +65,26 @@ public class HdfsService {
      * Try creating a FileSystem for any of the provided hdfs urls
      */
     public static FileSystem getFileSystem(List<String> hdfsURLs, Configuration conf) throws IOException {
+        Exception lastException = null;
         for (String hdfsURL : hdfsURLs) {
             try {
                 System.out.println("Filesystem to connect to: " + hdfsURL);
                 FileSystem realFs = FileSystem.get(new URI(hdfsURL), conf);
+                // Dirty hack: The above creation of the filesystem does not actually connect to the hdfs namenode,
+                // so it does not fail if the hostname is good but hdfs is not listening on the specified port.
+                // So we need to do something (cheap) with the filesystem to check if it is really available.
+                try {
+                    realFs.getFileStatus(new Path("this_file_is_probably_not_existing"));
+                }
+                catch (FileNotFoundException e) { // Ignore
+                }
                 return realFs;
             }
-            catch (IOException e) {
-                System.out.println("The hdfs url does not work at the moment: " + hdfsURL);
-                //throw new RuntimeException("catched IOException for " + hdfsURL, e);
-            }
-            catch (IllegalArgumentException e) {
-                System.out.println("The hdfs url does not work at the moment illegal argument: " + hdfsURL);
-                //throw new RuntimeException("catched IllegalArgumentException for " + hdfsURL , e);
-            }
-            catch (URISyntaxException e) {
-                throw new RuntimeException("The HDFS url " + hdfsURL + " is invalid.", e);
+            catch (Exception e) {
+                lastException = e;
             }
         }
-        throw new RuntimeException("Non of the provided HDFS URLs is reachable: " + hdfsURLs.toString());
+        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + hdfsURLs.toString() + ". The error for the last URL '" + hdfsURLs.get(hdfsURLs.size()-1) + "' was: " + lastException.getClass().getName() + ": " + lastException.getMessage());
     }
 
     /**

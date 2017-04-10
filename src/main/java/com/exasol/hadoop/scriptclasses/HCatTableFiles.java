@@ -12,6 +12,7 @@ import com.exasol.utils.UdfUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,6 +44,13 @@ public class HCatTableFiles {
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
         String hdfsAddressesFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
         List<String> listOfHdfsAddresses = Arrays.asList(hdfsAddressesFromUser.split(","));
+        List<String> hdfsAddresses = new ArrayList<>();
+        if(!hdfsAddressesFromUser.equals("")) {
+            String[] additionalHdfsAddresses = hdfsAddressesFromUser.split(",");
+            for(int i=0; i<additionalHdfsAddresses.length; i++){
+                hdfsAddresses.add(additionalHdfsAddresses[i]);
+            }
+        }
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         boolean useKerberos = authType.equalsIgnoreCase("kerberos");
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
@@ -89,6 +97,8 @@ public class HCatTableFiles {
         // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
         if(listOfHdfsAddresses.isEmpty()){
             listOfHdfsAddresses.add(tableMeta.getHdfsAddress());
+        if(hdfsAddresses.isEmpty()){
+            hdfsAddresses.add(tableMeta.getHdfsAddress());
         }
 
         List<String> filePaths = HdfsService.getFilesFromTable(
@@ -98,7 +108,7 @@ public class HCatTableFiles {
                 tableMeta.getPartitionColumns(),
                 useKerberos,
                 kerberosCredentials,
-                listOfHdfsAddresses,
+                hdfsAddresses,
                 hcatDB,
                 hcatTable,
                 hCatAddress);
@@ -107,6 +117,7 @@ public class HCatTableFiles {
         for (int i = 0; i < numFilePaths; i++) {
             iter.emit(
                     StringUtils.join(listOfHdfsAddresses, ","),  // Convert the List to a simple commaseparated value here, e.g. emit a String "host1:1234,host2:1234"
+                    StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
                     hdfsAndHCatUser,
                     tableMeta.getInputFormatClass(),

@@ -38,7 +38,7 @@ public class ImportHiveTableFiles {
         String serdeProps = iter.getString(PARAM_IDX_SERDE_PROPS);
         String hdfsServerUrls = iter.getString(PARAM_IDX_HDFS_ADDRESS);
         String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
-        List<String> listOfHdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
+        List<String> hdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
 
         // Optional: Kerberos authentication
         boolean useKerberos = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "").equalsIgnoreCase("kerberos");
@@ -76,6 +76,6 @@ public class ImportHiveTableFiles {
         do {
             files.add(iter.getString(PARAM_IDX_FILE));
         } while (iter.next());
-        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, listOfHdfsAddresses, hdfsUser, useKerberos, kerberosCredentials, iter);
+        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, hdfsAddresses, hdfsUser, useKerberos, kerberosCredentials, iter);
     }
 }
