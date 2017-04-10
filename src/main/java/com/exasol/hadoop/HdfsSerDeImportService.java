@@ -140,12 +140,6 @@ public class HdfsSerDeImportService {
         initProperties(props, conf, columns, outputColumns);
         serde.initialize(conf, props);
         FileStatus fileStatus = null;
-        try {
-            fileStatus = fs.getFileStatus(new Path(file));
-        }
-        catch (IOException ex){
-            FileSystem newFileSystem = HdfsService.getFileSystem(hdfsUrls,conf);
-            fileStatus = newFileSystem.getFileStatus(new Path(file));
         // If there is a HA namenode failover while UDFs are running, it will probably crash here when retrieving the files from namenode.
         // In case of a crash, we call {@HdfsService#getFileSystem} which will get the available namenode (or it fails because all are down)
         try {
@@ -159,9 +153,6 @@ public class HdfsSerDeImportService {
         InputSplit split = new FileSplit(fileStatus.getPath(), 0, fileStatus.getLen(), (String[]) null);
         CompressionCodecFactory codecs = new org.apache.hadoop.io.compress.CompressionCodecFactory(conf);
         ArrayList<Class> codecList = new ArrayList();
-        try {
-            codecList.add(Class.forName("com.hadoop.compression.lzo.LzoCodec"));
-        } catch (ClassNotFoundException ex) { /* LZO not supported */ }
         try {
             codecList.add(Class.forName("com.hadoop.compression.lzo.LzopCodec"));
         } catch (ClassNotFoundException ex) { /* LZOP not supported */ }

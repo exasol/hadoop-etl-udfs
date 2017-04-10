@@ -11,7 +11,6 @@ import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +42,6 @@ public class HCatTableFiles {
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
         String hdfsAddressesFromUser = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
-        List<String> listOfHdfsAddresses = Arrays.asList(hdfsAddressesFromUser.split(","));
         List<String> hdfsAddresses = new ArrayList<>();
         if(!hdfsAddressesFromUser.equals("")) {
             String[] additionalHdfsAddresses = hdfsAddressesFromUser.split(",");
@@ -95,8 +93,6 @@ public class HCatTableFiles {
 
         // If the user defined an webHDFS URL (e.g. "webhdfs://domain.namenode:50070" or "hdfs://namenode:8020") we use this and ignore the hdfs URL returned from HCat (e.g. "hdfs://namenode:8020")
         // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
-        if(listOfHdfsAddresses.isEmpty()){
-            listOfHdfsAddresses.add(tableMeta.getHdfsAddress());
         if(hdfsAddresses.isEmpty()){
             hdfsAddresses.add(tableMeta.getHdfsAddress());
         }
@@ -116,7 +112,7 @@ public class HCatTableFiles {
         int numFilePaths = filePaths.size();
         for (int i = 0; i < numFilePaths; i++) {
             iter.emit(
-                    StringUtils.join(listOfHdfsAddresses, ","),  // Convert the List to a simple commaseparated value here, e.g. emit a String "host1:1234,host2:1234"
+                    StringUtils.join(hdfsAddresses, ","),  // Convert the List to a simple commaseparated value here, e.g. emit a String "host1:1234,host2:1234"
                     StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
                     hdfsAndHCatUser,
