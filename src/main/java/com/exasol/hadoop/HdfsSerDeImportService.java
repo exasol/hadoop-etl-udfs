@@ -149,6 +149,9 @@ public class HdfsSerDeImportService {
             fs = HdfsService.getFileSystem(hdfsUrls,conf);
             fileStatus = fs.getFileStatus(new Path(file));
         }
+        if(fileStatus.getPath().getName().startsWith("_") || fileStatus.getBlockSize() == 0){
+            return fs;
+        }
         System.out.println("importing file: " + fileStatus.getPath());
         InputSplit split = new FileSplit(fileStatus.getPath(), 0, fileStatus.getLen(), (String[]) null);
         CompressionCodecFactory codecs = new org.apache.hadoop.io.compress.CompressionCodecFactory(conf);
