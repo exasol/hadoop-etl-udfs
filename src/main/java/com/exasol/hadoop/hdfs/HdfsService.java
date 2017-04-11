@@ -103,6 +103,9 @@ public class HdfsService {
                 if (!stat.isFile()) {
                     continue;
                 }
+                if(stat.getPath().getName().startsWith("_") || stat.getLen() == 0){
+                    continue;
+                }
                 filePaths.add(path + "/" + stat.getPath().getName());
             }
         }
