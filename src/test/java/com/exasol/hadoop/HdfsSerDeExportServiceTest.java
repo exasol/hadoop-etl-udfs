@@ -18,7 +18,7 @@ public class HdfsSerDeExportServiceTest {
         HCatTableMetadata tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, "default", table, false, "");
         System.out.println("tableMeta: " + tableMeta);
 
-        HdfsSerDeExportService.exportToTable(hdfsURL, "hdfs", "dummyfile3", tableMeta);
+        HdfsSerDeExportService.exportToTableTest(hdfsURL, "hdfs", "dummyfile3", tableMeta);
     }
 
 }

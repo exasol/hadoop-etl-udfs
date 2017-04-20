@@ -19,6 +19,7 @@ import javax.json.JsonValue.ValueType;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.utils.UdfUtils;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -33,11 +34,9 @@ import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarStruct;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
+import org.apache.hadoop.hive.serde2.objectinspector.*;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
-import org.apache.hadoop.hive.serde2.objectinspector.StructField;
-import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.*;
@@ -72,7 +71,7 @@ public class HdfsSerDeExportService {
     private static List<Integer> cols = null;
     private static int numCols = 0;
 
-    public static void exportToTable (
+    public static void exportToTableTest(
             final String hdfsUrl,
             final String hdfsUser,
             final String file,
@@ -105,7 +104,6 @@ public class HdfsSerDeExportService {
         final Properties props = new Properties();
         final Configuration conf = new Configuration();
         HdfsSerDeImportService.initProperties(props, conf, tableMeta.getColumns(), Lists.<OutputColumnSpec>newArrayList());
-        final int numColumns = tableMeta.getColumns().size();
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
@@ -114,7 +112,7 @@ public class HdfsSerDeExportService {
                 //ColumnarSerDe serDe = new ColumnarSerDe();
                 conf.set(JobContext.TASK_OUTPUT_DIR, "dummy");
                 conf.set(org.apache.hadoop.mapreduce.lib.output.FileOutputFormat.OUTDIR, "dummy");
-                serDe.initialize(conf, props);
+                serDe.initialize(conf, props);  // TODO .initialize is from deserializer, should not be needed!
                 // TODO not yet generic
                 RCFileOutputFormat.setColumnNumber(conf, tableMeta.getColumns().size());
                 System.out.println("Open HDFS file system: " + hdfsUrl);
@@ -122,9 +120,11 @@ public class HdfsSerDeExportService {
                 System.out.println("Create Writer for file: " + file);
                 RecordWriter writer = outputFormat.getRecordWriter(fs, new JobConf(conf), file,null);
                 System.out.println("After writer");
-                ObjectInspector objInsp = serDe.getObjectInspector();
-                System.out.println("ObjectInspector: " + objInsp.getClass().getName());
-                StructObjectInspector structObjIns = (StructObjectInspector)objInsp;
+                ObjectInspector objectInspector = ObjectInspectorFactory.getStandardStructObjectInspector(
+                        ImmutableList.of("artistid", "artistname", "year"),
+                        ImmutableList.<ObjectInspector>of(PrimitiveObjectInspectorFactory.javaIntObjectInspector, PrimitiveObjectInspectorFactory.javaStringObjectInspector, PrimitiveObjectInspectorFactory.javaIntObjectInspector));
+                System.out.println("ObjectInspector: " + objectInspector.getClass().getName());
+                StructObjectInspector structObjIns = (StructObjectInspector)objectInspector;
                 for (StructField structField : structObjIns.getAllStructFieldRefs()) {
                     System.out.println("- ObjectInspector field " + structField.getFieldName() + ": " + structField.getFieldObjectInspector().getClass().getName());
                 }
@@ -132,21 +132,12 @@ public class HdfsSerDeExportService {
                 row.add(1);  // artistid
                 row.add("artistname"); // artistname
                 row.add(2001);  // year
-                BytesRefArrayWritable brawCols = new BytesRefArrayWritable(numColumns);
-                // Emit single row
-                brawCols.set(1, new BytesRefWritable(((String)row.get(1)).getBytes("UTF-8")));
-                cols = new ArrayList<Integer>(numColumns);
-                for (int i = 0; i < numColumns; i++) {
-                    cols.add(i);
-                }
-                ColumnarStruct cs = new ColumnarStruct(objInsp, cols, new Text("NULL"));
-                cs.init(brawCols);
-                writer.write(null, (BytesRefArrayWritable) serDe.serialize(cs, objInsp)); // key ignored, at least for RCFileOutputFormat.getRecordWriter
+                writer.write(null, serDe.serialize(row, objectInspector)); // key ignored
                 // Emit single row end
                 writer.close(null);
                 return null;
             }
-        }); // security workaround
+        });
     }
 
     public static void exportTableToRCFile (
