@@ -6,6 +6,11 @@ import org.junit.Test;
 
 public class HdfsSerDeExportServiceTest {
 
+    /**
+     * Execute
+     * ssh ws64-2.dev.exasol.com -L 9083:vm031.cos.dev.exasol.com:9083 -L 8020:vm031.cos.dev.exasol.com:8020 -L 8888:vm031.cos.dev.exasol.com:8888
+     * before running this test
+     */
     @Test
     public void exportToTable() throws Exception {
         // Obtain table metadata
