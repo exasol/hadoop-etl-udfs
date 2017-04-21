@@ -64,6 +64,9 @@ import org.datanucleus.store.types.backed.*;
  * TODO Write Unit Tests
  * TODO Make ExaIterator (and all other classes) available as Interface
  *
+ *
+ *
+ * See HCatCreateTableDesc.Builder
  */
 public class HdfsSerDeExportService {
 
