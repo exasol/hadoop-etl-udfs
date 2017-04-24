@@ -131,6 +131,7 @@ public class HdfsSerDeExportService {
                 for (StructField structField : structObjIns.getAllStructFieldRefs()) {
                     System.out.println("- ObjectInspector field " + structField.getFieldName() + ": " + structField.getFieldObjectInspector().getClass().getName());
                 }
+                // StandardStructObjectInspector allows List<Object> and Object[]
                 List<Object> row = new ArrayList<>();
                 row.add(1);  // artistid
                 row.add("artistname"); // artistname
