@@ -31,6 +31,7 @@ public class ImportHCatTable {
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
+        String debugOn = getParameter(params, "DEBUG", "");
         
         // Construct EMITS specification
         String emitsSpec = "";  // "EMITS (col1 INT, col2 varchar(100))"
@@ -73,6 +74,7 @@ public class ImportHCatTable {
         hcatUDFArgs.add("'" + authenticationType + "'");
         hcatUDFArgs.add("'" + kerberosConnection + "'");
         hcatUDFArgs.add("'" + debugAddress + "'");
+        hcatUDFArgs.add("'" + debugOn + "'");
         
         List<String> importUDFArgs = new ArrayList<>();
         importUDFArgs.add("hdfspath");
@@ -88,12 +90,18 @@ public class ImportHCatTable {
         importUDFArgs.add("output_columns");
         importUDFArgs.add("debug_address");
 
+
+
         String sql = "SELECT"
                 + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(" + Joiner.on(", ").join(importUDFArgs) + ")"
                 + emitsSpec
                 + " FROM ("
                 + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES(" + Joiner.on(", ").join(hcatUDFArgs) + ")"
                 + ") GROUP BY import_partition;";
+
+        if (debugOn.equalsIgnoreCase("on")){
+               return "SELECT " + "'" +sql.replace("'", "''") + "' AS GENERATED_SQL";
+        }
 
         return sql;
     }

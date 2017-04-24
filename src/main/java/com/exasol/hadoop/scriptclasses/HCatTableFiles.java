@@ -30,6 +30,7 @@ public class HCatTableFiles {
     private static final int PARAM_IDX_AUTH_TYPE = 8;
     private static final int PARAM_IDX_AUTH_KERBEROS_CONNECTION = 9;
     private static final int PARAM_IDX_DEBUG_ADDRESS = 10;
+    private static final int PARAM_IDX_DEBUG_ON = 11;
     
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
 
@@ -38,6 +39,7 @@ public class HCatTableFiles {
         String hCatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
         String hdfsAndHCatUser = iter.getString(PARAM_IDX_HDFS_USER);
         int parallelism = iter.getInteger(PARAM_IDX_PARALLELISM);
+        String debugOn = iter.getString(PARAM_IDX_DEBUG_ON);
         // Optional parameters
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
         String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
@@ -121,7 +123,8 @@ public class HCatTableFiles {
                     authType,
                     connName,
                     outputColumnsSpec,
-                    debugAddress);
+                    debugAddress,
+                    debugOn);
         }
     }
 }
