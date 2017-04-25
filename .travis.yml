@@ -2,12 +2,12 @@ language: java
 
 matrix:
   include:
-    - jdk: "openjdk7"     # Maven build with default Hadoop (CDH)
+    - jdk: "oraclejdk8"     # Maven build with default Hadoop (CDH)
     - jdk: "oraclejdk8"   # New Hadoop and new Java
       env: MVN_ARGS="-P-cloudera -Dhadoop.version=2.7.1 -Dhive.version=1.2.1"
-    - jdk: "openjdk7"     # HDP from README
+    - jdk: "oraclejdk8"     # HDP from README
       env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.1.2.3.0.0-2557 -Dhive.version=1.2.1.2.3.0.0-2557"
-#    - jdk: "openjdk7"    # HDP 2.3.2 (Oct. 2015)
+#    - jdk: "oraclejdk8"    # HDP 2.3.2 (Oct. 2015)
 #      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.1.2.3.2.0-2950 -Dhive.version=1.2.1.2.3.2.0-2950"
 
 # build a jar with all dependencies. Will also run tests.

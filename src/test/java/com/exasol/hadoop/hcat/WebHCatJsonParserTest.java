@@ -36,6 +36,7 @@ public class WebHCatJsonParserTest {
         "    ]," +
         "    \"partitioned\":true," +
         "    \"inputFormat\":\"org.apache.hadoop.hive.ql.io.RCFileInputFormat\"," +
+        "    \"outputFormat\":\"org.apache.hadoop.hive.ql.io.RCFileOutputFormat\"," +
         "    \"sd\":{" +
         "        \"inputFormat\":\"org.apache.hadoop.hive.ql.io.RCFileInputFormat\"," +
         "        \"outputFormat\":\"org.apache.hadoop.hive.ql.io.RCFileOutputFormat\"," +

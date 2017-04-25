@@ -9,6 +9,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
@@ -24,26 +25,51 @@ public class HdfsService {
             final List<HCatTableColumn> partitionColumns,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
-            final String hdfsAddressToUse) throws Exception {
+            final List<String> hdfsAddressesToUse) throws Exception {
         
-        UserGroupInformation ugi = useKerberos ?
-                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+        UserGroupInformation ugi = useKerberos ? KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
         List<String> tableInfo = ugi.doAs(new PrivilegedExceptionAction<List<String>>() {
             @Override
             public List<String> run() throws Exception {
-                System.out.println("Filesystem to connect to: " + hdfsAddressToUse);
                 Configuration conf = new Configuration();
                 if (useKerberos) {
                     conf.set("dfs.namenode.kerberos.principal", hdfsUser);
                 }
                 // Get all directories (leafs only) of the table
-                FileSystemWrapper fs = new FileSystemWrapperImpl(FileSystem.get(new URI(hdfsAddressToUse), conf));
+                FileSystem realFs = getFileSystem(hdfsAddressesToUse, conf);
+                FileSystemWrapper fs = new FileSystemWrapperImpl(realFs);
                 List<String> partitionPaths = getPartitionPaths(fs, tableRootPath, partitionColumns, MultiPartitionFilter.parseMultiFilter(partitionFilterSpec));
                 // Get all filenames for the table
                 return getFilePaths(fs, partitionPaths);
             }
         });
         return tableInfo;
+    }
+
+    /**
+     * Try creating a FileSystem for any of the provided hdfs urls
+     */
+    public static FileSystem getFileSystem(List<String> hdfsURLs, Configuration conf) throws IOException {
+        Exception lastException = null;
+        for (String hdfsURL : hdfsURLs) {
+            try {
+                System.out.println("Filesystem to connect to: " + hdfsURL);
+                FileSystem realFs = FileSystem.get(new URI(hdfsURL), conf);
+                // Dirty hack: The above creation of the filesystem does not actually connect to the hdfs namenode,
+                // so it does not fail if the hostname is good but hdfs is not listening on the specified port.
+                // So we need to do something (cheap) with the filesystem to check if it is really available.
+                try {
+                    realFs.getFileStatus(new Path("this_file_is_probably_not_existing"));
+                }
+                catch (FileNotFoundException e) { // Ignore
+                }
+                return realFs;
+            }
+            catch (Exception e) {
+                lastException = e;
+            }
+        }
+        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + hdfsURLs.toString() + ". The error for the last URL '" + hdfsURLs.get(hdfsURLs.size()-1) + "' was: " + lastException.getClass().getName() + ": " + lastException.getMessage());
     }
 
     /**
@@ -75,6 +101,9 @@ public class HdfsService {
             FileStatus[] fileStatuses = fs.listStatus(new Path(path));
             for (FileStatus stat : fileStatuses) {
                 if (!stat.isFile()) {
+                    continue;
+                }
+                if(stat.getPath().getName().startsWith("_") || stat.getLen() == 0){
                     continue;
                 }
                 filePaths.add(path + "/" + stat.getPath().getName());
