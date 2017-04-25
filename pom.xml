@@ -13,55 +13,55 @@
 		<!--  hadoop01.omg.dev.exasol uses hadoop 2.5.0-cdh5.2.0 and hive 0.13.1-cdh5.2.0 -->
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>maven.exasol.com</id>
-			<url>https://maven.exasol.com/artifactory/exasol-releases</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>maven.exasol.com-snapshots</id>
-			<url>https://maven.exasol.com/artifactory/exasol-snapshots</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>maven.exasol.com</id>
+            <url>https://maven.exasol.com/artifactory/exasol-releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>maven.exasol.com-snapshots</id>
+            <url>https://maven.exasol.com/artifactory/exasol-snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
-	<profiles>
-		<profile>
-			<id>cloudera</id>
-			<!-- If true, this profile is automatically active for all builds, unless another profile gets activated-->
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<repositories>
-				<repository>
-					<id>cloudera</id>
-					<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-				</repository>
-			</repositories>
-		</profile>
-		<profile>
-			<id>hortonworks</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<repositories>
-				<repository>
-					<id>hortonworks releases</id>
-					<url>http://repo.hortonworks.com/content/repositories/releases/</url>
-				</repository>
-				<!-- Hortonworks introduces a strange dependency to org.mortbay.jetty:jetty:jar:6.1.26.hwx, available in a special repo -->
-				<repository>
-					<id>hortonworks jetty</id>
-					<url>http://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
-				</repository>
-			</repositories>
-		</profile>
-	</profiles>
+    <profiles>
+        <profile>
+            <id>cloudera</id>
+            <!-- If true, this profile is automatically active for all builds, unless another profile gets activated-->
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>hortonworks</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>hortonworks releases</id>
+                    <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+                </repository>
+                <!-- Hortonworks introduces a strange dependency to org.mortbay.jetty:jetty:jar:6.1.26.hwx, available in a special repo -->
+                <repository>
+                    <id>hortonworks jetty</id>
+                    <url>http://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 
 	<dependencies>
 		<dependency>
@@ -186,6 +186,5 @@
 				</executions>
 			</plugin>
 		</plugins>
-
 	</build>
 </project>
