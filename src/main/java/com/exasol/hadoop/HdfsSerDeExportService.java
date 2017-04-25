@@ -1,28 +1,12 @@
 package com.exasol.hadoop;
 
-import java.net.URI;
-import java.security.PrivilegedExceptionAction;
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-import javax.json.JsonValue.ValueType;
-
+import com.exasol.ExaIterator;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.utils.UdfUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.RCFile;
@@ -34,16 +18,24 @@ import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarStruct;
-import org.apache.hadoop.hive.serde2.objectinspector.*;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobContext;
+import org.apache.hadoop.mapred.OutputFormat;
+import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.security.UserGroupInformation;
 
-import com.exasol.ExaIterator;
-import org.datanucleus.store.types.backed.*;
+import java.net.URI;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * org.apache.hadoop.mapred is old, ...mapreduce is new. However, mapred was undeprecated
@@ -72,13 +64,13 @@ public class HdfsSerDeExportService {
 
     // TODO Refactor and remove this
     private static List<Integer> cols = null;
-    private static int numCols = 0;
 
     public static void exportToTableTest(
             final String hdfsUrl,
             final String hdfsUser,
             final String file,
-            final HCatTableMetadata tableMeta) throws Exception {
+            final HCatTableMetadata tableMeta,
+            final ExaIterator ctx) throws Exception {
 
         System.out.println("----------\nStarted Export Table To Hive\n----------");
 
@@ -131,13 +123,17 @@ public class HdfsSerDeExportService {
                 for (StructField structField : structObjIns.getAllStructFieldRefs()) {
                     System.out.println("- ObjectInspector field " + structField.getFieldName() + ": " + structField.getFieldObjectInspector().getClass().getName());
                 }
-                // StandardStructObjectInspector allows List<Object> and Object[]
-                List<Object> row = new ArrayList<>();
-                row.add(1);  // artistid
-                row.add("artistname"); // artistname
-                row.add(2001);  // year
-                writer.write(null, serDe.serialize(row, objectInspector)); // key ignored
-                // Emit single row end
+                if (ctx.size() > 0) {
+                    do {
+                        // StandardStructObjectInspector allows List<Object> and Object[]
+                        // Would be nice to have a way to get the current row from ExaIterator as List<Object> or Object[]
+                        List<Object> row = new ArrayList<>();
+                        for (int i = 0; i < tableMeta.getColumns().size(); i++) {
+                            row.add(ctx.getObject(i));
+                        }
+                        writer.write(null, serDe.serialize(row, objectInspector)); // key ignored
+                    } while (ctx.next());
+                }
                 writer.close(null);
                 return null;
             }
@@ -157,7 +153,7 @@ public class HdfsSerDeExportService {
 
         final Properties props = new Properties();
         final Configuration conf = new Configuration();
-        initProperties(props, conf, columnInfo, selectedColumns);
+        final int numCols = initProperties(props, conf, columnInfo, selectedColumns);
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
@@ -192,7 +188,8 @@ public class HdfsSerDeExportService {
         }); // security workaround
     }
 
-    public static void initProperties(Properties props, Configuration conf, List<Map.Entry<String, String>> columnInfo, List<Integer> selectedColumns) throws Exception {
+    public static int initProperties(Properties props, Configuration conf, List<Map.Entry<String, String>> columnInfo, List<Integer> selectedColumns) throws Exception {
+        int numCols = 0;
         String colNames = "";
         String colTypes = "";
         for (Map.Entry<String, String> colInfo : columnInfo) {
@@ -219,5 +216,6 @@ public class HdfsSerDeExportService {
                 cols.add(i);
             }
         }
+        return numCols;
     }
 }

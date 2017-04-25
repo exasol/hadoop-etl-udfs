@@ -1,8 +1,13 @@
 package com.exasol.hadoop;
 
+import com.exasol.ExaIteratorDummy;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.hive.HiveMetastoreService;
+import com.google.common.collect.Lists;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class HdfsSerDeExportServiceTest {
 
@@ -15,7 +20,8 @@ public class HdfsSerDeExportServiceTest {
     public void exportToTable() throws Exception {
         // Obtain table metadata
         // albums_rc
-        String table = "albums_rc"; // works to a certain point
+        //String table = "albums_rc"; // works to a certain point
+        String table = "artists_rc"; // works to a certain point
         //String table = "albums";
         String hiveMetastoreURL = "thrift://localhost:9083";
         //String hdfsURL = "hdfs://localhost:50070";
@@ -23,7 +29,14 @@ public class HdfsSerDeExportServiceTest {
         HCatTableMetadata tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, "default", table, false, "");
         System.out.println("tableMeta: " + tableMeta);
 
-        HdfsSerDeExportService.exportToTableTest(hdfsURL, "hdfs", "dummyfile3", tableMeta);
+        List<List<Object>> inputRows = new ArrayList<>();
+        List<Object> row1 = new ArrayList<>();
+        row1.add(1);  // artistid
+        row1.add("artistname"); // artistname
+        row1.add(2001);  // year
+        inputRows.add(row1);
+
+        HdfsSerDeExportService.exportToTableTest(hdfsURL, "hdfs", "dummyfile3", tableMeta, new ExaIteratorDummy(inputRows));
     }
 
 }
