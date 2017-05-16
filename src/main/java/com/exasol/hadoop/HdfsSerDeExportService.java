@@ -1,6 +1,7 @@
 package com.exasol.hadoop;
 
 import com.exasol.ExaIterator;
+import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.utils.UdfUtils;
@@ -11,7 +12,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.RCFile;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.ql.io.parquet.convert.HiveSchemaConverter;
 import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
@@ -23,6 +26,8 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobContext;
@@ -81,19 +86,25 @@ public class HdfsSerDeExportService {
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
 
-        String schemaString = "message hive_schema {\n" +
-                "  optional binary code (UTF8);\n" +
-                "  optional binary description (UTF8);\n" +
-                "  optional int32 total_emp;\n" +
-                "  optional int32 salary;\n" +
-                "}";
-        MessageType schema = MessageTypeParser.parseMessageType(schemaString);
+        List<String> colNames = new ArrayList<>();
+        for (HCatTableColumn col : tableMeta.getColumns()) {
+            colNames.add(col.getName());
+        }
+        List<String> colTypeNames = new ArrayList<>();
+        for (HCatTableColumn col : tableMeta.getColumns()) {
+            colTypeNames.add(col.getDataType());
+        }
+        List<TypeInfo> colTypes = new ArrayList<>();
+        for (String col : colTypeNames) {
+            colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
+        }
+
+        MessageType schema = HiveSchemaConverter.convert(colNames, colTypes);
 
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
                 if (ctx.size() > 0) {
-                    //FileSystem fs = FileSystem.get(new URI(hdfsUrl), new Configuration());
                     Configuration conf = new Configuration();
                     GroupWriteSupport.setSchema(schema, conf);
                     //Path path = new Path(hdfsUrl, file);
@@ -112,17 +123,12 @@ public class HdfsSerDeExportService {
                         SimpleGroup row = new SimpleGroup(schema);
                         for (int i = 0; i < tableMeta.getColumns().size(); i++) {
                             Object obj = ctx.getObject(i);
-                            if (obj != null) {
-                                if (i == 0) {
-                                    row.append("code", (String) obj);
-                                } else if (i == 1) {
-                                    row.append("description", (String) obj);
-                                } else if (i == 2) {
-                                    row.append("total_emp", (int) obj);
-                                } else if (i == 3) {
-                                    row.append("salary", (int) obj);
-                                }
-                            }
+                            if (colTypeNames.get(i).equals(serdeConstants.STRING_TYPE_NAME))
+                                row.append(colNames.get(i), (String) obj);
+                            else if (colTypeNames.get(i).equals(serdeConstants.INT_TYPE_NAME))
+                                row.append(colNames.get(i), (int) obj);
+                            else
+                                throw new RuntimeException("Unsupported Type: " + colTypes.get(i));
                         }
                         writer.write(row);
                     } while (ctx.next());
