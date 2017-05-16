@@ -30,12 +30,20 @@ import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import java.io.File;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import parquet.example.data.Group;
+import parquet.example.data.simple.SimpleGroup;
+import parquet.hadoop.ParquetWriter;
+import parquet.hadoop.example.GroupWriteSupport;
+import parquet.schema.MessageType;
+import parquet.schema.MessageTypeParser;
 
 /**
  * org.apache.hadoop.mapred is old, ...mapreduce is new. However, mapred was undeprecated
@@ -64,6 +72,66 @@ public class HdfsSerDeExportService {
 
     // TODO Refactor and remove this
     private static List<Integer> cols = null;
+
+    public static void exportToParquetTableTest(
+            final String hdfsUrl,
+            final String hdfsUser,
+            final String file,
+            final HCatTableMetadata tableMeta,
+            final ExaIterator ctx) throws Exception {
+        System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
+
+        String schemaString = "message hive_schema {\n" +
+                "  optional binary code (UTF8);\n" +
+                "  optional binary description (UTF8);\n" +
+                "  optional int32 total_emp;\n" +
+                "  optional int32 salary;\n" +
+                "}";
+        MessageType schema = MessageTypeParser.parseMessageType(schemaString);
+
+        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+        ugi.doAs(new PrivilegedExceptionAction<Void>() {
+            public Void run() throws Exception {
+                if (ctx.size() > 0) {
+                    //FileSystem fs = FileSystem.get(new URI(hdfsUrl), new Configuration());
+                    Configuration conf = new Configuration();
+                    GroupWriteSupport.setSchema(schema, conf);
+                    //Path path = new Path(hdfsUrl, file);
+                    Path path = new Path(file);
+                    System.out.println("Path: " + path.toString());
+                    ParquetWriter<Group> writer = new ParquetWriter<Group>(path,
+                            new GroupWriteSupport(),
+                            ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
+                            ParquetWriter.DEFAULT_BLOCK_SIZE,
+                            ParquetWriter.DEFAULT_PAGE_SIZE,
+                            ParquetWriter.DEFAULT_PAGE_SIZE,
+                            ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
+                            ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
+                            conf);
+                    do {
+                        SimpleGroup row = new SimpleGroup(schema);
+                        for (int i = 0; i < tableMeta.getColumns().size(); i++) {
+                            Object obj = ctx.getObject(i);
+                            if (obj != null) {
+                                if (i == 0) {
+                                    row.append("code", (String) obj);
+                                } else if (i == 1) {
+                                    row.append("description", (String) obj);
+                                } else if (i == 2) {
+                                    row.append("total_emp", (int) obj);
+                                } else if (i == 3) {
+                                    row.append("salary", (int) obj);
+                                }
+                            }
+                        }
+                        writer.write(row);
+                    } while (ctx.next());
+                    writer.close();
+                }
+                return null;
+            }
+        });
+    }
 
     public static void exportToTableTest(
             final String hdfsUrl,
