@@ -37,10 +37,7 @@ public class Tuple {
             throw new RuntimeException("Tuple index " + index + " is out of bounds.");
         }
         Object obj = data[index];
-        if (obj instanceof Boolean) {
-            recordConsumer.addBoolean((Boolean)obj);
-        }
-        else if (obj instanceof Integer) {
+        if (obj instanceof Integer) {
             recordConsumer.addInteger((Integer)obj);
         }
         else if (obj instanceof Long) {
@@ -54,6 +51,9 @@ public class Tuple {
         }
         else if (obj instanceof String) {
             recordConsumer.addBinary(Binary.fromString((String)obj));
+        }
+        else if (obj instanceof Boolean) {
+            recordConsumer.addBoolean((Boolean)obj);
         }
         else {
             throw new RuntimeException("Tuple.writeValue(): Unknown object type: " + obj.getClass().getName());
