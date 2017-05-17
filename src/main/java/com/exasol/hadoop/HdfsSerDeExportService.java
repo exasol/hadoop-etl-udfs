@@ -49,6 +49,8 @@ import parquet.hadoop.ParquetWriter;
 import parquet.hadoop.example.GroupWriteSupport;
 import parquet.schema.MessageType;
 import parquet.schema.MessageTypeParser;
+import com.exasol.hadoop.parquet.Tuple;
+import com.exasol.hadoop.parquet.TupleWriteSupport;
 
 /**
  * org.apache.hadoop.mapred is old, ...mapreduce is new. However, mapred was undeprecated
@@ -106,12 +108,15 @@ public class HdfsSerDeExportService {
             public Void run() throws Exception {
                 if (ctx.size() > 0) {
                     Configuration conf = new Configuration();
-                    GroupWriteSupport.setSchema(schema, conf);
+                    //GroupWriteSupport.setSchema(schema, conf);
+                    TupleWriteSupport.setSchema(schema, conf);
                     //Path path = new Path(hdfsUrl, file);
                     Path path = new Path(file);
                     System.out.println("Path: " + path.toString());
-                    ParquetWriter<Group> writer = new ParquetWriter<Group>(path,
-                            new GroupWriteSupport(),
+                    //ParquetWriter<Group> writer = new ParquetWriter<Group>(path,
+                    ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
+                            //new GroupWriteSupport(),
+                            new TupleWriteSupport(),
                             ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
                             ParquetWriter.DEFAULT_BLOCK_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
@@ -120,6 +125,7 @@ public class HdfsSerDeExportService {
                             ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
                             conf);
                     do {
+                        /*
                         SimpleGroup row = new SimpleGroup(schema);
                         for (int i = 0; i < tableMeta.getColumns().size(); i++) {
                             Object obj = ctx.getObject(i);
@@ -129,6 +135,11 @@ public class HdfsSerDeExportService {
                                 row.append(colNames.get(i), (int) obj);
                             else
                                 throw new RuntimeException("Unsupported Type: " + colTypes.get(i));
+                        }
+                        */
+                        Tuple row = new Tuple(schema);
+                        for (int i = 0; i < tableMeta.getColumns().size(); i++) {
+                            row.setValue(i, ctx.getObject(i));
                         }
                         writer.write(row);
                     } while (ctx.next());
