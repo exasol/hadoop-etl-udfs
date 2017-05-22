@@ -2,6 +2,7 @@ package com.exasol.hadoop.parquet;
 
 import parquet.io.api.RecordConsumer;
 import parquet.schema.GroupType;
+import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
 
 public class TupleWriter {
@@ -25,7 +26,7 @@ public class TupleWriter {
             String fieldName = fieldType.getName();
             recordConsumer.startField(fieldName, index);
             if (fieldType.isPrimitive()) {
-                tuple.writeValue(index, recordConsumer);
+                tuple.writePrimitiveValue(recordConsumer, index, (PrimitiveType)fieldType);
             }
             else {
                 recordConsumer.startGroup();

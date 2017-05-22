@@ -1,6 +1,7 @@
 package com.exasol.hadoop;
 
 import com.exasol.ExaIterator;
+import com.exasol.ExaMetadata;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.jsonpath.OutputColumnSpec;
@@ -36,6 +37,7 @@ import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -85,7 +87,8 @@ public class HdfsSerDeExportService {
             final String hdfsUser,
             final String file,
             final HCatTableMetadata tableMeta,
-            final ExaIterator ctx) throws Exception {
+            final ExaIterator ctx,
+            final ExaMetadata meta) throws Exception {
         System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
 
         List<String> colNames = new ArrayList<>();
@@ -102,6 +105,7 @@ public class HdfsSerDeExportService {
         }
 
         MessageType schema = HiveSchemaConverter.convert(colNames, colTypes);
+        System.out.println("Parquet schema:\n" + schema);
 
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
@@ -122,10 +126,7 @@ public class HdfsSerDeExportService {
                             ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
                             conf);
                     do {
-                        Tuple row = new Tuple(schema);
-                        for (int i = 0; i < tableMeta.getColumns().size(); i++) {
-                            row.setValue(i, ctx.getObject(i));
-                        }
+                        Tuple row = new Tuple(ctx, tableMeta.getColumns().size());
                         writer.write(row);
                     } while (ctx.next());
                     writer.close();

@@ -1,13 +1,16 @@
 package com.exasol.hadoop;
 
 import com.exasol.ExaIteratorDummy;
+import com.exasol.ExaMetadataDummy;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 public class HdfsSerDeExportServiceTest {
 
@@ -19,23 +22,33 @@ public class HdfsSerDeExportServiceTest {
     @Test
     public void exportToTable() throws Exception {
         String dbname = "default";
-        String table = "sample_07_parquet";
+        //String table = "sample_07_parquet";
+        String table = "parquet_all_types";
         String hiveMetastoreURL = "thrift://cloudera01.exacloud.de:9083";
-        String hdfsURL = "hdfs://cloudera01.exacloud.de:8020/user/hive/warehouse/sample_07_parquet";
+        String hdfsURL = "hdfs://cloudera01.exacloud.de:8020/user/hive/warehouse/" + table;
         HCatTableMetadata tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, dbname, table, false, "");
         System.out.println("tableMeta: " + tableMeta);
 
-        List<List<Object>> inputRows = new ArrayList<>();
-        List<Object> row = new ArrayList<>();
-        row.add("99-9999");
-        row.add("Test Description");
-        row.add(9999999);
-        row.add(999999);
-        inputRows.add(row);
+        List<List<Object>> rows = new ArrayList<>();
+        List<Class<?>> rowTypes = new ArrayList<>();
+        List<Object> rowValues = new ArrayList<>();
+        rowTypes.add(Class.forName("java.lang.Integer"));       rowValues.add(55);
+        rowTypes.add(Class.forName("java.lang.Integer"));       rowValues.add(5555);
+        rowTypes.add(Class.forName("java.lang.Integer"));       rowValues.add(555555555);
+        rowTypes.add(Class.forName("java.lang.Long"));          rowValues.add(555555555555555555L);
+        //rowTypes.add(Class.forName("java.lang.Float"));       //rowValues.add(55.55f);
+        rowTypes.add(Class.forName("java.lang.Double"));        rowValues.add(55.55);
+        rowTypes.add(Class.forName("java.lang.Double"));        rowValues.add(55555.55555);
+        rowTypes.add(Class.forName("java.math.BigDecimal"));    rowValues.add(new BigDecimal("55555555555555555555555555555555555555"));
+        rowTypes.add(Class.forName("java.math.BigDecimal"));    rowValues.add(new BigDecimal("555555555555555555555555555555555.55555"));
+        rowTypes.add(Class.forName("java.math.BigDecimal"));    rowValues.add(new BigDecimal("0.12345678"));
+        rows.add(rowValues);
 
         String hdfsUser = "hdfs";
-        String file = "test.parq";
-        HdfsSerDeExportService.exportToParquetTableTest(hdfsURL, hdfsUser, file, tableMeta, new ExaIteratorDummy(inputRows));
+        String filename = "test.parq";
+        File testFile = new File(filename);
+        testFile.delete();
+        HdfsSerDeExportService.exportToParquetTableTest(hdfsURL, hdfsUser, filename, tableMeta, new ExaIteratorDummy(rows), new ExaMetadataDummy(rowTypes));
     }
 
 }
