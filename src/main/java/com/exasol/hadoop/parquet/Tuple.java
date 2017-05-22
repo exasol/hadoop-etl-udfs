@@ -71,18 +71,10 @@ public class Tuple {
                     BigDecimal bigDecimalVal = iter.getBigDecimal(index);
                     if (bigDecimalVal != null)
                         decimalBytes = bigDecimalVal.unscaledValue().toByteArray();
-                    recordConsumer.addBinary(Binary.fromByteArray(decimalBytes));
+                    recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
                     break;
                 case "STRING":
-                    try {
-                        byte[] stringBytes = null;
-                        String stringVal = iter.getString(index);
-                        if (stringVal != null)
-                            stringBytes = stringVal.getBytes("UTF-8");
-                        recordConsumer.addBinary(Binary.fromByteArray(stringBytes));
-                    } catch (UnsupportedEncodingException ex) {
-                        throw new RuntimeException("writeBinaryValue String: " + ex.toString());
-                    }
+                    recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
                     break;
                 case "BOOLEAN":
                     recordConsumer.addBoolean(iter.getBoolean(index));
