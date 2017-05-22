@@ -8,9 +8,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
-		<hadoop.version>2.5.0-cdh5.2.0</hadoop.version>
-		<hive.version>0.13.1-cdh5.2.0</hive.version>
-		<!--  hadoop01.omg.dev.exasol uses hadoop 2.5.0-cdh5.2.0 and hive 0.13.1-cdh5.2.0 -->
+		<hadoop.version>2.6.0-cdh5.11.0</hadoop.version>
+		<hive.version>1.1.0-cdh5.11.0</hive.version>
+		<!--  hadoop01.omg.dev.exasol uses hadoop 2.6.0-cdh5.11.0 and hive 1.1.0-cdh5.11.0 -->
 	</properties>
 
     <repositories>
