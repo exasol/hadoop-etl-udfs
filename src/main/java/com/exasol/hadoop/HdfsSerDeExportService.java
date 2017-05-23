@@ -49,8 +49,7 @@ import parquet.example.data.Group;
 import parquet.example.data.simple.SimpleGroup;
 import parquet.hadoop.ParquetWriter;
 import parquet.hadoop.example.GroupWriteSupport;
-import parquet.schema.MessageType;
-import parquet.schema.MessageTypeParser;
+import parquet.schema.*;
 import com.exasol.hadoop.parquet.Tuple;
 import com.exasol.hadoop.parquet.TupleWriteSupport;
 
@@ -87,24 +86,32 @@ public class HdfsSerDeExportService {
             final String hdfsUser,
             final String file,
             final HCatTableMetadata tableMeta,
-            final ExaIterator ctx,
-            final ExaMetadata meta) throws Exception {
+            final List<Type> schemaTypes,
+            final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
 
-        List<String> colNames = new ArrayList<>();
-        for (HCatTableColumn col : tableMeta.getColumns()) {
-            colNames.add(col.getName());
+        int numColumns;
+        MessageType schema;
+        if (tableMeta != null) {
+            List<String> colNames = new ArrayList<>();
+            for (HCatTableColumn col : tableMeta.getColumns()) {
+                colNames.add(col.getName());
+            }
+            List<String> colTypeNames = new ArrayList<>();
+            for (HCatTableColumn col : tableMeta.getColumns()) {
+                colTypeNames.add(col.getDataType());
+            }
+            List<TypeInfo> colTypes = new ArrayList<>();
+            for (String col : colTypeNames) {
+                colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
+            }
+            schema = HiveSchemaConverter.convert(colNames, colTypes);
+            numColumns = tableMeta.getColumns().size();
         }
-        List<String> colTypeNames = new ArrayList<>();
-        for (HCatTableColumn col : tableMeta.getColumns()) {
-            colTypeNames.add(col.getDataType());
+        else {
+            schema = new MessageType("hive_schema", schemaTypes);
+            numColumns = schemaTypes.size();
         }
-        List<TypeInfo> colTypes = new ArrayList<>();
-        for (String col : colTypeNames) {
-            colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
-        }
-
-        MessageType schema = HiveSchemaConverter.convert(colNames, colTypes);
         System.out.println("Parquet schema:\n" + schema);
 
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
@@ -126,7 +133,7 @@ public class HdfsSerDeExportService {
                             ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
                             conf);
                     do {
-                        Tuple row = new Tuple(ctx, tableMeta.getColumns().size());
+                        Tuple row = new Tuple(ctx, numColumns);
                         writer.write(row);
                     } while (ctx.next());
                     writer.close();

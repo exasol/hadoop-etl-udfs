@@ -7,6 +7,7 @@ import com.exasol.ExaIterator;
 import parquet.io.api.Binary;
 import parquet.io.api.RecordConsumer;
 import parquet.schema.GroupType;
+import parquet.schema.OriginalType;
 import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
 
@@ -40,45 +41,48 @@ public class Tuple {
             throw new RuntimeException("Tuple index " + index + " is out of bounds.");
         }
 
-        String primitiveTypeName = primitiveType.getPrimitiveTypeName().toString().toUpperCase();
-        if (primitiveTypeName.endsWith("BYTE_ARRAY")) {
-            if (primitiveType.getDecimalMetadata() != null)
-                primitiveTypeName = "DECIMAL";
-            else
-                primitiveTypeName = "STRING";
-        }
-
+        PrimitiveType.PrimitiveTypeName primitiveTypeName = primitiveType.getPrimitiveTypeName();
+        OriginalType originalType = primitiveType.getOriginalType();
         try {
             switch (primitiveTypeName) {
-                case "INT32":
+                case INT32:
                     recordConsumer.addInteger(iter.getInteger(index));
                     break;
-                case "INT64":
+                case INT64:
                     recordConsumer.addLong(iter.getLong(index));
                     break;
-                case "FLOAT":
+                case FLOAT:
                     Float floatVal = null;
                     Double doubleVal = iter.getDouble(index);
                     if (doubleVal != null)
                         floatVal = doubleVal.floatValue();
                     recordConsumer.addFloat(floatVal);
                     break;
-                case "DOUBLE":
+                case DOUBLE:
                     recordConsumer.addDouble(iter.getDouble(index));
                     break;
-                case "DECIMAL":
-                    byte[] decimalBytes = null;
-                    BigDecimal bigDecimalVal = iter.getBigDecimal(index);
-                    if (bigDecimalVal != null)
-                        decimalBytes = bigDecimalVal.unscaledValue().toByteArray();
-                    recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
+                case FIXED_LEN_BYTE_ARRAY:
+                    if (originalType == OriginalType.DECIMAL) {
+                        byte[] decimalBytes = null;
+                        BigDecimal bigDecimalVal = iter.getBigDecimal(index);
+                        if (bigDecimalVal != null)
+                            decimalBytes = bigDecimalVal.unscaledValue().toByteArray();
+                        recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
+                    }
+                    else
+                        throw new RuntimeException("Unsupported FIXED_LEN_BYTE_ARRAY, original type: " + originalType);
                     break;
-                case "STRING":
-                    recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
+                case BINARY:
+                    if (originalType == OriginalType.UTF8)
+                        recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
+                    else
+                        throw new RuntimeException("Unsupported BINARY, original type: " + originalType);
                     break;
-                case "BOOLEAN":
+                case BOOLEAN:
                     recordConsumer.addBoolean(iter.getBoolean(index));
                     break;
+                case INT96:
+                    throw new RuntimeException("Unsupported primitive type: " + primitiveTypeName);
                 default:
                     throw new RuntimeException("Unsupported primitive type: " + primitiveTypeName);
             }
