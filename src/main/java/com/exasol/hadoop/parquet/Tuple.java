@@ -74,10 +74,7 @@ public class Tuple {
                         throw new RuntimeException("Unsupported FIXED_LEN_BYTE_ARRAY, original type: " + originalType);
                     break;
                 case BINARY:
-                    if (originalType == OriginalType.UTF8)
-                        recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
-                    else
-                        throw new RuntimeException("Unsupported BINARY, original type: " + originalType);
+                    recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
                     break;
                 case BOOLEAN:
                     recordConsumer.addBoolean(iter.getBoolean(index));

@@ -80,12 +80,22 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "vc2", OriginalType.UTF8));
         */
 
-        ///*
+        /*
         // PARQUET DATE TIME TYPES
-        rowTypes.add(Class.forName("java.sql.Timestamp"));       rowValues.add(Timestamp.valueOf("1945-05-24 02:01:01.123456789"));
+        rowTypes.add(Class.forName("java.sql.Timestamp"));  rowValues.add(Timestamp.valueOf("1945-05-24 02:01:01.123456789"));
 
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "ts", null));
+        */
+
+        ///*
+        // PARQUET BOOLEAN BINARY TYPES
+        rowTypes.add(Class.forName("java.lang.Boolean"));   rowValues.add(false);
+        rowTypes.add(Class.forName("java.lang.String"));    rowValues.add("fdsa");
+
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "bool", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "bin", null));
         //*/
 
         rows.add(rowValues);
