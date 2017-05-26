@@ -49,6 +49,7 @@ import parquet.example.data.Group;
 import parquet.example.data.simple.SimpleGroup;
 import parquet.hadoop.ParquetWriter;
 import parquet.hadoop.example.GroupWriteSupport;
+import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.schema.*;
 import com.exasol.hadoop.parquet.Tuple;
 import com.exasol.hadoop.parquet.TupleWriteSupport;
@@ -125,7 +126,8 @@ public class HdfsSerDeExportService {
                     System.out.println("Path: " + path.toString());
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
-                            ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
+                            //ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
+                            CompressionCodecName.SNAPPY,
                             ParquetWriter.DEFAULT_BLOCK_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,

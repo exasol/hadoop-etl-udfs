@@ -88,7 +88,7 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "ts", null));
         */
 
-        ///*
+        /*
         // PARQUET BOOLEAN BINARY TYPES
         rowTypes.add(Class.forName("java.lang.Boolean"));   rowValues.add(false);
         rowTypes.add(Class.forName("java.lang.String"));    rowValues.add("fdsa");
@@ -96,6 +96,16 @@ public class HdfsSerDeExportServiceTest {
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "bool", null));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "bin", null));
+        */
+
+        ///*
+        // PARQUET SNAPPY TYPES
+        rowTypes.add(Class.forName("java.lang.Integer"));   rowValues.add(2);
+        rowTypes.add(Class.forName("java.lang.String"));    rowValues.add("b");
+
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "c1", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c2", null));
         //*/
 
         rows.add(rowValues);
