@@ -12,6 +12,7 @@ import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
@@ -63,7 +64,7 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"dec3"));
         */
 
-        ///*
+        /*
         // PARQUET STRING TYPES
         rowTypes.add(Class.forName("java.lang.String"));       rowValues.add("str_str_str_str");
         rowTypes.add(Class.forName("java.lang.String"));       rowValues.add("c");
@@ -77,6 +78,14 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c2", OriginalType.UTF8));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "vc1", OriginalType.UTF8));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "vc2", OriginalType.UTF8));
+        */
+
+        ///*
+        // PARQUET DATE TIME TYPES
+        rowTypes.add(Class.forName("java.sql.Timestamp"));       rowValues.add(Timestamp.valueOf("1945-05-24 02:01:01.123456789"));
+
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "ts", null));
         //*/
 
         rows.add(rowValues);

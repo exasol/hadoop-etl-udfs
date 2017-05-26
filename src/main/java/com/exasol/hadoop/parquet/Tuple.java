@@ -4,16 +4,17 @@ import com.exasol.ExaDataTypeException;
 import com.exasol.ExaIterationException;
 import com.exasol.ExaIterator;
 
+import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
 import parquet.io.api.Binary;
 import parquet.io.api.RecordConsumer;
-import parquet.schema.GroupType;
 import parquet.schema.OriginalType;
 import parquet.schema.PrimitiveType;
-import parquet.schema.Type;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.time.*;
+import java.time.temporal.JulianFields;
+import java.util.TimeZone;
 
 public class Tuple {
     private Object[] data;
@@ -82,7 +83,22 @@ public class Tuple {
                     recordConsumer.addBoolean(iter.getBoolean(index));
                     break;
                 case INT96:
-                    throw new RuntimeException("Unsupported primitive type: " + primitiveTypeName);
+                    // Timestamp
+                    // First 8 bytes: nanoseconds within day
+                    // Next 4 bytes: Julian day
+                    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+                    Timestamp timestamp = iter.getTimestamp(index);
+                    if (timestamp != null) {
+                        LocalDateTime localDateTime = timestamp.toLocalDateTime();
+                        long dayNanoSeconds = localDateTime.getNano()
+                                + ((localDateTime.getHour() * 60 * 60)
+                                + (localDateTime.getMinute() * 60)
+                                + localDateTime.getSecond()) * 1000000000L;
+                        long julianDay = JulianFields.JULIAN_DAY.getFrom(timestamp.toLocalDateTime());
+                        NanoTime nanoTime = new NanoTime((int)julianDay, dayNanoSeconds);
+                        recordConsumer.addBinary(nanoTime.toBinary());
+                    }
+                    break;
                 default:
                     throw new RuntimeException("Unsupported primitive type: " + primitiveTypeName);
             }
