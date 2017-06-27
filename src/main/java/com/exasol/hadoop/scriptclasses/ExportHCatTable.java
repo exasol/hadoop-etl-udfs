@@ -41,6 +41,7 @@ public class ExportHCatTable {
         String partitions = getParameter(params, "PARTITIONS", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
+        String jdbcAuthType = getParameter(params, "JDBC_AUTH_TYPE", "");
         String jdbcConnection = getParameter(params, "JDBC_CONNECTION", "");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
 
@@ -76,7 +77,7 @@ public class ExportHCatTable {
                 throw new RuntimeException("ExaConnectionAccessException while getting connection " + jdbcConnection + ": " + e.toString(), e);
             }
 
-            boolean useKerberosJdbc = (jdbcConn.getPassword().indexOf("ExaAuthType=Kerberos") == 0);
+            boolean useKerberosJdbc = jdbcAuthType.equalsIgnoreCase("kerberos");
             String user = jdbcConn.getUser();
             String password = jdbcConn.getPassword();
             if (useKerberosJdbc) {
@@ -163,15 +164,10 @@ public class ExportHCatTable {
     }
 
     private static void configKerberos(String user, String password) throws Exception {
-        final String krbKey = "ExaAuthType=Kerberos;";
-        try {
-            password = password.replaceFirst(krbKey, "");
-        } catch (Exception e) {
-            throw new RuntimeException("Could not find " + krbKey + " in password: " + e.getMessage());
-        }
+        final String krbKey = "ExaAuthType=Kerberos";
         String[] confKeytab = password.split(";");
-        if (confKeytab.length != 2) {
-            throw new RuntimeException("Invalid Kerberos conf/keytab");
+        if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
+            throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
         }
 
         File kerberosBaseDir = new File("/tmp");
@@ -180,8 +176,8 @@ public class ExportHCatTable {
         krbDir.mkdir();
         krbDir.deleteOnExit();
 
-        String krbConfPath = writeKrbConf(krbDir, confKeytab[0]);
-        String keytabPath = writeKeytab(krbDir, confKeytab[1]);
+        String krbConfPath = writeKrbConf(krbDir, confKeytab[1]);
+        String keytabPath = writeKeytab(krbDir, confKeytab[2]);
         String jaasConfigPath = writeJaasConfig(krbDir, user, keytabPath);
         System.setProperty("java.security.auth.login.config", jaasConfigPath);
         System.setProperty("java.security.krb5.conf", krbConfPath);
