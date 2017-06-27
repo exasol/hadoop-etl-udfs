@@ -1,10 +1,18 @@
 package com.exasol.hadoop;
 
+import com.exasol.ExaIterator;
 import com.exasol.ExaIteratorDummy;
+import com.exasol.ExaMetadata;
 import com.exasol.ExaMetadataDummy;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.hive.HiveMetastoreService;
+import com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.junit.Test;
 import parquet.schema.DecimalMetadata;
 import parquet.schema.OriginalType;
@@ -13,8 +21,8 @@ import parquet.schema.Type;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.io.File;
 
 public class HdfsSerDeExportServiceTest {
@@ -25,14 +33,47 @@ public class HdfsSerDeExportServiceTest {
      * before running this test
      */
     @Test
+    public void exportToTableUdf() throws Exception {
+        String dbName = "default";
+        String table = "parquet_partition";
+        String hiveMetastoreURL = "thrift://cloudera01.exacloud.de:9083";
+        String hdfsUser = "hdfs";
+        String hdfsUrl = "";
+        String partition = "part1=a/part2=1";
+        String authType = "";
+        String authKerberosConnection = "";
+        String debugAddress = "";
+
+        List<List<Object>> iterValues = new ArrayList<>();
+        List<Object> iterValue = new ArrayList<>();
+        iterValue.add(dbName);
+        iterValue.add(table);
+        iterValue.add(hiveMetastoreURL);
+        iterValue.add(hdfsUser);
+        iterValue.add(hdfsUrl);
+        iterValue.add(partition);
+        iterValue.add(authType);
+        iterValue.add(authKerberosConnection);
+        iterValue.add(debugAddress);
+        iterValues.add(iterValue);
+
+        ExaMetadata meta = null;
+        ExaIterator iter = new ExaIteratorDummy(iterValues);
+        ExportIntoHiveTable.run(meta, iter);
+    }
+
+    //@Test
     public void exportToTable() throws Exception {
-        String dbname = "default";
+        String dbName = "default";
         //String table = "sample_07_parquet";
-        String table = "parquet_all_types";
+        String table = "parquet_partition";
         String hiveMetastoreURL = "thrift://cloudera01.exacloud.de:9083";
         String hdfsURL = "hdfs://cloudera01.exacloud.de:8020/user/hive/warehouse/" + table;
+        String partition = "part1=a/part2=1";
+        if (partition != null && !partition.isEmpty())
+            hdfsURL += "/" + partition;
         HCatTableMetadata tableMeta = null;
-        //tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, dbname, table, false, "");
+        tableMeta = HiveMetastoreService.getTableMetadata(hiveMetastoreURL, dbName, table, false, "");
         System.out.println("tableMeta: " + tableMeta);
 
         List<List<Object>> rows = new ArrayList<>();
@@ -100,8 +141,8 @@ public class HdfsSerDeExportServiceTest {
 
         ///*
         // PARQUET SNAPPY TYPES
-        rowTypes.add(Class.forName("java.lang.Integer"));   rowValues.add(2);
-        rowTypes.add(Class.forName("java.lang.String"));    rowValues.add("b");
+        rowTypes.add(Class.forName("java.lang.Integer"));   rowValues.add(1111);
+        rowTypes.add(Class.forName("java.lang.String"));    rowValues.add("aaaa");
 
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "c1", null));
@@ -110,11 +151,20 @@ public class HdfsSerDeExportServiceTest {
 
         rows.add(rowValues);
 
+        //String testPartition = "part1=d/part2=4";
+        //boolean createdPartition = HiveMetastoreService.createPartitionIfNotExists(hiveMetastoreURL,false, "", dbName, table, testPartition);
+        //System.out.println("Created partition " + testPartition + ": " + createdPartition);
+
         String hdfsUser = "hdfs";
-        String filename = "test.parq";
-        File testFile = new File(filename);
-        testFile.delete();
-        HdfsSerDeExportService.exportToParquetTableTest(hdfsURL, hdfsUser, filename, tableMeta, schemaTypes, new ExaIteratorDummy(rows));
+        StringBuilder sb = new StringBuilder();
+        sb.append("exa_export_");
+        sb.append(new SimpleDateFormat("yyyyMMdd_HHmmss_").format(new Date()));
+        sb.append(UUID.randomUUID().toString().replaceAll("-", ""));
+        sb.append(".parq");
+        String filename = sb.toString();
+        System.out.println("Temp Filename: " + filename);
+
+        //HdfsSerDeExportService.exportToParquetTableTest(hdfsURL, hdfsUser, filename, tableMeta, schemaTypes, new ExaIteratorDummy(rows));
     }
 
 }

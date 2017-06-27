@@ -4,6 +4,8 @@ import com.exasol.ExaIterator;
 import com.exasol.ExaMetadata;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
+import com.exasol.hadoop.kerberos.KerberosCredentials;
+import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.utils.UdfUtils;
 import com.google.common.collect.ImmutableList;
@@ -82,12 +84,15 @@ public class HdfsSerDeExportService {
     // TODO Refactor and remove this
     private static List<Integer> cols = null;
 
-    public static void exportToParquetTableTest(
+    public static void exportToParquetTable(
             final String hdfsUrl,
             final String hdfsUser,
+            final boolean useKerberos,
+            final KerberosCredentials kerberosCredentials,
             final String file,
             final HCatTableMetadata tableMeta,
             final List<Type> schemaTypes,
+            final int firstColumnIndex,
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
 
@@ -115,19 +120,28 @@ public class HdfsSerDeExportService {
         }
         System.out.println("Parquet schema:\n" + schema);
 
-        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+        UserGroupInformation ugi;
+        if (useKerberos) {
+            ugi = KerberosHadoopUtils.getKerberosUGI(kerberosCredentials);
+        }else {
+            ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+        }
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
                 if (ctx.size() > 0) {
                     Configuration conf = new Configuration();
+                    if (useKerberos) {
+                        conf.set("dfs.namenode.kerberos.principal", hdfsUser);
+                    }
                     TupleWriteSupport.setSchema(schema, conf);
-                    //Path path = new Path(hdfsUrl, file);
-                    Path path = new Path(file);
+                    Path path = new Path(hdfsUrl, file);
+                    //Path path = new Path(file);
                     System.out.println("Path: " + path.toString());
+                    int rowsExported = 0;
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
-                            //ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
-                            CompressionCodecName.SNAPPY,
+                            ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
+                            //CompressionCodecName.SNAPPY,
                             ParquetWriter.DEFAULT_BLOCK_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
@@ -135,10 +149,12 @@ public class HdfsSerDeExportService {
                             ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
                             conf);
                     do {
-                        Tuple row = new Tuple(ctx, numColumns);
+                        Tuple row = new Tuple(ctx, numColumns, firstColumnIndex);
                         writer.write(row);
+                        rowsExported++;
                     } while (ctx.next());
                     writer.close();
+                    ctx.emit(rowsExported);
                 }
                 return null;
             }

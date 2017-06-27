@@ -19,10 +19,12 @@ import java.util.TimeZone;
 public class Tuple {
     private Object[] data;
     private ExaIterator iter;
+    private int firstColumnIndex;
 
-    public Tuple(ExaIterator iter, final int numCols) {
+    public Tuple(ExaIterator iter, final int numCols, final int firstColumnIndex) {
         this.iter = iter;
         data = new Object[numCols];
+        this.firstColumnIndex = firstColumnIndex;
     }
 
     public Tuple getTuple(int index) {
@@ -42,30 +44,31 @@ public class Tuple {
             throw new RuntimeException("Tuple index " + index + " is out of bounds.");
         }
 
+        int iterIndex = firstColumnIndex + index;
         PrimitiveType.PrimitiveTypeName primitiveTypeName = primitiveType.getPrimitiveTypeName();
         OriginalType originalType = primitiveType.getOriginalType();
         try {
             switch (primitiveTypeName) {
                 case INT32:
-                    recordConsumer.addInteger(iter.getInteger(index));
+                    recordConsumer.addInteger(iter.getInteger(iterIndex));
                     break;
                 case INT64:
-                    recordConsumer.addLong(iter.getLong(index));
+                    recordConsumer.addLong(iter.getLong(iterIndex));
                     break;
                 case FLOAT:
                     Float floatVal = null;
-                    Double doubleVal = iter.getDouble(index);
+                    Double doubleVal = iter.getDouble(iterIndex);
                     if (doubleVal != null)
                         floatVal = doubleVal.floatValue();
                     recordConsumer.addFloat(floatVal);
                     break;
                 case DOUBLE:
-                    recordConsumer.addDouble(iter.getDouble(index));
+                    recordConsumer.addDouble(iter.getDouble(iterIndex));
                     break;
                 case FIXED_LEN_BYTE_ARRAY:
                     if (originalType == OriginalType.DECIMAL) {
                         byte[] decimalBytes = null;
-                        BigDecimal bigDecimalVal = iter.getBigDecimal(index);
+                        BigDecimal bigDecimalVal = iter.getBigDecimal(iterIndex);
                         if (bigDecimalVal != null)
                             decimalBytes = bigDecimalVal.unscaledValue().toByteArray();
                         recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
@@ -74,17 +77,17 @@ public class Tuple {
                         throw new RuntimeException("Unsupported FIXED_LEN_BYTE_ARRAY, original type: " + originalType);
                     break;
                 case BINARY:
-                    recordConsumer.addBinary(Binary.fromString(iter.getString(index)));
+                    recordConsumer.addBinary(Binary.fromString(iter.getString(iterIndex)));
                     break;
                 case BOOLEAN:
-                    recordConsumer.addBoolean(iter.getBoolean(index));
+                    recordConsumer.addBoolean(iter.getBoolean(iterIndex));
                     break;
                 case INT96:
                     // Timestamp
                     // First 8 bytes: nanoseconds within day
                     // Next 4 bytes: Julian day
                     TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-                    Timestamp timestamp = iter.getTimestamp(index);
+                    Timestamp timestamp = iter.getTimestamp(iterIndex);
                     if (timestamp != null) {
                         LocalDateTime localDateTime = timestamp.toLocalDateTime();
                         long dayNanoSeconds = localDateTime.getNano()

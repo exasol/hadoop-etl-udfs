@@ -43,6 +43,11 @@ public class ExaMetadataDummy implements ExaMetadata {
     }
 
     @Override
+    public String getCurrentSchema() {
+        throw new NotImplementedException("Not yet implemented");
+    }
+
+    @Override
     public String getScriptCode() {
         throw new NotImplementedException("Not yet implemented");
     }

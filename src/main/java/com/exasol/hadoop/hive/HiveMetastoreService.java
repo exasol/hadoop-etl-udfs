@@ -9,6 +9,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.thrift.TException;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,26 @@ public class HiveMetastoreService {
         }
         client.close();
         return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, outputFormat, serDeClass, serDeParameters);
+    }
+
+    public static boolean createPartitionIfNotExists(String hiveMetastoreUrl, boolean useKerberos, String kerberosPrincipal,
+                                                     String dbName, String tableName, String partitionName) {
+        HiveMetaStoreClient hiveClient = getHiveMetastoreClient(hiveMetastoreUrl, useKerberos, kerberosPrincipal);
+        boolean createdPartition = false;
+        try {
+            hiveClient.appendPartition(dbName, tableName, partitionName);
+            createdPartition = true;
+        } catch (AlreadyExistsException e) {
+            // Partition is already there, do nothing
+        } catch (MetaException e) {
+            throw new RuntimeException("Unknown MetaException occured when reading partition information for partition " + partitionName + " in table " + tableName + " in database " + dbName + " from the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
+        } catch (InvalidObjectException e) {
+            throw new RuntimeException("InvalidObjectException when creating partition " + partitionName + " in table " + tableName + " in database " + dbName + ". Error: " + e.toString(), e);
+        } catch (TException e) {
+            throw new RuntimeException("Unknown TException occured when reading partition information for partition " + partitionName + " in table " + tableName + " in database " + dbName + " from the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
+        }
+
+        return createdPartition;
     }
 
 }
