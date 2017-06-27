@@ -140,8 +140,7 @@ public class HdfsSerDeExportService {
                     int rowsExported = 0;
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
-                            ParquetWriter.DEFAULT_COMPRESSION_CODEC_NAME,
-                            //CompressionCodecName.SNAPPY,
+                            CompressionCodecName.valueOf(""),
                             ParquetWriter.DEFAULT_BLOCK_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
