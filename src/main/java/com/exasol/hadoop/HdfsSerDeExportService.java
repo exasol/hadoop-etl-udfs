@@ -91,6 +91,7 @@ public class HdfsSerDeExportService {
             final KerberosCredentials kerberosCredentials,
             final String file,
             final HCatTableMetadata tableMeta,
+            final String compressionType,
             final List<Type> schemaTypes,
             final int firstColumnIndex,
             final ExaIterator ctx) throws Exception {
@@ -140,7 +141,7 @@ public class HdfsSerDeExportService {
                     int rowsExported = 0;
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
-                            CompressionCodecName.valueOf(""),
+                            CompressionCodecName.fromConf(compressionType),
                             ParquetWriter.DEFAULT_BLOCK_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,
                             ParquetWriter.DEFAULT_PAGE_SIZE,

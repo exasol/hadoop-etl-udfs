@@ -43,6 +43,8 @@ public class ExportHCatTable {
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
         String jdbcAuthType = getParameter(params, "JDBC_AUTH_TYPE", "");
         String jdbcConnection = getParameter(params, "JDBC_CONNECTION", "");
+        String fileFormat = getParameter(params, "FILE_FORMAT", "");
+        String compressionType = getParameter(params, "COMPRESSION_TYPE", "uncompressed");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
 
         if (!debugAddress.isEmpty()) {
@@ -53,6 +55,14 @@ public class ExportHCatTable {
             } catch (Exception ex) {
                 throw new RuntimeException("You have to specify a valid hostname and port for the udf debug service, e.g. 'hostname:3000'");
             }
+        }
+
+        fileFormat = fileFormat.toUpperCase();
+        switch (fileFormat) {
+            case "PARQUET":
+                break;
+            default:
+                throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }
 
         // JDBC statements
@@ -102,6 +112,8 @@ public class ExportHCatTable {
         exportUDFArgs.add(partitions);
         exportUDFArgs.add(authenticationType);
         exportUDFArgs.add(kerberosConnection);
+        exportUDFArgs.add(fileFormat);
+        exportUDFArgs.add(compressionType);
         exportUDFArgs.add(debugAddress);
 
         String sql;

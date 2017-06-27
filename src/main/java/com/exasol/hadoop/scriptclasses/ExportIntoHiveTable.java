@@ -29,8 +29,10 @@ public class ExportIntoHiveTable {
     private static final int PARAM_IDX_PARTITIONS = 5;
     private static final int PARAM_IDX_AUTH_TYPE = 6;
     private static final int PARAM_IDX_AUTH_CONNECTION = 7;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 8;
-    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 9;
+    private static final int PARAM_IDX_FILE_FORMAT = 8;
+    private static final int PARAM_IDX_COMPRESSION_TYPE = 9;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 10;
+    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 11;
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
@@ -41,6 +43,8 @@ public class ExportIntoHiveTable {
         String partitions = iter.getString(PARAM_IDX_PARTITIONS);
         String authType = iter.getString(PARAM_IDX_AUTH_TYPE);
         String connName = iter.getString(PARAM_IDX_AUTH_CONNECTION);
+        String fileFormat = iter.getString(PARAM_IDX_FILE_FORMAT);
+        String compressionType = iter.getString(PARAM_IDX_COMPRESSION_TYPE);
         String debugAddress = iter.getString(PARAM_IDX_DEBUG_ADDRESS);
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
 
@@ -86,7 +90,11 @@ public class ExportIntoHiveTable {
         sb.append(".parq");
         String file = sb.toString();
 
-        HdfsSerDeExportService.exportToParquetTable(hdfsPath, hdfsUser, useKerberos, kerberosCredentials, file, tableMeta, null, firstColumnIndex, iter);
+        if (fileFormat.equals("PARQUET")) {
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath, hdfsUser, useKerberos, kerberosCredentials, file, tableMeta, compressionType, null, firstColumnIndex, iter);
+        } else {
+            throw new RuntimeException("The file format is unsupported: " + fileFormat);
+        }
     }
 
 }
