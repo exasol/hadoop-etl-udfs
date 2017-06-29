@@ -25,17 +25,7 @@ CREATE JAVA  ADAPTER SCRIPT "HIVE_ADAPTER" AS
 %scriptclass com.exasol.adapter.HiveAdapter;
 
   %jar /buckets/bucketfs1/bucket1/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
-  %jar /buckets/bucketfs1/bucket1/hive_metastore.jar;
-  %jar /buckets/bucketfs1/bucket1/hive_service.jar;
-  %jar /buckets/bucketfs1/bucket1/HiveJDBC41.jar;
-  %jar /buckets/bucketfs1/bucket1/libfb303-0.9.0.jar;
-  %jar /buckets/bucketfs1/bucket1/libthrift-0.9.0.jar;
-  %jar /buckets/bucketfs1/bucket1/log4j-1.2.14.jar;
-  %jar /buckets/bucketfs1/bucket1/ql.jar;
-  %jar /buckets/bucketfs1/bucket1/slf4j-api-1.5.11.jar;
-  %jar /buckets/bucketfs1/bucket1/slf4j-log4j12-1.5.11.jar;
-  %jar /buckets/bucketfs1/bucket1/TCLIServiceClient.jar;
-  %jar /buckets
+
 ```
 
 ## Using the Adapter
@@ -47,7 +37,7 @@ First we create a virtual schema using the Hive adapter. The adapter will retrie
 CREATE VIRTUAL SCHEMA HIVE_SCHEMA
  USING HIVE_ADAPTER WITH 
 HCAT_DB='xperience'
-HCAT_ADDRESS='thrift://your_cloudera_instance:9083'
+HCAT_ADDRESS='thrift://cloudera01.exacloud.de:9083'
 HDFS_USER='hdfs';
 ```
 
@@ -60,8 +50,8 @@ DESCRIBE sample_07;
 
 And we can run arbitrary queries on the virtual tables:
 ```sql
-SELECT count(*) FROM clicks;
-SELECT DISTINCT USER_ID FROM clicks;
+SELECT count(*) FROM sample_07;
+SELECT DISTINCT CODE FROM sample_07;
 ```
 
 Behind the scenes the EXASOL command IMPORT INTO(…) FROM SCRIPT ETL.IMPORT_HCAT_TABLE will be executed to obtain the data needed from the data source to fulfil the query.
@@ -74,7 +64,7 @@ ALTER VIRTUAL SCHEMA hive REFRESH TABLES t1 t2; -- refresh only these tables
 
 Or set properties. Depending on the adapter and the property you set this might update the metadata or not. In our example the metadata are affected, because afterwards the virtual schema will only expose two virtul tables.
 ```sql
-ALTER VIRTUAL SCHEMA hive SET TABLE_FILTER='CUSTOMERS, CLICKS';
+ALTER VIRTUAL SCHEMA hive SET TABLE_FILTER='SAMPLE_07, ALL_HIVE_DATA_TYPES';
 ```
 
 Finally you can unset properties:
