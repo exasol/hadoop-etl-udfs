@@ -5,10 +5,7 @@ import com.exasol.ExaMetadata;
 import com.exasol.adapter.capabilities.Capabilities;
 import com.exasol.adapter.json.RequestJsonParser;
 import com.exasol.adapter.json.ResponseJsonSerializer;
-import com.exasol.adapter.metadata.MetadataException;
-import com.exasol.adapter.metadata.SchemaMetadata;
-import com.exasol.adapter.metadata.SchemaMetadataInfo;
-import com.exasol.adapter.metadata.TableMetadata;
+import com.exasol.adapter.metadata.*;
 import com.exasol.adapter.request.*;
 import com.exasol.adapter.sql.SqlSelectList;
 import com.exasol.adapter.sql.SqlStatementSelect;
@@ -24,7 +21,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class HiveAdapter {
 
@@ -95,7 +91,8 @@ public class HiveAdapter {
 
     private static String handleCreateVirtualSchema(CreateVirtualSchemaRequest request, ExaMetadata meta) throws SQLException, MetadataException {
         final ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(request.getSchemaMetadataInfo().getProperties(), meta);
-        SchemaMetadata schemaMetadata = readMetadata(request.getSchemaMetadataInfo(), connection, null, null);
+        List<String> tableNames = HiveAdapterProperties.getTableFilter(request.getSchemaMetadataInfo().getProperties());
+        SchemaMetadata schemaMetadata = readMetadata(request.getSchemaMetadataInfo(), connection, tableNames, null);
         return ResponseJsonSerializer.makeCreateVirtualSchemaResponse(schemaMetadata);
     }
 
@@ -140,15 +137,28 @@ public class HiveAdapter {
         String outputColumnsString = "";
         String selectedColumsString = "";
         if (!sqlGenerator.loadAllColumns || !sqlGeneratorForWhereClause.loadAllColumns) {
-            Set<String> outputColumns = sqlGenerator.getOutputColumns();
-            Set<String> outputColumnsInWhere = sqlGeneratorForWhereClause.getOutputColumns();
-            Set<String> selectedColumns = sqlGenerator.getSelectedColumns();
-            Set<String> selectedColumnsInWhere = sqlGeneratorForWhereClause.getSelectedColumns();
+            List<String> outputColumns = sqlGenerator.getOutputColumns();
+            List<String> outputColumnsInWhere = sqlGeneratorForWhereClause.getOutputColumns();
+            List<String> selectedColumns = sqlGenerator.getSelectedColumns();
+            List<String> selectedColumnsInWhere = sqlGeneratorForWhereClause.getSelectedColumns();
             for (String col : outputColumnsInWhere) {
-                outputColumns.add(col);
+                if(!outputColumns.contains(col)) {
+                    outputColumns.add(col);
+                }
             }
             for (String col : selectedColumnsInWhere) {
-                selectedColumns.add(col);
+                if(!selectedColumns.contains(col)) {
+                    selectedColumns.add(col);
+                }
+            }
+            if(selectedColumns.isEmpty()){
+                for(ColumnMetadata columnMeta : fromTable.getMetadata().getColumns()){
+                    try {
+                        selectedColumns.add('"' + columnMeta.getName() + '"' + " " +HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(columnMeta.getAdapterNotes(), columnMeta.getName()).getOriginalTypeName()));
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
             outputColumnsString = StringUtils.join(outputColumns, ",");

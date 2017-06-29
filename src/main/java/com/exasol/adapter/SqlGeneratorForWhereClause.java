@@ -12,9 +12,9 @@ import java.util.Set;
 public class SqlGeneratorForWhereClause extends SqlGenerator {
 
 
-    private Set<String> outputColumns;
+    private List<String> outputColumns;
     private Set<String> selectedPartitions;
-    private Set<String> selectedColumns;
+    private List<String> selectedColumns;
 
     public Boolean loadAllColumns;
     public Boolean loadAllPartitions;
@@ -22,16 +22,16 @@ public class SqlGeneratorForWhereClause extends SqlGenerator {
     public SqlGeneratorForWhereClause() {
         this.loadAllPartitions = false;
         this.loadAllColumns = false;
-        outputColumns = new HashSet<>();
+        outputColumns = new ArrayList<>();
         selectedPartitions = new HashSet<>();
-        selectedColumns = new HashSet<>();
+        selectedColumns = new ArrayList<>();
     }
 
-    public Set<String> getOutputColumns(){
+    public List<String> getOutputColumns(){
         return outputColumns;
     }
 
-    public Set<String> getSelectedColumns(){
+    public List<String> getSelectedColumns(){
         return selectedColumns;
     }
 
@@ -60,10 +60,14 @@ public class SqlGeneratorForWhereClause extends SqlGenerator {
     @Override
     public String visit(SqlColumn column) {
         if(!this.loadAllColumns) {
-            outputColumns.add(column.getName());
+            if(!outputColumns.contains(column.getName())) {
+                outputColumns.add(column.getName());
+            }
         }
             try {
-                selectedColumns.add(column.getName() + " " +HiveTableInformation.typeMapping(column.getType().toString()));
+                if(!selectedColumns.contains('"' + column.getName() + '"' + " " + HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(column.getMetadata().getAdapterNotes(), column.getMetadata().getName()).getOriginalTypeName()))) {
+                    selectedColumns.add('"' + column.getName() + '"' + " " + HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(column.getMetadata().getAdapterNotes(), column.getMetadata().getName()).getOriginalTypeName()));
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }

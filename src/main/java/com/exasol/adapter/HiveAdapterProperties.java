@@ -63,7 +63,8 @@ public class HiveAdapterProperties {
         if (connName != null && !connName.isEmpty()) {
             try {
                 ExaConnectionInformation connInfo = exaMeta.getConnection(connName);
-                return connInfo;
+                String connectionAddress = properties.get(PROP_CONNECTION_ADDRESS);
+                return new ExaConnectionInformationHdfs(connectionAddress, connInfo.getUser(), connInfo.getPassword());
             } catch (ExaConnectionAccessException e) {
                 throw new RuntimeException("Could not access the connection information of connection " + connName + ". Error: " + e.toString());
             }
@@ -144,7 +145,7 @@ public class HiveAdapterProperties {
             }
             return tables;
         } else {
-            return new ArrayList<>();
+            return null;
         }
     }
 

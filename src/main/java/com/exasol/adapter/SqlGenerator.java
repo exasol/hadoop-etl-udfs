@@ -6,28 +6,26 @@ import com.google.common.base.Joiner;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SqlGenerator implements SqlNodeVisitor<String> {
 
-    private Set<String> outputColumns;
-    private Set<String> selectedColumns;
+    private List<String> outputColumns;
+    private List<String> selectedColumns;
 
     public Boolean loadAllColumns;
 
     public SqlGenerator() {
-        outputColumns = new HashSet<>();
-        selectedColumns = new HashSet<>();
+        outputColumns = new ArrayList<>();
+        selectedColumns = new ArrayList<>();
         this.loadAllColumns = false;
     }
 
-    public Set<String> getOutputColumns(){
+    public List<String> getOutputColumns(){
         return outputColumns;
     }
 
-    public Set<String> getSelectedColumns(){
+    public List<String> getSelectedColumns(){
         return selectedColumns;
     }
 
@@ -51,10 +49,14 @@ public class SqlGenerator implements SqlNodeVisitor<String> {
     @Override
     public String visit(SqlColumn column) {
          if(!loadAllColumns) {
-             outputColumns.add(column.getName());
+             if(!outputColumns.contains(column.getName())) {
+                 outputColumns.add(column.getName());
+             }
          }
              try {
-                 selectedColumns.add('"' + column.getName() + '"' + " " +HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(column.getMetadata().getAdapterNotes(), column.getMetadata().getName()).getOriginalTypeName()));
+             if(!selectedColumns.contains('"' + column.getName() + '"' + " " + HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(column.getMetadata().getAdapterNotes(), column.getMetadata().getName()).getOriginalTypeName()))) {
+                 selectedColumns.add('"' + column.getName() + '"' + " " + HiveTableInformation.typeMapping(ColumnAdapterNotes.deserialize(column.getMetadata().getAdapterNotes(), column.getMetadata().getName()).getOriginalTypeName()));
+             }
              } catch (SQLException e) {
                  e.printStackTrace();
              }
