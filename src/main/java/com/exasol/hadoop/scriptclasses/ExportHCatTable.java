@@ -38,7 +38,8 @@ public class ExportHCatTable {
 
         // Optional parameters
         String hdfsAddress = getParameter(params, "HDFS_ADDRESS", "");
-        String partitions = getParameter(params, "PARTITIONS", "");
+        String staticPartition = getParameter(params, "STATIC_PARTITION", "");
+        String dynamicPartitionExaCols = getParameter(params, "DYNAMIC_PARTITION_EXA_COLS", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
         String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
         String jdbcAuthType = getParameter(params, "JDBC_AUTH_TYPE", "");
@@ -62,7 +63,7 @@ public class ExportHCatTable {
             case "PARQUET":
                 break;
             default:
-                throw new RuntimeException("The file format is unsupported: " + fileFormat);
+                throw new RuntimeException("The " + fileFormat + " file format is unsupported.");
         }
 
         // JDBC statements
@@ -109,7 +110,8 @@ public class ExportHCatTable {
         exportUDFArgs.add(hcatAddress);
         exportUDFArgs.add(hdfsUser);
         exportUDFArgs.add(hdfsAddress);
-        exportUDFArgs.add(partitions);
+        exportUDFArgs.add(staticPartition);
+        exportUDFArgs.add(dynamicPartitionExaCols);
         exportUDFArgs.add(authenticationType);
         exportUDFArgs.add(kerberosConnection);
         exportUDFArgs.add(fileFormat);
