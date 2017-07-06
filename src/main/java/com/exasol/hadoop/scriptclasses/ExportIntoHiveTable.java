@@ -114,8 +114,6 @@ public class ExportIntoHiveTable {
         sb.append(tableMeta.getHdfsTableRootPath());
         if (hasStaticPartition) {
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
-            //HiveMetastoreService.createPartitionIfNotExists(hcatAddress, useKerberos, kerberosCredentials.getPrinciple(), hcatDB, hcatTable, staticPartition);
-            //HiveMetastoreService.createPartitionIfNotExists(hcatAddress, useKerberos, hdfsUser, hcatDB, hcatTable, staticPartition);
             sb.append("/" + staticPartition);
         }
         String hdfsPath = sb.toString();
