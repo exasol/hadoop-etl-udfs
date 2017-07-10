@@ -16,15 +16,15 @@ import java.util.Map;
 public class HiveMetastoreService {
 
 
-    public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple){
+    public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple,String password){
         try {
-            return checkHiveMetaStoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
+            return checkHiveMetaStoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple,password);
         } catch (MetaException e) {
             throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
         }
     }
 
-    public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple) throws MetaException {
+    public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple,String password) throws MetaException {
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
         hiveConf.set("hive.metastore.local", "false");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
@@ -32,6 +32,13 @@ public class HiveMetastoreService {
         if (useKerberos) {
             System.out.println("Add kerberosPrinciple: " + kerberosPrinciple);
             hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, kerberosPrinciple);
+            if(password!=null) {
+                String[] confKeytab = password.split(";");
+                if (confKeytab.length != 3 || !confKeytab[0].equals("ExaAuthType=Kerberos")) {
+                    throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
+                }
+                hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_KEYTAB_FILE, confKeytab[2]);
+            }
             hiveConf.setVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, "true");
         }
         return new HiveMetaStoreClient(hiveConf);
@@ -44,7 +51,7 @@ public class HiveMetastoreService {
      */
     public static HCatTableMetadata getTableMetadata(String hiveMetastoreUrl, String dbName, String tableName, boolean useKerberos, String kerberosPrinciple) {
 
-        HiveMetaStoreClient client = getHiveMetastoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
+        HiveMetaStoreClient client = getHiveMetastoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple,null);
         Table table;
         try {
           table = client.getTable(dbName, tableName);
