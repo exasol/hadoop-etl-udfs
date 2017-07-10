@@ -26,17 +26,15 @@ public class HiveMetastoreService {
 
     public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple) throws MetaException {
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
-        throw new RuntimeException("THROWN EXCEPTION " + hiveMetastoreUrl + " USEKERBEROS " + kerberosPrinciple);
-     //   hiveConf.set("hive.metastore.local", "false");
-     //   hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
-     //   hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
-     //   if (useKerberos) {
-     //       System.out.println("Add kerberosPrinciple: " + kerberosPrinciple);
-      //      hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, kerberosPrinciple);
-           // METASTORE_KERBEROS_KEYTAB_FILE
-       //     hiveConf.setVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, "true");
-      //  }
-      //  return new HiveMetaStoreClient(hiveConf);
+        hiveConf.set("hive.metastore.local", "false");
+        hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
+        hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
+        if (useKerberos) {
+            System.out.println("Add kerberosPrinciple: " + kerberosPrinciple);
+            hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, kerberosPrinciple);
+            hiveConf.setVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, "true");
+        }
+        return new HiveMetaStoreClient(hiveConf);
     }
 
     /**

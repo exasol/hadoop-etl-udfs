@@ -71,7 +71,9 @@ public class HiveAdapter {
         if (newSchema == null) {
             databaseName = HiveAdapterProperties.getSchema(schemaMetaInfo.getProperties());
         }
-        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()), connection.getUser());
+
+
+        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()), connection.getUser().replaceAll("hdfs", "hive"));
         if (tableNames == null) {
             try {
                 tableNames = hiveMetastoreClient.getAllTables(databaseName);
@@ -127,7 +129,7 @@ public class HiveAdapter {
         String tableName = fromTable.getName();
         ExaConnectionInformation connection = HiveAdapterProperties.getConnectionInformation(meta.getProperties(), exaMeta);
 
-        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()),connection.getUser());
+        HiveMetaStoreClient hiveMetastoreClient = HiveMetastoreService.getHiveMetastoreClient(connection.getAddress(), HiveQueryGenerator.isKerberosAuth(connection.getPassword()),connection.getUser().replaceAll("hdfs", "hive"));
         Table table = HiveTableInformation.getHiveTable(hiveMetastoreClient, tableName, HiveAdapterProperties.getSchema(meta.getProperties()));
         SqlGenerator sqlGenerator = new SqlGenerator();
         String selectListPart = selectList.accept(sqlGenerator);
