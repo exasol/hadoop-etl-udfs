@@ -94,6 +94,7 @@ public class HdfsSerDeExportService {
             final String compressionType,
             final List<Type> schemaTypes,
             final int firstColumnIndex,
+            final List<Integer> dynamicPartitionExaColNums,
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted Export Parquet Table To Hive\n----------");
 
@@ -148,11 +149,12 @@ public class HdfsSerDeExportService {
                             ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
                             ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
                             conf);
+
+                    Tuple row = new Tuple(ctx, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
                     do {
-                        Tuple row = new Tuple(ctx, numColumns, firstColumnIndex);
                         writer.write(row);
                         rowsExported++;
-                    } while (ctx.next());
+                    } while (row.next());
                     writer.close();
                     ctx.emit(rowsExported);
                 }

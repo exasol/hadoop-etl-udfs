@@ -17,9 +17,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 import java.security.PrivilegedExceptionAction;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name
@@ -103,6 +101,61 @@ public class ExportHCatTable {
             executeJdbcStatements(jdbcConn.getAddress(), user, password, jdbcSqlStatements);
         }
 
+        // Dynamic partitions
+        List<String> exaColumns = exportSpec.getSourceColumnNames();
+        List<String> exaColSet = new ArrayList<>();
+
+        for (String exaCol : exaColumns) {
+            exaCol = exaCol.replaceAll("\"", "");
+            exaColSet.add(exaCol);
+        }
+
+        List<String> dynamicCols = new ArrayList<>();
+        if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
+            String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
+            for (int i = 0; i < dynamicPartitions.length; i++) {
+                String[] dynPartTableCol = dynamicPartitions[i].split("\\.");
+                for (int j = 0; j < dynPartTableCol.length; j++) {
+                    if (dynPartTableCol[j].startsWith("\"") && dynPartTableCol[j].endsWith("\"")) {
+                        // Quoted identifier, case senstive
+                        dynPartTableCol[j] = dynPartTableCol[j].replaceAll("\"", "");
+                    } else {
+                        // Not quoted, to upper case
+                        dynPartTableCol[j] = dynPartTableCol[j].toUpperCase();
+                    }
+                }
+                String table;
+                String column;
+                if (dynPartTableCol.length == 1) {
+                    if (exportSpec.hasSourceTable()) {
+                        table = exportSpec.getSourceTable().replaceAll("\"", "");
+                    } else {
+                        table = "";
+                    }
+                    column = dynPartTableCol[0];
+                } else if (dynPartTableCol.length == 2) {
+                    table = dynPartTableCol[0];
+                    column = dynPartTableCol[1];
+                } else {
+                    throw new RuntimeException("Exception while parsing dynamic column name: " + dynamicPartitions[i]);
+                }
+                if (table.isEmpty()) {
+                    dynamicCols.add(column);
+                } else {
+                    dynamicCols.add(table + "." + column);
+                }
+            }
+        }
+
+        List<Integer> dynamicPartsExaColNums = new ArrayList<>();
+        for (String dynamicCol : dynamicCols) {
+            int exaColIndex = exaColSet.indexOf(dynamicCol);
+            if (exaColIndex == -1) {
+                throw new RuntimeException("Dynamic partition " + dynamicCol + " was not found in column list");
+            }
+            dynamicPartsExaColNums.add(exaColIndex);
+        }
+
         // SQL query
         List<String> exportUDFArgs = new ArrayList<>();
         exportUDFArgs.add(hcatDB);
@@ -111,15 +164,16 @@ public class ExportHCatTable {
         exportUDFArgs.add(hdfsUser);
         exportUDFArgs.add(hdfsAddress);
         exportUDFArgs.add(staticPartition);
-        exportUDFArgs.add(dynamicPartitionExaCols);
+        exportUDFArgs.add(Joiner.on(",").join(dynamicPartsExaColNums));
         exportUDFArgs.add(authenticationType);
         exportUDFArgs.add(kerberosConnection);
         exportUDFArgs.add(fileFormat);
         exportUDFArgs.add(compressionType);
         exportUDFArgs.add(debugAddress);
 
+        // SQL
         String sql;
-        sql = "SELECT " + meta.getScriptSchema() + ".EXPORT_INTO_HIVE_TABLE(";
+        sql = "SELECT \"" + meta.getScriptSchema() + "\".\"EXPORT_INTO_HIVE_TABLE\"(";
         sql += "'" + Joiner.on("', '").join(exportUDFArgs) + "'";
         sql += ", ";
         sql += Joiner.on(", ").join(exportSpec.getSourceColumnNames());
@@ -130,8 +184,13 @@ public class ExportHCatTable {
         } else if (exportSpec.hasSourceSelectQuery()) {
             sql += "(" + exportSpec.getSourceSelectQuery() + ")";
         }
+        if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
+            sql += " GROUP BY ";
+            sql += Joiner.on(", ").join(dynamicPartitionExaCols.split("/"));
+        }
         sql += ";";
 
+        System.out.println("Export SQL: " + sql);
         return sql;
     }
 

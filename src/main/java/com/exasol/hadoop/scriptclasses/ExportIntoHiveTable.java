@@ -5,6 +5,7 @@ import com.exasol.ExaIterator;
 import com.exasol.ExaMetadata;
 import com.exasol.hadoop.HdfsSerDeExportService;
 import com.exasol.hadoop.hcat.HCatMetadataService;
+import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
@@ -13,8 +14,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 
 import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name as the main class.
@@ -112,9 +112,31 @@ public class ExportIntoHiveTable {
         StringBuilder sb = new StringBuilder();
         sb.append(tableMeta.getHdfsAddress());
         sb.append(tableMeta.getHdfsTableRootPath());
+
+        // Partitions
+        List<Integer> dynamicPartitionExaColNums = new ArrayList<>();
         if (hasStaticPartition) {
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
             sb.append("/" + staticPartition);
+        } else if (hasDynamicPartition) {
+            List<HCatTableColumn> hivePartitions = tableMeta.getPartitionColumns();
+            String[] exaColumnNums = dynamicPartitionExaCols.split(",");
+
+            if (hivePartitions.size() != exaColumnNums.length) {
+                String exMsg = "The target table has " + hivePartitions.size() + " partition columns, but "
+                        + exaColumnNums.length + " source partition columns were specified.";
+                throw new RuntimeException(exMsg);
+            }
+
+            // Build partitions
+            String dynamicPartition = "";
+            for (int i = 0; i < exaColumnNums.length; i++) {
+                int colNum = firstColumnIndex + Integer.parseInt(exaColumnNums[i]);
+                dynamicPartitionExaColNums.add(colNum);
+                dynamicPartition += "/" + hivePartitions.get(i).getName() + "=" + iter.getString(colNum);
+            }
+            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            sb.append(dynamicPartition);
         }
         String hdfsPath = sb.toString();
 
@@ -127,7 +149,7 @@ public class ExportIntoHiveTable {
         String file = sb.toString();
 
         if (fileFormat.equals("PARQUET")) {
-            HdfsSerDeExportService.exportToParquetTable(hdfsPath, hdfsUser, useKerberos, kerberosCredentials, file, tableMeta, compressionType, null, firstColumnIndex, iter);
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath, hdfsUser, useKerberos, kerberosCredentials, file, tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
         } else {
             throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }

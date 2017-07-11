@@ -14,17 +14,31 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.temporal.JulianFields;
+import java.util.List;
 import java.util.TimeZone;
 
 public class Tuple {
     private Object[] data;
     private ExaIterator iter;
     private int firstColumnIndex;
+    private int[] hiveToExaColNumMap;
 
-    public Tuple(ExaIterator iter, final int numCols, final int firstColumnIndex) {
+    public Tuple(ExaIterator iter, final int numCols, final int firstColumnIndex, final List<Integer> dynamicPartitionExaColNums) {
         this.iter = iter;
-        data = new Object[numCols];
+        this.data = new Object[numCols];
         this.firstColumnIndex = firstColumnIndex;
+        this.hiveToExaColNumMap = new int[numCols];
+        for (int hiveIdx = 0, exaIdx = 0; hiveIdx < hiveToExaColNumMap.length; exaIdx++) {
+            if (dynamicPartitionExaColNums.contains(this.firstColumnIndex + exaIdx)) {
+                // Skip column, partition values are not in data
+                continue;
+            }
+            this.hiveToExaColNumMap[hiveIdx++] = exaIdx;
+        }
+    }
+
+    public boolean next() throws ExaIterationException {
+        return iter.next();
     }
 
     public Tuple getTuple(int index) {
@@ -44,7 +58,7 @@ public class Tuple {
             throw new RuntimeException("Tuple index " + index + " is out of bounds.");
         }
 
-        int iterIndex = firstColumnIndex + index;
+        int iterIndex = firstColumnIndex + hiveToExaColNumMap[index];
         PrimitiveType.PrimitiveTypeName primitiveTypeName = primitiveType.getPrimitiveTypeName();
         OriginalType originalType = primitiveType.getOriginalType();
         try {
