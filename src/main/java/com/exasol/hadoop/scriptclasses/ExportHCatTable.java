@@ -4,6 +4,8 @@ import com.exasol.ExaConnectionAccessException;
 import com.exasol.ExaConnectionInformation;
 import com.exasol.ExaExportSpecification;
 import com.exasol.ExaMetadata;
+import com.exasol.hadoop.hcat.HCatMetadataService;
+import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.utils.UdfUtils;
@@ -103,15 +105,15 @@ public class ExportHCatTable {
 
         // Dynamic partitions
         List<String> exaColumns = exportSpec.getSourceColumnNames();
-        List<String> exaColSet = new ArrayList<>();
-
+        List<String> exaColNames = new ArrayList<>();
         for (String exaCol : exaColumns) {
             exaCol = exaCol.replaceAll("\"", "");
-            exaColSet.add(exaCol);
+            exaColNames.add(exaCol);
         }
 
-        List<String> dynamicCols = new ArrayList<>();
+        List<Integer> dynamicPartsExaColNums = null;
         if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
+            List<String> dynamicCols = new ArrayList<>();
             String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
             for (int i = 0; i < dynamicPartitions.length; i++) {
                 String[] dynPartTableCol = dynamicPartitions[i].split("\\.");
@@ -145,15 +147,61 @@ public class ExportHCatTable {
                     dynamicCols.add(table + "." + column);
                 }
             }
+
+            dynamicPartsExaColNums = new ArrayList<>();
+            for (String dynamicCol : dynamicCols) {
+                int exaColIndex = exaColNames.indexOf(dynamicCol);
+                if (exaColIndex == -1) {
+                    throw new RuntimeException("Dynamic partition " + dynamicCol + " was not found in column list");
+                }
+                dynamicPartsExaColNums.add(exaColIndex);
+            }
+        } else {
+            // Possible non-specified dynamic partitions
+            boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
+            KerberosCredentials kerberosCredentials = null;
+            if (!kerberosConnection.isEmpty()) {
+                ExaConnectionInformation kerberosConn;
+                try {
+                    kerberosConn = meta.getConnection(kerberosConnection);
+                } catch (ExaConnectionAccessException e) {
+                    throw new RuntimeException("Exception while accessing Kerberos connection " + kerberosConnection + ": " + e.toString(), e);
+                }
+                String principal = kerberosConn.getUser();
+                final String krbKey = "ExaAuthType=Kerberos";
+                String[] confKeytab = kerberosConn.getPassword().split(";");
+                if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
+                    throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
+                }
+                byte[] configFile = UdfUtils.base64ToByteArray(confKeytab[1]);
+                byte[] keytabFile = UdfUtils.base64ToByteArray(confKeytab[2]);
+                kerberosCredentials = new KerberosCredentials(principal, configFile, keytabFile);
+            }
+            HCatTableMetadata tableMeta;
+            try {
+                tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            } catch (Exception e) {
+                throw new RuntimeException("Exception while fetching metadata for " + hcatTable + ": " + e.toString(), e);
+            }
+            // Use last columns for partitions
+            int numHivePartitions = tableMeta.getPartitionColumns().size();
+            if (numHivePartitions > 0) {
+                int numExaCols = exaColNames.size();
+                if (numHivePartitions > numExaCols) {
+                    throw new RuntimeException("The target table has " + numHivePartitions + " although the source table only has " + numExaCols + " partitions.");
+                }
+                Integer[] exaColumnNums = new Integer[numHivePartitions];
+                int firstPartColNum = numExaCols - numHivePartitions;
+                for (int i = 0; i < exaColumnNums.length; i++) {
+                    exaColumnNums[i] = firstPartColNum + i;
+                }
+                dynamicPartsExaColNums = Arrays.asList(exaColumnNums);
+            }
         }
 
-        List<Integer> dynamicPartsExaColNums = new ArrayList<>();
-        for (String dynamicCol : dynamicCols) {
-            int exaColIndex = exaColSet.indexOf(dynamicCol);
-            if (exaColIndex == -1) {
-                throw new RuntimeException("Dynamic partition " + dynamicCol + " was not found in column list");
-            }
-            dynamicPartsExaColNums.add(exaColIndex);
+        List<String> groupByColumns = new ArrayList<>();
+        for (Integer dynamicPartsExaColNum : dynamicPartsExaColNums) {
+            groupByColumns.add(exaColumns.get(dynamicPartsExaColNum));
         }
 
         // SQL query
@@ -184,9 +232,9 @@ public class ExportHCatTable {
         } else if (exportSpec.hasSourceSelectQuery()) {
             sql += "(" + exportSpec.getSourceSelectQuery() + ")";
         }
-        if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
+        if (!groupByColumns.isEmpty()) {
             sql += " GROUP BY ";
-            sql += Joiner.on(", ").join(dynamicPartitionExaCols.split("/"));
+            sql += Joiner.on(", ").join(groupByColumns);
         }
         sql += ";";
 

@@ -80,7 +80,7 @@ public class ExportIntoHiveTable {
 
         boolean hasStaticPartition = false;
         boolean hasDynamicPartition = false;
-        boolean tableHasPartition = !tableMeta.getPartitionColumns().isEmpty();
+        List<HCatTableColumn> hivePartitions = tableMeta.getPartitionColumns();
         if (staticPartition == null) {
             staticPartition = "";
         }
@@ -91,21 +91,15 @@ public class ExportIntoHiveTable {
             throw new RuntimeException("A static and dynamic partition cannot both be specified.");
         } else if (!staticPartition.isEmpty()) {
             // Static partition
-            if (!tableHasPartition) {
-                throw new RuntimeException("A partition was specified although the target table does not have any partitions.");
+            if (hivePartitions.isEmpty()) {
+                throw new RuntimeException("A static partition was specified although the target table does not have any partitions.");
             }
             hasStaticPartition = true;
-        } else {
-            // Possible dynamic partition
-            if (tableHasPartition) {
-                // Dynamic partition
-                hasDynamicPartition = true;
-            } else {
-                if (!dynamicPartitionExaCols.isEmpty()) {
-                    throw new RuntimeException("A partition was specified although the target table does not have any partitions.");
-                }
-                // No dynamic partition
-            }
+        } else if (!dynamicPartitionExaCols.isEmpty()) {
+            // Dynamic partition
+            hasDynamicPartition = true;
+        } else if (!dynamicPartitionExaCols.isEmpty() && hivePartitions.isEmpty()) {
+            throw new RuntimeException("A dynamic partition was specified although the target table does not have any partitions.");
         }
 
         // HDFS path
@@ -119,8 +113,11 @@ public class ExportIntoHiveTable {
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
             sb.append("/" + staticPartition);
         } else if (hasDynamicPartition) {
-            List<HCatTableColumn> hivePartitions = tableMeta.getPartitionColumns();
-            String[] exaColumnNums = dynamicPartitionExaCols.split(",");
+            int[] exaColumnNums = new int[hivePartitions.size()];
+            String[] exaColumnNumsStr = dynamicPartitionExaCols.split(",");
+            for (int i = 0; i < exaColumnNumsStr.length; i++) {
+                exaColumnNums[i] = Integer.parseInt(exaColumnNumsStr[i]);
+            }
 
             if (hivePartitions.size() != exaColumnNums.length) {
                 String exMsg = "The target table has " + hivePartitions.size() + " partition columns, but "
@@ -131,7 +128,7 @@ public class ExportIntoHiveTable {
             // Build partitions
             String dynamicPartition = "";
             for (int i = 0; i < exaColumnNums.length; i++) {
-                int colNum = firstColumnIndex + Integer.parseInt(exaColumnNums[i]);
+                int colNum = firstColumnIndex + exaColumnNums[i];
                 dynamicPartitionExaColNums.add(colNum);
                 dynamicPartition += "/" + hivePartitions.get(i).getName() + "=" + iter.getString(colNum);
             }
