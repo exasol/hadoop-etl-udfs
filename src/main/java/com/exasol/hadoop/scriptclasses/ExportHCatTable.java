@@ -93,7 +93,8 @@ public class ExportHCatTable {
             String password = jdbcConn.getPassword();
             if (useKerberosJdbc) {
                 try {
-                    KerberosHadoopUtils.configKerberosJaas(jdbcConn.getUser(), jdbcConn.getPassword());
+                    final String path = "/tmp";
+                    KerberosHadoopUtils.configKerberosJaas(path, jdbcConn.getUser(), jdbcConn.getPassword());
                     user = "";
                     password = "";
                 } catch (Exception e) {

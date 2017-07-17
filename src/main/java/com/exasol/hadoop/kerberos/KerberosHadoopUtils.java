@@ -33,16 +33,15 @@ public class KerberosHadoopUtils {
         return UdfUtils.writeTempFile(data, path, "kt_", ".keytab");
     }
 
-    public static void configKerberosJaas(String user, String password) throws Exception {
+    public static void configKerberosJaas(String path, String user, String password) throws Exception {
         final String krbKey = "ExaAuthType=Kerberos";
         String[] confKeytab = password.split(";");
         if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
             throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
         }
 
-        final String tmpDir = "/tmp";
-        String confPath = UdfUtils.writeTempFile(DatatypeConverter.parseBase64Binary(confKeytab[1]), tmpDir, "krb5_", ".conf");
-        String keytabPath = UdfUtils.writeTempFile(DatatypeConverter.parseBase64Binary(confKeytab[2]), tmpDir, "kt_", ".keytab");
+        String confPath = UdfUtils.writeTempFile(DatatypeConverter.parseBase64Binary(confKeytab[1]), path, "krb5_", ".conf");
+        String keytabPath = UdfUtils.writeTempFile(DatatypeConverter.parseBase64Binary(confKeytab[2]), path, "kt_", ".keytab");
 
         StringBuilder jaasData = new StringBuilder();
         jaasData.append("Client {\n");
@@ -61,7 +60,7 @@ public class KerberosHadoopUtils {
         jaasData.append("doNotPrompt=true\n");
         jaasData.append("useTicketCache=false;\n");
         jaasData.append("};\n");
-        String jaasPath = UdfUtils.writeTempFile(jaasData.toString().getBytes(Charset.forName("UTF-8")), tmpDir, "jaas_", ".conf");
+        String jaasPath = UdfUtils.writeTempFile(jaasData.toString().getBytes(Charset.forName("UTF-8")), path, "jaas_", ".conf");
 
         System.setProperty("java.security.auth.login.config", jaasPath);
         System.setProperty("java.security.krb5.conf", confPath);
