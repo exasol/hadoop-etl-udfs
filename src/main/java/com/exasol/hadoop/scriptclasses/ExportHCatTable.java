@@ -93,7 +93,7 @@ public class ExportHCatTable {
             String password = jdbcConn.getPassword();
             if (useKerberosJdbc) {
                 try {
-                    configKerberos(jdbcConn.getUser(), jdbcConn.getPassword());
+                    KerberosHadoopUtils.configKerberosJaas(jdbcConn.getUser(), jdbcConn.getPassword());
                     user = "";
                     password = "";
                 } catch (Exception e) {
@@ -282,79 +282,6 @@ public class ExportHCatTable {
                 System.out.println("SQLException in Connection.close() while creating table using JDBC driver: " + e.toString());
             }
         }
-    }
-
-    private static void configKerberos(String user, String password) throws Exception {
-        final String krbKey = "ExaAuthType=Kerberos";
-        String[] confKeytab = password.split(";");
-        if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
-            throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
-        }
-
-        File kerberosBaseDir = new File("/tmp");
-        File krbDir = File.createTempFile("kerberos_", null, kerberosBaseDir);
-        krbDir.delete();
-        krbDir.mkdir();
-        krbDir.deleteOnExit();
-
-        String krbConfPath = writeKrbConf(krbDir, confKeytab[1]);
-        String keytabPath = writeKeytab(krbDir, confKeytab[2]);
-        String jaasConfigPath = writeJaasConfig(krbDir, user, keytabPath);
-        System.setProperty("java.security.auth.login.config", jaasConfigPath);
-        System.setProperty("java.security.krb5.conf", krbConfPath);
-        System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
-
-        // Set login user. The value is actually not important, but something must be specified.
-        // UnixLoginModule makes a native system to get the username
-        int endIndex = StringUtils.indexOfAny(user, "/@");
-        if (endIndex != -1) {
-            user = user.substring(0, endIndex);
-        }
-        UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(user));
-    }
-
-    private static String writeKrbConf(File krbDir, String base64Conf) throws Exception {
-        File file = File.createTempFile("krb_", ".conf", krbDir);
-        file.deleteOnExit();
-        FileOutputStream os = new FileOutputStream(file);
-        os.write(DatatypeConverter.parseBase64Binary(base64Conf));
-        os.close();
-        return file.getCanonicalPath();
-    }
-
-    private static String writeKeytab(File krbDir, String base64Keytab) throws Exception {
-        File file = File.createTempFile("kt_", ".keytab", krbDir);
-        file.deleteOnExit();
-        FileOutputStream os = new FileOutputStream(file);
-        os.write(DatatypeConverter.parseBase64Binary(base64Keytab));
-        os.close();
-        return file.getCanonicalPath();
-    }
-
-    private static String writeJaasConfig(File krbDir, String princ, String keytabPath) throws Exception {
-        File file = File.createTempFile("jaas_", ".conf", krbDir);
-        file.deleteOnExit();
-        String jaasData;
-        jaasData  = "Client {\n";
-        jaasData += "com.sun.security.auth.module.Krb5LoginModule required\n";
-        jaasData += "principal=\"" + princ + "\"\n";
-        jaasData += "useKeyTab=true\n";
-        jaasData += "keyTab=\"" + keytabPath + "\"\n";
-        jaasData += "doNotPrompt=true\n";
-        jaasData += "useTicketCache=false;\n";
-        jaasData += "};\n";
-        jaasData += "com.sun.security.jgss.initiate {\n";
-        jaasData += "com.sun.security.auth.module.Krb5LoginModule required\n";
-        jaasData += "principal=\"" + princ + "\"\n";
-        jaasData += "useKeyTab=true\n";
-        jaasData += "keyTab=\"" + keytabPath + "\"\n";
-        jaasData += "doNotPrompt=true\n";
-        jaasData += "useTicketCache=false;\n";
-        jaasData += "};\n";
-        FileOutputStream os = new FileOutputStream(file);
-        os.write(jaasData.getBytes(Charset.forName("UTF-8")));
-        os.close();
-        return file.getCanonicalPath();
     }
 
     private static String getMandatoryParameter(Map<String, String> params, String key) {
