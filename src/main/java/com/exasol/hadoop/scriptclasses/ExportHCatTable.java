@@ -8,6 +8,7 @@ import com.exasol.hadoop.hcat.HCatMetadataService;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
+import com.exasol.utils.JdbcUtils;
 import com.exasol.utils.UdfUtils;
 import com.google.common.base.Joiner;
 import org.apache.commons.lang.StringUtils;
@@ -67,41 +68,11 @@ public class ExportHCatTable {
         }
 
         // JDBC statements
-        List<String> jdbcSqlStatements = new ArrayList<>();
-        if (exportSpec.hasTruncate()) {
-            jdbcSqlStatements.add("TRUNCATE TABLE " + hcatDB + "." + hcatTable);
-        }
-        if (exportSpec.hasReplace()) {
-            jdbcSqlStatements.add("DROP TABLE " + hcatDB + "." + hcatTable);
-        }
-        if (exportSpec.hasCreateBy()) {
-            jdbcSqlStatements.add(exportSpec.getCreateBy());
-        }
+        List<String> jdbcSqlStatements = getJdbcStatements(exportSpec, hcatDB, hcatTable);
         if (jdbcSqlStatements.size() > 0) {
-            if (jdbcConnection.isEmpty()) {
-                throw new RuntimeException("The JDBC_CONNECTION parameter is required, but was not specified.");
-            }
-            ExaConnectionInformation jdbcConn;
-            try {
-                jdbcConn = meta.getConnection(jdbcConnection);
-            } catch (ExaConnectionAccessException e) {
-                throw new RuntimeException("ExaConnectionAccessException while getting connection " + jdbcConnection + ": " + e.toString(), e);
-            }
-
-            boolean useKerberosJdbc = jdbcAuthType.equalsIgnoreCase("kerberos");
-            String user = jdbcConn.getUser();
-            String password = jdbcConn.getPassword();
-            if (useKerberosJdbc) {
-                try {
-                    final String path = "/tmp";
-                    KerberosHadoopUtils.configKerberosJaas(path, jdbcConn.getUser(), jdbcConn.getPassword());
-                    user = "";
-                    password = "";
-                } catch (Exception e) {
-                    throw new RuntimeException("Exception while configuring Kerberos connection " + jdbcConnection + ": " + e.toString(), e);
-                }
-            }
-            executeJdbcStatements(jdbcConn.getAddress(), user, password, jdbcSqlStatements);
+            ExaConnectionInformation jdbcConn = getJdbcConnection(meta, jdbcConnection);
+            boolean useKerberos = jdbcAuthType.equalsIgnoreCase("kerberos");
+            JdbcUtils.executeJdbcStatements(jdbcSqlStatements, jdbcConn, useKerberos);
         }
 
         // Dynamic partitions
@@ -243,46 +214,43 @@ public class ExportHCatTable {
         return sql;
     }
 
-    private static void executeJdbcStatements(String url, String user, String password, List<String> sqlStatements) {
-        final String jdbcClass = "org.apache.hive.jdbc.HiveDriver";
-        try {
-            Class.forName(jdbcClass);
-        } catch (ExceptionInInitializerError e) {
-            throw new RuntimeException("ExceptionInInitializerError while creating table using JDBC driver: " + e.toString(), e);
-        } catch (LinkageError e) {
-            throw new RuntimeException("LinkageError while creating table using JDBC driver: " + e.toString(), e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("ClassNotFoundException while creating table using JDBC driver: " + e.toString(), e);
+    private static ExaConnectionInformation getJdbcConnection(ExaMetadata meta, String jdbcConnection) {
+        if (jdbcConnection.isEmpty()) {
+            throw new RuntimeException("The JDBC_CONNECTION parameter is required, but was not specified.");
         }
+        ExaConnectionInformation jdbcConn;
+        try {
+            jdbcConn = meta.getConnection(jdbcConnection);
+        } catch (ExaConnectionAccessException e) {
+            throw new RuntimeException("ExaConnectionAccessException while getting connection " + jdbcConnection + ": " + e.toString(), e);
+        }
+        return jdbcConn;
+    }
 
-        Connection conn = null;
-        Statement stmt = null;
-        try {
-            conn = DriverManager.getConnection(url, user, password);
-            stmt = conn.createStatement();
-            for (String sql : sqlStatements) {
-                stmt.executeUpdate(sql);
+    private static List<String> getJdbcStatements(ExaExportSpecification exportSpec, String hcatDB, String hcatTable) {
+        List<String> jdbcSqlStatements = new ArrayList<>();
+        if (exportSpec.hasTruncate()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("TRUNCATE TABLE ");
+            if (hcatDB != null && !hcatDB.isEmpty()) {
+                sb.append(hcatDB + ".");
             }
-        } catch (SQLTimeoutException e) {
-            throw new RuntimeException("SQLTimeoutException while creating table using JDBC driver: " + e.toString(), e);
-        } catch (SQLException e) {
-            throw new RuntimeException("SQLException while creating table using JDBC driver: " + e.toString(), e);
-        } finally {
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("SQLException in Statement.close() while creating table using JDBC driver: " + e.toString());
-            }
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                System.out.println("SQLException in Connection.close() while creating table using JDBC driver: " + e.toString());
-            }
+            sb.append(hcatTable);
+            jdbcSqlStatements.add(sb.toString());
         }
+        if (exportSpec.hasReplace()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("DROP TABLE ");
+            if (hcatDB != null && !hcatDB.isEmpty()) {
+                sb.append(hcatDB + ".");
+            }
+            sb.append(hcatTable);
+            jdbcSqlStatements.add(sb.toString());
+        }
+        if (exportSpec.hasCreateBy()) {
+            jdbcSqlStatements.add(exportSpec.getCreateBy());
+        }
+        return jdbcSqlStatements;
     }
 
     private static String getMandatoryParameter(Map<String, String> params, String key) {
