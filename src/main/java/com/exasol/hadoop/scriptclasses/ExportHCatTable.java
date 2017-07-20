@@ -83,53 +83,12 @@ public class ExportHCatTable {
             exaColNames.add(exaCol);
         }
 
-        List<Integer> dynamicPartsExaColNums = null;
+        List<Integer> dynamicPartsExaColNums;
         if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
-            List<String> dynamicCols = new ArrayList<>();
-            String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
-            for (int i = 0; i < dynamicPartitions.length; i++) {
-                String[] dynPartTableCol = dynamicPartitions[i].split("\\.");
-                for (int j = 0; j < dynPartTableCol.length; j++) {
-                    if (dynPartTableCol[j].startsWith("\"") && dynPartTableCol[j].endsWith("\"")) {
-                        // Quoted identifier, case senstive
-                        dynPartTableCol[j] = dynPartTableCol[j].replaceAll("\"", "");
-                    } else {
-                        // Not quoted, to upper case
-                        dynPartTableCol[j] = dynPartTableCol[j].toUpperCase();
-                    }
-                }
-                String table;
-                String column;
-                if (dynPartTableCol.length == 1) {
-                    if (exportSpec.hasSourceTable()) {
-                        table = exportSpec.getSourceTable().replaceAll("\"", "");
-                    } else {
-                        table = "";
-                    }
-                    column = dynPartTableCol[0];
-                } else if (dynPartTableCol.length == 2) {
-                    table = dynPartTableCol[0];
-                    column = dynPartTableCol[1];
-                } else {
-                    throw new RuntimeException("Exception while parsing dynamic column name: " + dynamicPartitions[i]);
-                }
-                if (table.isEmpty()) {
-                    dynamicCols.add(column);
-                } else {
-                    dynamicCols.add(table + "." + column);
-                }
-            }
-
-            dynamicPartsExaColNums = new ArrayList<>();
-            for (String dynamicCol : dynamicCols) {
-                int exaColIndex = exaColNames.indexOf(dynamicCol);
-                if (exaColIndex == -1) {
-                    throw new RuntimeException("Dynamic partition " + dynamicCol + " was not found in column list");
-                }
-                dynamicPartsExaColNums.add(exaColIndex);
-            }
+            // Dynamic columns were specified
+            dynamicPartsExaColNums = getExaColumnNumbersOfSpecifiedDynamicPartitions(exportSpec, dynamicPartitionExaCols, exaColNames);
         } else {
-            // Possible non-specified dynamic partitions
+            // Dynamic columns were not specified
             boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
             KerberosCredentials kerberosCredentials = null;
             if (!kerberosConnection.isEmpty()) {
@@ -139,15 +98,7 @@ public class ExportHCatTable {
                 } catch (ExaConnectionAccessException e) {
                     throw new RuntimeException("Exception while accessing Kerberos connection " + kerberosConnection + ": " + e.toString(), e);
                 }
-                String principal = kerberosConn.getUser();
-                final String krbKey = "ExaAuthType=Kerberos";
-                String[] confKeytab = kerberosConn.getPassword().split(";");
-                if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
-                    throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
-                }
-                byte[] configFile = UdfUtils.base64ToByteArray(confKeytab[1]);
-                byte[] keytabFile = UdfUtils.base64ToByteArray(confKeytab[2]);
-                kerberosCredentials = new KerberosCredentials(principal, configFile, keytabFile);
+                kerberosCredentials = new KerberosCredentials(kerberosConn);
             }
             HCatTableMetadata tableMeta;
             try {
@@ -155,20 +106,7 @@ public class ExportHCatTable {
             } catch (Exception e) {
                 throw new RuntimeException("Exception while fetching metadata for " + hcatTable + ": " + e.toString(), e);
             }
-            // Use last columns for partitions
-            int numHivePartitions = tableMeta.getPartitionColumns().size();
-            if (numHivePartitions > 0) {
-                int numExaCols = exaColNames.size();
-                if (numHivePartitions > numExaCols) {
-                    throw new RuntimeException("The target table has " + numHivePartitions + " although the source table only has " + numExaCols + " partitions.");
-                }
-                Integer[] exaColumnNums = new Integer[numHivePartitions];
-                int firstPartColNum = numExaCols - numHivePartitions;
-                for (int i = 0; i < exaColumnNums.length; i++) {
-                    exaColumnNums[i] = firstPartColNum + i;
-                }
-                dynamicPartsExaColNums = Arrays.asList(exaColumnNums);
-            }
+            dynamicPartsExaColNums = getExaColumnNumbersOfNonSpecifiedDynamicPartitions(tableMeta, exaColNames.size());
         }
 
         List<String> groupByColumns = new ArrayList<>();
@@ -192,26 +130,94 @@ public class ExportHCatTable {
         exportUDFArgs.add(debugAddress);
 
         // SQL
-        String sql;
-        sql = "SELECT \"" + meta.getScriptSchema() + "\".\"EXPORT_INTO_HIVE_TABLE\"(";
-        sql += "'" + Joiner.on("', '").join(exportUDFArgs) + "'";
-        sql += ", ";
-        sql += Joiner.on(", ").join(exportSpec.getSourceColumnNames());
-        sql += ") ";
-        sql += "FROM ";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ");
+        sql.append("\"" + meta.getScriptSchema() + "\".\"EXPORT_INTO_HIVE_TABLE\"(");
+        sql.append("'" + Joiner.on("', '").join(exportUDFArgs) + "'");
+        sql.append(", ");
+        sql.append(Joiner.on(", ").join(exportSpec.getSourceColumnNames()));
+        sql.append(") ");
+        sql.append("FROM ");
         if (exportSpec.hasSourceTable()) {
-            sql += exportSpec.getSourceTable();
+            sql.append(exportSpec.getSourceTable());
         } else if (exportSpec.hasSourceSelectQuery()) {
-            sql += "(" + exportSpec.getSourceSelectQuery() + ")";
+            sql.append("(" + exportSpec.getSourceSelectQuery() + ") ");
         }
         if (!groupByColumns.isEmpty()) {
-            sql += " GROUP BY ";
-            sql += Joiner.on(", ").join(groupByColumns);
+            sql.append("GROUP BY ");
+            sql.append(Joiner.on(", ").join(groupByColumns));
         }
-        sql += ";";
+        sql.append(";");
 
-        System.out.println("Export SQL: " + sql);
-        return sql;
+        return sql.toString();
+    }
+
+    private static List<Integer> getExaColumnNumbersOfSpecifiedDynamicPartitions(ExaExportSpecification exportSpec,
+                                                                                 String dynamicPartitionExaCols,
+                                                                                 List<String> exaColNames) {
+        List<String> dynamicCols = new ArrayList<>();
+        String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
+        for (int i = 0; i < dynamicPartitions.length; i++) {
+            String[] dynPartTableCol = dynamicPartitions[i].split("\\.");
+            for (int j = 0; j < dynPartTableCol.length; j++) {
+                if (dynPartTableCol[j].startsWith("\"") && dynPartTableCol[j].endsWith("\"")) {
+                    // Quoted identifier, case sensitive
+                    dynPartTableCol[j] = dynPartTableCol[j].replaceAll("\"", "");
+                } else {
+                    // Not quoted, to upper case
+                    dynPartTableCol[j] = dynPartTableCol[j].toUpperCase();
+                }
+            }
+            String table = "";
+            String column;
+            if (dynPartTableCol.length == 1) {
+                if (exportSpec.hasSourceTable()) {
+                    table = exportSpec.getSourceTable().replaceAll("\"", "");
+                }
+                column = dynPartTableCol[0];
+            } else if (dynPartTableCol.length == 2) {
+                table = dynPartTableCol[0];
+                column = dynPartTableCol[1];
+            } else {
+                throw new RuntimeException("Exception while parsing dynamic column name: " + dynamicPartitions[i]);
+            }
+            if (table.isEmpty()) {
+                dynamicCols.add(column);
+            } else {
+                dynamicCols.add(table + "." + column);
+            }
+        }
+
+        List<Integer> dynamicPartsExaColNums = new ArrayList<>();
+        for (String dynamicCol : dynamicCols) {
+            int exaColIndex = exaColNames.indexOf(dynamicCol);
+            if (exaColIndex == -1) {
+                throw new RuntimeException("Dynamic partition " + dynamicCol + " was not found in column list");
+            }
+            dynamicPartsExaColNums.add(exaColIndex);
+        }
+
+        return dynamicPartsExaColNums;
+    }
+
+    private static List<Integer> getExaColumnNumbersOfNonSpecifiedDynamicPartitions(HCatTableMetadata tableMeta, int numExaCols) {
+        List<Integer> dynamicPartsExaColNums = new ArrayList<>();
+
+        // Use last columns for partitions
+        int numHivePartitions = tableMeta.getPartitionColumns().size();
+        if (numHivePartitions > 0) {
+            if (numHivePartitions > numExaCols) {
+                throw new RuntimeException("The target table has " + numHivePartitions + " although the source table only has " + numExaCols + " partitions.");
+            }
+            Integer[] exaColumnNums = new Integer[numHivePartitions];
+            int firstPartColNum = numExaCols - numHivePartitions;
+            for (int i = 0; i < exaColumnNums.length; i++) {
+                exaColumnNums[i] = firstPartColNum + i;
+            }
+            dynamicPartsExaColNums = Arrays.asList(exaColumnNums);
+        }
+
+        return dynamicPartsExaColNums;
     }
 
     private static ExaConnectionInformation getJdbcConnection(ExaMetadata meta, String jdbcConnection) {
