@@ -64,15 +64,7 @@ public class ExportIntoHiveTable {
         KerberosCredentials kerberosCredentials = null;
         if (!connName.isEmpty()) {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
-            String principal = kerberosConnection.getUser();
-            final String krbKey = "ExaAuthType=Kerberos";
-            String[] confKeytab = kerberosConnection.getPassword().split(";");
-            if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
-                throw new RuntimeException("An invalid Kerberos CONNECTION was specified.");
-            }
-            byte[] configFile = UdfUtils.base64ToByteArray(confKeytab[1]);
-            byte[] keytabFile = UdfUtils.base64ToByteArray(confKeytab[2]);
-            kerberosCredentials = new KerberosCredentials(principal, configFile, keytabFile);
+            kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
 
         HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
