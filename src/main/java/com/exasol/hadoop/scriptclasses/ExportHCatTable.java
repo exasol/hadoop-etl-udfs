@@ -132,8 +132,9 @@ public class ExportHCatTable {
         // SQL
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
-        sql.append("\"" + meta.getScriptSchema() + "\".\"EXPORT_INTO_HIVE_TABLE\"(");
-        sql.append("'" + Joiner.on("', '").join(exportUDFArgs) + "'");
+        sql.append("\"").append(meta.getScriptSchema()).append("\".\"EXPORT_INTO_HIVE_TABLE\"");
+        sql.append("(");
+        sql.append("'").append(Joiner.on("', '").join(exportUDFArgs)).append("'");
         sql.append(", ");
         sql.append(Joiner.on(", ").join(exportSpec.getSourceColumnNames()));
         sql.append(") ");
@@ -141,7 +142,7 @@ public class ExportHCatTable {
         if (exportSpec.hasSourceTable()) {
             sql.append(exportSpec.getSourceTable());
         } else if (exportSpec.hasSourceSelectQuery()) {
-            sql.append("(" + exportSpec.getSourceSelectQuery() + ") ");
+            sql.append("(").append(exportSpec.getSourceSelectQuery()).append(") ");
         }
         if (!groupByColumns.isEmpty()) {
             sql.append("GROUP BY ");

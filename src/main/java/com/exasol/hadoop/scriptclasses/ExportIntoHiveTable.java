@@ -95,15 +95,15 @@ public class ExportIntoHiveTable {
         }
 
         // HDFS path
-        StringBuilder sb = new StringBuilder();
-        sb.append(tableMeta.getHdfsAddress());
-        sb.append(tableMeta.getHdfsTableRootPath());
+        StringBuilder hdfsPath = new StringBuilder();
+        hdfsPath.append(tableMeta.getHdfsAddress());
+        hdfsPath.append(tableMeta.getHdfsTableRootPath());
 
         // Partitions
         List<Integer> dynamicPartitionExaColNums = new ArrayList<>();
         if (hasStaticPartition) {
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
-            sb.append("/" + staticPartition);
+            hdfsPath.append("/").append(staticPartition);
         } else if (hasDynamicPartition) {
             int[] exaColumnNums = new int[hivePartitions.size()];
             String[] exaColumnNumsStr = dynamicPartitionExaCols.split(",");
@@ -118,27 +118,26 @@ public class ExportIntoHiveTable {
             }
 
             // Build partitions
-            String dynamicPartition = "";
+            StringBuilder dynamicPart = new StringBuilder();
             for (int i = 0; i < exaColumnNums.length; i++) {
                 int colNum = firstColumnIndex + exaColumnNums[i];
                 dynamicPartitionExaColNums.add(colNum);
-                dynamicPartition += "/" + hivePartitions.get(i).getName() + "=" + iter.getString(colNum);
+                dynamicPart.append("/").append(hivePartitions.get(i).getName()).append("=").append(iter.getString(colNum));
             }
+            String dynamicPartition = dynamicPart.toString();
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
-            sb.append(dynamicPartition);
+            hdfsPath.append(dynamicPartition);
         }
-        String hdfsPath = sb.toString();
 
         // Filename
-        sb = new StringBuilder();
-        sb.append("exa_export_");
-        sb.append(new SimpleDateFormat("yyyyMMdd_HHmmss_").format(new Date()));
-        sb.append(UUID.randomUUID().toString().replaceAll("-", ""));
-        sb.append(".parq");
-        String file = sb.toString();
+        StringBuilder file = new StringBuilder();
+        file.append("exa_export_");
+        file.append(new SimpleDateFormat("yyyyMMdd_HHmmss_").format(new Date()));
+        file.append(UUID.randomUUID().toString().replaceAll("-", ""));
+        file.append(".parq");
 
         if (fileFormat.equals("PARQUET")) {
-            HdfsSerDeExportService.exportToParquetTable(hdfsPath, hdfsUser, useKerberos, kerberosCredentials, file, tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUser, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
         } else {
             throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }
