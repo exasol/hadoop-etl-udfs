@@ -254,8 +254,8 @@ public class ExportHCatTable {
             sb.append(hcatTable);
             jdbcSqlStatements.add(sb.toString());
         }
-        if (exportSpec.hasCreateBy()) {
-            jdbcSqlStatements.add(exportSpec.getCreateBy());
+        if (exportSpec.hasCreatedBy()) {
+            jdbcSqlStatements.add(exportSpec.getCreatedBy());
         }
         return jdbcSqlStatements;
     }
