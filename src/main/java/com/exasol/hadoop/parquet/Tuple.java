@@ -12,7 +12,9 @@ import parquet.schema.PrimitiveType;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.JulianFields;
 import java.util.List;
 import java.util.TimeZone;
@@ -100,18 +102,21 @@ public class Tuple {
                     // Timestamp
                     // First 8 bytes: nanoseconds within day
                     // Next 4 bytes: Julian day
-                    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+                    // Avoid any type of time zone conversion
+                    // Hive automatically adjusts values to UTC when reading (Impala does not)
                     Timestamp timestamp = iter.getTimestamp(iterIndex);
-                    if (timestamp != null) {
-                        LocalDateTime localDateTime = timestamp.toLocalDateTime();
-                        long dayNanoSeconds = localDateTime.getNano()
-                                + ((localDateTime.getHour() * 60 * 60)
-                                + (localDateTime.getMinute() * 60)
-                                + localDateTime.getSecond()) * 1000000000L;
-                        long julianDay = JulianFields.JULIAN_DAY.getFrom(timestamp.toLocalDateTime());
-                        NanoTime nanoTime = new NanoTime((int)julianDay, dayNanoSeconds);
-                        recordConsumer.addBinary(nanoTime.toBinary());
-                    }
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.");
+                    // Get timestamp string with no time zone offset
+                    String timestampStr = dateFormat.format(timestamp) + String.format("%09d", timestamp.getNanos()) + " +0000";
+                    DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS Z");
+                    ZonedDateTime zonedDateTime = ZonedDateTime.parse(timestampStr, dateTimeFormat);
+                    long dayNanoSeconds = zonedDateTime.getNano()
+                                + ((zonedDateTime.getHour() * 60 * 60)
+                                + (zonedDateTime.getMinute() * 60)
+                                + zonedDateTime.getSecond()) * 1000000000L;
+                    long julianDay = JulianFields.JULIAN_DAY.getFrom(zonedDateTime);
+                    NanoTime nanoTime = new NanoTime((int) julianDay, dayNanoSeconds);
+                    recordConsumer.addBinary(nanoTime.toBinary());
                     break;
                 default:
                     throw new RuntimeException("Unsupported primitive type: " + primitiveTypeName);
