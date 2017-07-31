@@ -125,7 +125,7 @@ public class HdfsSerDeExportService {
         UserGroupInformation ugi;
         if (useKerberos) {
             ugi = KerberosHadoopUtils.getKerberosUGI(kerberosCredentials);
-        }else {
+        } else {
             ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         }
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
@@ -139,7 +139,6 @@ public class HdfsSerDeExportService {
                     Path path = new Path(hdfsUrl, file);
                     //Path path = new Path(file);
                     System.out.println("Path: " + path.toString());
-                    int rowsExported = 0;
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
                             CompressionCodecName.fromConf(compressionType),
@@ -151,6 +150,7 @@ public class HdfsSerDeExportService {
                             conf);
 
                     Tuple row = new Tuple(ctx, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
+                    int rowsExported = 0;
                     do {
                         writer.write(row);
                         rowsExported++;
