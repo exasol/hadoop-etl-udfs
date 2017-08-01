@@ -9,6 +9,8 @@
 1. [Overview](#overview)
 2. [Getting Started](#getting-started)
 3. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+    1. [IMPORT](#import)
+    2. [EXPORT](#export)
 4. [Debugging](#debugging)
 
 
@@ -27,9 +29,13 @@ Please follow the [step-by-step deployment guide](doc/deployment-guide.md).
 
 The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
-For IMPORT, please see the [IMPORT details](doc/import.md).
+### IMPORT
 
-For EXPORT, please see the [EXPORT details](doc/export.md).
+Please see the [IMPORT details](doc/import.md).
+
+### EXPORT
+
+Please see the [EXPORT details](doc/export.md).
 
 
 ## Debugging
