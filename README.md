@@ -28,6 +28,7 @@ Please follow the [step-by-step deployment guide](doc/deployment-guide.md).
 The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
 For IMPORT, please see the [IMPORT details](doc/import.md).
+
 For EXPORT, please see the [EXPORT details](doc/export.md).
 
 
