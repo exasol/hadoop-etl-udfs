@@ -38,7 +38,7 @@ public class ExportHCatTable {
         String hdfsUser = getMandatoryParameter(params, "HDFS_USER");
 
         // Optional parameters
-        String hdfsAddress = getParameter(params, "HDFS_ADDRESS", "");
+        String hdfsAddress = getParameter(params, "HDFS_URL", "");
         String staticPartition = getParameter(params, "STATIC_PARTITION", "");
         String dynamicPartitionExaCols = getParameter(params, "DYNAMIC_PARTITION_EXA_COLS", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
