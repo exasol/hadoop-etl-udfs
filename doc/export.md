@@ -91,4 +91,58 @@ Parameter           | Value
 
 ## Options
 
+The following options may be used to create or modify the destination table before the EXPORT is started.
+
+Option           | Action
+------------------- | -----------
+**REPLACE** | Drops the destination table before the EXPORT is started.
+**TRUNCATE** | Truncates the destination table before the EXPORT is started.
+**CREATED BY** | Creates the destination table using the specified string before the EXPORT is started.
+
+Note: The SQL statements for these options are executed using the Apache Hive JDBC driver. Thus, in order to use them, the ```JDBC_CONNECTION``` paramater must be specified. If ```JDBC_CONNECTION``` is a Kerberos connection, ```JDBC_AUTH_TYPE``` must also be specified.
+
+Examples:
+
+Exasol CONNECTION object used for EXPORT.
+```sql
+CREATE CONNECTION HIVE_JDBC_CONN TO 'jdbc:hive2://hive-host:10000/' USER 'hive-user' IDENTIFIED BY 'hive-password';
+```
+
+Create the destination table before starting the EXPORT.
+```sql
+EXPORT TABLE1
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ HCAT_TABLE      = 'test_table'
+ HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HDFS_USER       = 'hdfs';
+ JDBC_CONNECTION = 'hive_jdbc_conn'
+CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS PARQUET';
+```
+
+Truncate the destination table before starting the EXPORT.
+```sql
+EXPORT TABLE1
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ HCAT_TABLE      = 'test_table'
+ HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HDFS_USER       = 'hdfs';
+ JDBC_CONNECTION = 'hive_jdbc_conn'
+TRUNCATE;
+```
+
+Replace the destination table before starting the EXPORT.
+```sql
+EXPORT TABLE1
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ HCAT_TABLE      = 'test_table'
+ HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HDFS_USER       = 'hdfs';
+ JDBC_CONNECTION = 'hive_jdbc_conn'
+REPLACE
+CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS PARQUET';
+```
+
 ## Partitions
