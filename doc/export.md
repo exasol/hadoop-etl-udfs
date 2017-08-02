@@ -1,5 +1,12 @@
 # Hadoop ETL UDF EXPORT
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+3. [Parameters](#parameters)
+4. [Options](#options)
+5. [Partitions](#partitions)
+
 ## Overview
 Hadoop ETL UDFs are the main way to load data from EXASOL into Hadoop (HCatalog tables on HDFS).
 
@@ -57,6 +64,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
 ```
+## Parameters
 
 ### Mandatory Parameters
 
@@ -80,3 +88,7 @@ Parameter           | Value
 **JDBC_AUTH_TYPE**       | The authentication type to be used for JDBC optional connections. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, user/password authentication will be used.
 **JDBC_CONNECTION**        | The connection name to used for optional JDBC connections.
 **DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below. 
+
+## Options
+
+## Partitions
