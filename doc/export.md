@@ -21,27 +21,43 @@ Current limitations:
 
 The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
-Run the following query to show the contents of the HCatalog table sample_07.
+Exporting data using the ETL UDFs works in much the way as the normal EXPORT command.
+
+The following examples assume that the following table exists in Exasol.
 ```sql
-IMPORT INTO (code VARCHAR(1000), description VARCHAR (1000), total_emp INT, salary INT)
-FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
+CREATE TABLE TABLE1 (COL1 SMALLINT, COL2 INT, COL3 VARCHAR(50));
+```
+
+Run the following query to EXPORT a table.
+```sql
+EXPORT TABLE1
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
- HCAT_TABLE      = 'sample_07'
+ HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
 ```
 
-Run the following statement to import into an existing table.
+Run the following query to EXPORT selected columns of a table.
 ```sql
-CREATE TABLE sample_07 (code VARCHAR(1000), description VARCHAR (1000), total_emp INT, salary INT);
-
-IMPORT INTO sample_07
-FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
+EXPORT TABLE1 (COL1, COL3)
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
- HCAT_TABLE      = 'sample_07'
+ HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
 ```
+
+Run the following query to EXPORT the result set of a query.
+```sql
+EXPORT (SELECT COL2, COL3 FROM TABLE1)
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ HCAT_TABLE      = 'test_table'
+ HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HDFS_USER       = 'hdfs';
+```
+
 The EMITS specification is not required because the columns are inferred from the target table.
 
 ### Mandatory Parameters
