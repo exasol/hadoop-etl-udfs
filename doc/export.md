@@ -58,8 +58,6 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HDFS_USER       = 'hdfs';
 ```
 
-The EMITS specification is not required because the columns are inferred from the target table.
-
 ### Mandatory Parameters
 
 Parameter           | Value
