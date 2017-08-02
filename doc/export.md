@@ -101,9 +101,7 @@ Option           | Action
 
 Note: The SQL statements for these options are executed using the Apache Hive JDBC driver. Thus, in order to use them, the ```JDBC_CONNECTION``` paramater must be specified. If ```JDBC_CONNECTION``` is a Kerberos connection, ```JDBC_AUTH_TYPE``` must also be specified.
 
-Examples:
-
-Exasol CONNECTION object used for EXPORT.
+The following examples assume that the following connection exists in Exasol.
 ```sql
 CREATE CONNECTION HIVE_JDBC_CONN TO 'jdbc:hive2://hive-host:10000/' USER 'hive-user' IDENTIFIED BY 'hive-password';
 ```
