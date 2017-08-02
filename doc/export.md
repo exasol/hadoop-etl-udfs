@@ -4,16 +4,18 @@
 Hadoop ETL UDFs are the main way to load data from EXASOL into Hadoop (HCatalog tables on HDFS).
 
 The features in detail:
-* Metadata are retrieved from HCatalog (HDFS files, file formats, columns, etc.).
-* Supports all Hive SerDes (Parquet, ORC, RC, Avro, JSON, etc.).
-* Supports compression for SerDe (e.g., ORC compression) and for Hive (```hive.exec.compress.*```).
-* Supports complex data types (array, map, struct, union) and JsonPath. Values of complex data types are returned as JSON. You can also specify simple JSONPath expressions.
-* Supports to specify filters which partitions to load.
+* Metadata are retrieved from HCatalog (table location, columns, partitions, etc.).
+* Supports loading data into both static and dynamic partitions.
 * Supports HDFS HA environments (see ```HDFS_URL``` parameter below)
 * Parallel Transfer:
-  * Data is loaded directly from the data node to one of the EXASOL nodes.
-  * Parallelization is applied if the HCatalog table consists of multiple files.
-  * Degree of parallelism can be controlled via an UDF parameter. The maximum degree is determined by the number of HDFS files and the number of EXASOL nodes and cores.
+  * Data is loaded directly from the EXASOL nodes into the Hadoop data nodes.
+  * Parallelization is applied if the data set is grouped (using GROUP BY).
+  * Degree of parallelism can be controlled by the number of data set groups.
+  
+Current limitations:
+* Supports only the Parquet file format.
+* Supports only Parquet compression.
+* Supports only non-complex Hive data types.
 
 ## Using the Hadoop ETL UDFs
 
