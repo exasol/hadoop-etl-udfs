@@ -15,7 +15,7 @@ The features in detail:
 Current limitations:
 * Supports only the Parquet file format.
 * Supports only Parquet compression.
-* Supports only non-complex Hive data types.
+* Supports only non-complex data types.
 
 ## Using the Hadoop ETL UDFs
 
