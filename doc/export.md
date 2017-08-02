@@ -147,7 +147,7 @@ CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS P
 
 If the destination table has partitions, data can exported into it in one of two ways: specifying a static partition or using dynamic partitioning.
 
-### Static Partition
+### Specifying a Static Partition
 
 If a static partition is specified using ```STATIC_PARTITION```, all of the exported data is written into that single partition. Note that all table partitions must be specified.
 
@@ -169,3 +169,5 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  STATIC_PARTITION = 'year=2017/month=8'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (year INT, month INT) STORED AS PARQUET';
 ```
+### Using Dynamic Partitioning
+
