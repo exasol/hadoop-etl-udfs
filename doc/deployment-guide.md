@@ -65,7 +65,7 @@ See chapter 3.6.4. "The synchronous cluster file system BucketFS" in the EXASolu
 ### 4. Deploy UDF Scripts
 
 Then run the following SQL commands to deploy the UDF scripts in the database:
-```sql
+```
 CREATE SCHEMA ETL;
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
