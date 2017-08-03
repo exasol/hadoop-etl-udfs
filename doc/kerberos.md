@@ -66,7 +66,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
 
 ### JDBC Kerberos Connection
 
-In order to use the ```REPLACE```, ```TRUNCATE```, or ```CREATED BY``` options with the EXPORT UDF, you must also setup a CONNECTION for the JDBC driver. This CONNECTION has the same format as the above-created CONNECTION, except that the JDBC connection string must be provided in the TO field.
+In order to use the ```REPLACE```, ```TRUNCATE```, or ```CREATED BY``` options with the EXPORT UDF, you must also setup a CONNECTION for the JDBC driver. This CONNECTION has the same format as the above-created CONNECTION, except that the JDBC connection string must be provided in the ```TO``` field.
 
 Assuming the principal information for the JDBC connection is the same as for connection created above, you can just copy the CREATE CONNECTION statement previously created, specify a new name, and provide the JDBC connection string in TO field. Otherwise, you will need to execute the [create_kerberos_conn.py](../tools/create_kerberos_conn.py) Python script again with the correct information for the JDBC user.
 
