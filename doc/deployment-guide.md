@@ -65,7 +65,7 @@ See chapter 3.6.4. "The synchronous cluster file system BucketFS" in the EXASolu
 ### 4. Deploy UDF Scripts
 
 Then run the following SQL commands to deploy the UDF scripts in the database:
-```
+```sql
 CREATE SCHEMA ETL;
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
@@ -97,6 +97,16 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
  AS
 %scriptclass com.exasol.hadoop.scriptclasses.HCatTableFiles;
 %jar /buckets/your-bucket-fs/your-bucket/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+/
+
+CREATE OR REPLACE JAVA SET SCRIPT EXPORT_HCAT_TABLE(...) EMITS (...) AS
+%scriptclass com.exasol.hadoop.scriptclasses.ExportHCatTable;
+%jar /buckets/testing/test_bucket/etludf/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+/
+
+CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECTED INT) AS
+%scriptclass com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
+%jar /buckets/testing/test_bucket/etludf/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
 /
 ```
 
