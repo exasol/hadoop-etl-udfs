@@ -99,6 +99,6 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  AUTH_TYPE       = 'kerberos'
  AUTH_KERBEROS_CONNECTION = 'krb_conn';
  JDBC_AUTH_TYPE  = 'kerberos'
- JDBC_CONNECTION = 'hive_jdbc_conn'
+ JDBC_CONNECTION = 'jdbc_krb_conn'
 CREATED BY 'CREATE TABLE default.test_table(col1 VARCHAR(200)) STORED AS PARQUET';
 ```
