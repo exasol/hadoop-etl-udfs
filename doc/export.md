@@ -145,7 +145,7 @@ CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS P
 
 ## Partitions
 
-If the destination table has partitions, data can exported into it in one of two ways: specifying a static partition or using dynamic partitioning.
+If the destination table has partitions, data can be exported into it in one of two ways: specifying a static partition or using dynamic partitioning.
 
 ### Specifying a Static Partition
 
@@ -171,3 +171,40 @@ CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED B
 ```
 ### Using Dynamic Partitioning
 
+If a static partition is not specified, dynamic partitioning will be used to export data into partitioned tables. Dynamic partitioning uses the data values from the appropriate Exasol columns to automatically determine into which partition the data should be imported.
+
+To specify which Exasol columns should be used for the destination table's partitions, the ```DYNAMIC_PARTITION_EXA_COLS``` parameter should be specified. This is done by listing the names of the Exasol columns, which correspond the destination table's partitions.
+
+For example, assume that the following table exists in Exasol.
+```sql
+CREATE TABLE TABLE1 (YEAR INT, TEST_DATA VARCHAR(50), COUNTRY VARCHAR(50));
+```
+
+It can exported into a partitioned table by specifying the dynamic partition columns using the following query.
+```sql
+EXPORT
+TABLE1
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB                     = 'default'
+ HCAT_TABLE                  = 'test_table'
+ HCAT_ADDRESS                = 'thrift://hive-metastore-host:9083'
+ HDFS_USER                   = 'hdfs';
+ JDBC_CONNECTION             = 'hive_jdbc_conn'
+ DYNAMIC_PARTITION_EXA_COLS  = 'COUNTRY/YEAR'
+CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
+```
+
+If the destination table has partitions and neither ```STATIC_PARTITION``` nor ```DYNAMIC_PARTITION_EXA_COLS``` are specified, dynamic partitioning will be assumed. In this case, the last X columns of data in Exasol will be used as the dynamic partitions, where X is the destination table's number of partitions.
+
+In the following example, the last two Exasol columns are used for dynamic partitioning because the destination table has two partitions and neither ```STATIC_PARTITION``` nor ```DYNAMIC_PARTITION_EXA_COLS``` are specified.
+```sql
+EXPORT
+TABLE1(TEST_DATA, COUNTRY, YEAR)
+INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB                     = 'default'
+ HCAT_TABLE                  = 'test_table'
+ HCAT_ADDRESS                = 'thrift://hive-metastore-host:9083'
+ HDFS_USER                   = 'hdfs';
+ JDBC_CONNECTION             = 'hive_jdbc_conn'
+CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
+```
