@@ -201,10 +201,10 @@ In the following example, the last two Exasol columns are used for dynamic parti
 EXPORT
 TABLE1(TEST_DATA, COUNTRY, YEAR)
 INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
- HCAT_DB                     = 'default'
- HCAT_TABLE                  = 'test_table'
- HCAT_ADDRESS                = 'thrift://hive-metastore-host:9083'
- HDFS_USER                   = 'hdfs';
- JDBC_CONNECTION             = 'hive_jdbc_conn'
+ HCAT_DB         = 'default'
+ HCAT_TABLE      = 'test_table'
+ HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HDFS_USER       = 'hdfs';
+ JDBC_CONNECTION = 'hive_jdbc_conn'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
 ```
