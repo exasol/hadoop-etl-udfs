@@ -1,11 +1,19 @@
+## Kerberos Authentication
 
-This section only applies if your Hadoop is secured by Kerberos.
+These instructions only apply if your Hadoop installation is secured by Kerberos.
+
+### Prerequisites
 
 First, obtain the following information:
 * Kerberos principal for Hadoop (i.e., Hadoop user)
 * Kerberos configuration file (e.g., krb5.conf)
 * Kerberos keytab which contains keys for the Kerberos principal
 * Kerberos principal for the Hadoop NameNode (value of ```dfs.namenode.kerberos.principal``` in hdfs-site.xml)
+
+Optional for EXPORT:
+* Kerberos principal for Hive (value of ```hive.server2.authentication.kerberos.principal``` in hive-site.xml)
+
+### Create a Connection
 
 In order for the UDFs to have access to the necessary Kerberos information, a CONNECTION object must be created in EXASOL. Storing the Kerberos information in CONNECTION objects provides the ability to set the accessibility of the Kerberos authentication data (especially the keytab) for users. The ```TO``` field is left empty, the Kerberos principal is stored in the ```USER``` field, and the Kerberos configuration and keytab are stored in the ```IDENTIFIED BY``` field (base64 format) along with an internal key to identify the CONNECTION as a Kerberos CONNECTION.
 
@@ -28,6 +36,8 @@ The output is a CREATE CONNECTION statement, which can be executed directly in E
 python tools/create_kerberos_conn.py -h
 ```
 
+### Grant Access to the Connection
+
 You can then grant access to the CONNECTION to UDFs and users:
 ```sql
 GRANT ACCESS ON CONNECTION krb_conn FOR ETL.HCAT_TABLE_FILES TO exauser;
@@ -37,6 +47,8 @@ Or, if you want to grant the user access to the CONNECTION in any UDF (which mea
 ```sql
 GRANT CONNECTION krb_conn TO exauser;
 ```
+
+### Connection Usage
 
 Then, you can access the created CONNECTION from a UDF by passing the CONNECTION name as a UDF parameter as described above. Note: The ```hcat-and-hdfs-user``` UDF parameter must be set the NameNode principal, as described above.
 
@@ -50,4 +62,20 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HDFS_USER       = 'hdfs/_HOST@EXAMPLE.COM'
  AUTH_TYPE       = 'kerberos'
  AUTH_KERBEROS_CONNECTION = 'krb_conn';
+```
+
+### JDBC Kerberos Connection
+
+In order to use the ```REPLACE```, ```TRUNCATE```, or ```CREATED BY``` options with the EXPORT UDF, you must also setup a CONNECTION for the JDBC driver. This CONNECTION has the same format as the above-created CONNECTION, except that the JDBC connection string must be provided in the TO field.
+
+Assuming the principal information for the JDBC connection is the same as for connection created above, you can just copy the CREATE CONNECTION statement previously created, specify a new name, and provide the JDBC connection string in TO field. Otherwise, you will need to execute the [create_kerberos_conn.py](../tools/create_kerberos_conn.py) Python script again with the correct information for the JDBC user.
+
+The EXPORT UDF uses the Apache Hive JDBC driver to execute the necessary statements. For most cases, the connection string should have a format similar to the following.
+```
+'jdbc:hive2://hive-host:10000/;principal=hive/hive-host@EXAMPLE'
+```
+
+Then you can create the JDBC CONNECTION using the statement below.
+```sql
+CREATE CONNECTION jdbc_krb_conn TO 'jdbc:hive2://hive-host:10000/;principal=hive/hive-host@EXAMPLE' USER 'krbuser@EXAMPLE.COM' IDENTIFIED BY 'ExaAuthType=Kerberos;enp6Cg==;YWFhCg=='
 ```
