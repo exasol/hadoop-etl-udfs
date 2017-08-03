@@ -1,7 +1,7 @@
 # Hadoop ETL UDF IMPORT
 
 ## Overview
-Hadoop ETL UDFs are the main way to load data from Hadoop into EXASOL (HCatalog tables on HDFS).
+Hadoop ETL UDFs are the main way to load data into EXASOL from Hadoop (HCatalog tables on HDFS).
 
 The features in detail:
 * Metadata are retrieved from HCatalog (HDFS files, file formats, columns, etc.).
