@@ -10,7 +10,7 @@ First, obtain the following information:
 * Kerberos keytab which contains keys for the Kerberos principal
 * Kerberos principal for the Hadoop NameNode (value of ```dfs.namenode.kerberos.principal``` in hdfs-site.xml)
 
-Optional for EXPORT:
+If you plan to use an optional JDBC connection for EXPORT:
 * Kerberos principal for Hive (value of ```hive.server2.authentication.kerberos.principal``` in hive-site.xml)
 
 ### Create a Connection
