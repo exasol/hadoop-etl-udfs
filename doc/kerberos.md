@@ -70,7 +70,7 @@ In order to use the ```REPLACE```, ```TRUNCATE```, or ```CREATED BY``` options w
 
 Assuming the principal information for the JDBC connection is the same as for connection created above, you can just copy the CREATE CONNECTION statement previously created, specify a new name, and provide the JDBC connection string in TO field. Otherwise, you will need to execute the [create_kerberos_conn.py](../tools/create_kerberos_conn.py) Python script again with the correct information for the JDBC user.
 
-The EXPORT UDF uses the Apache Hive JDBC driver to execute the necessary statements. For most cases, the connection string should have a format similar to the following.
+The EXPORT UDF uses the Apache Hive JDBC driver to execute the necessary statements. For most cases, the connection string should have a format similar to the following. See [JDBC Client Setup for a Secure Cluster](https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Clients#HiveServer2Clients-JDBCClientSetupforaSecureCluster) for details.
 ```
 'jdbc:hive2://hive-host:10000/;principal=hive/hive-host@EXAMPLE'
 ```
