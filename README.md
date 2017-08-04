@@ -8,10 +8,9 @@
 ## Table of Contents
 1. [Overview](#overview)
 2. [Getting Started](#getting-started)
-3. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
-    1. [IMPORT](#import)
-    2. [EXPORT](#export)
-4. [Debugging](#debugging)
+3. [Using the Import UDFs](#using-the-import-udfs)
+4. [Using the Export UDFs](#using-the-export-udfs)
+5. [Debugging](#debugging)
 
 
 ## Overview
@@ -29,11 +28,11 @@ Please follow the [step-by-step deployment guide](doc/deployment-guide.md).
 
 The following examples assume that you have simple authentication. If your Hadoop installation requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
-### IMPORT
+## Using the Import UDFs
 
 The IMPORT UDFs load data into EXASOL from Hadoop (HCatalog tables on HDFS). Please see [IMPORT details](doc/import.md) for a full description.
 
-### EXPORT
+## Using the Export UDFs
 
 The EXPORT UDFs load data from EXASOL into Hadoop (HCatalog tables on HDFS). Please see the [EXPORT details](doc/export.md) for a full description.
 
