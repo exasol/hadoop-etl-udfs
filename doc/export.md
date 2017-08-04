@@ -208,3 +208,18 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  JDBC_CONNECTION = 'hive_jdbc_conn'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
 ```
+
+## Debugging
+To see debug output for the Hadoop UDFs, you can use the Python script [udf_debug.py](../tools/udf_debug.py).
+
+First, start the udf_debug.py script, which will listen on the specified address and port and print all incoming text.
+```
+python tools/udf_debug.py -s myhost -p 3000
+```
+Then set the ```DEBUG_ADDRESS``` UDF argument so that stdout of the UDFs will be forwarded to the specified address.
+```sql
+EXPORT TABLE1 INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ ...
+ DEBUG_ADDRESS   = 'myhost:3000';
+```
