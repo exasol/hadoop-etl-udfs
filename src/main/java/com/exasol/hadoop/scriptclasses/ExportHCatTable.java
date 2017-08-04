@@ -67,12 +67,7 @@ public class ExportHCatTable {
         }
 
         // Dynamic partitions
-        List<String> exaColumns = exportSpec.getSourceColumnNames();
-        List<String> exaColNames = new ArrayList<>();
-        for (String exaCol : exaColumns) {
-            exaCol = exaCol.replaceAll("\"", "");
-            exaColNames.add(exaCol);
-        }
+        List<String> exaColNames = getExaSourceColumnNames(exportSpec);
 
         List<Integer> dynamicPartsExaColNums;
         if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
@@ -102,7 +97,7 @@ public class ExportHCatTable {
 
         List<String> groupByColumns = new ArrayList<>();
         for (Integer dynamicPartsExaColNum : dynamicPartsExaColNums) {
-            groupByColumns.add(exaColumns.get(dynamicPartsExaColNum));
+            groupByColumns.add(exaColNames.get(dynamicPartsExaColNum));
         }
 
         // SQL query
@@ -126,21 +121,37 @@ public class ExportHCatTable {
         sql.append("(");
         sql.append("'").append(Joiner.on("', '").join(exportUDFArgs)).append("'");
         sql.append(", ");
-        sql.append(Joiner.on(", ").join(exportSpec.getSourceColumnNames()));
+        sql.append("\"").append(Joiner.on("\", \"").join(exaColNames)).append("\"");
         sql.append(") ");
         sql.append("FROM ");
-        if (exportSpec.hasSourceTable()) {
-            sql.append(exportSpec.getSourceTable());
-        } else if (exportSpec.hasSourceSelectQuery()) {
-            sql.append("(").append(exportSpec.getSourceSelectQuery()).append(") ");
-        }
+        sql.append("DUAL "); // Dummy placeholder
         if (!groupByColumns.isEmpty()) {
             sql.append("GROUP BY ");
-            sql.append(Joiner.on(", ").join(groupByColumns));
+            sql.append("\"").append(Joiner.on("\", \"").join(groupByColumns)).append("\"");
         }
         sql.append(";");
 
         return sql.toString();
+    }
+
+    private static List<String> getExaSourceColumnNames(ExaExportSpecification exportSpec) {
+        List<String> colNames = new ArrayList<>();
+        List<String> sourceColNames = exportSpec.getSourceColumnNames();
+
+        for (String sourceColName : sourceColNames) {
+            String colName;
+            String[] colNameSplit = sourceColName.split("\\.");
+            // Check for and remove table name
+            if (colNameSplit.length > 1) {
+                colName = colNameSplit[1];
+            } else {
+                colName = colNameSplit[0];
+            }
+            colName = colName.replaceAll("\"", "");
+            colNames.add(colName);
+        }
+
+        return colNames;
     }
 
     private static List<Integer> getExaColumnNumbersOfSpecifiedDynamicPartitions(ExaExportSpecification exportSpec,
@@ -149,34 +160,25 @@ public class ExportHCatTable {
         List<String> dynamicCols = new ArrayList<>();
         String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
         for (int i = 0; i < dynamicPartitions.length; i++) {
+            String dynPartCol;
             String[] dynPartTableCol = dynamicPartitions[i].split("\\.");
-            for (int j = 0; j < dynPartTableCol.length; j++) {
-                if (dynPartTableCol[j].startsWith("\"") && dynPartTableCol[j].endsWith("\"")) {
-                    // Quoted identifier, case sensitive
-                    dynPartTableCol[j] = dynPartTableCol[j].replaceAll("\"", "");
-                } else {
-                    // Not quoted, to upper case
-                    dynPartTableCol[j] = dynPartTableCol[j].toUpperCase();
-                }
-            }
-            String table = "";
-            String column;
-            if (dynPartTableCol.length == 1) {
-                if (exportSpec.hasSourceTable()) {
-                    table = exportSpec.getSourceTable().replaceAll("\"", "");
-                }
-                column = dynPartTableCol[0];
-            } else if (dynPartTableCol.length == 2) {
-                table = dynPartTableCol[0];
-                column = dynPartTableCol[1];
+
+            // Check for and remove table name
+            if (dynPartTableCol.length > 1) {
+                dynPartCol = dynPartTableCol[1];
             } else {
-                throw new RuntimeException("Exception while parsing dynamic column name: " + dynamicPartitions[i]);
+                dynPartCol = dynPartTableCol[0];
             }
-            if (table.isEmpty()) {
-                dynamicCols.add(column);
+
+            if (dynPartCol.startsWith("\"") && dynPartCol.endsWith("\"")) {
+                // Quoted identifier, case sensitive
+                dynPartCol = dynPartCol.replaceAll("\"", "");
             } else {
-                dynamicCols.add(table + "." + column);
+                // Not quoted, to upper case
+                dynPartCol = dynPartCol.toUpperCase();
             }
+
+            dynamicCols.add(dynPartCol);
         }
 
         List<Integer> dynamicPartsExaColNums = new ArrayList<>();
