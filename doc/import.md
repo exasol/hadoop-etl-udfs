@@ -1,7 +1,13 @@
 # Hadoop ETL UDF IMPORT
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+3. [Parameters](#parameters)
+4. [Debugging](#debugging)
+
 ## Overview
-Hadoop ETL UDFs are the main way to load data from Hadoop into EXASOL (HCatalog tables on HDFS).
+Hadoop ETL UDFs are the main way to load data into EXASOL from Hadoop (HCatalog tables on HDFS).
 
 The features in detail:
 * Metadata are retrieved from HCatalog (HDFS files, file formats, columns, etc.).
@@ -42,6 +48,8 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
 ```
 The EMITS specification is not required because the columns are inferred from the target table.
 
+## Parameters
+
 ### Mandatory Parameters
 
 Parameter           | Value
@@ -62,3 +70,18 @@ Parameter           | Value
 **AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
 **DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below. 
+
+## Debugging
+To see debug output for the Hadoop UDFs, you can use the Python script [udf_debug.py](../tools/udf_debug.py).
+
+First, start the udf_debug.py script, which will listen on the specified address and port and print all incoming text.
+```
+python tools/udf_debug.py -s myhost -p 3000
+```
+Then set the ```DEBUG_ADDRESS``` UDF argument so that stdout of the UDFs will be forwarded to the specified address.
+```sql
+IMPORT FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
+ HCAT_DB         = 'default'
+ ...
+ DEBUG_ADDRESS   = 'myhost:3000';
+```
