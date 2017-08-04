@@ -1,5 +1,11 @@
 # Hadoop ETL UDF IMPORT
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+3. [Parameters](#parameters)
+4. [Debugging](#debugging)
+
 ## Overview
 Hadoop ETL UDFs are the main way to load data into EXASOL from Hadoop (HCatalog tables on HDFS).
 
@@ -41,6 +47,8 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HDFS_USER       = 'hdfs';
 ```
 The EMITS specification is not required because the columns are inferred from the target table.
+
+## Parameters
 
 ### Mandatory Parameters
 
