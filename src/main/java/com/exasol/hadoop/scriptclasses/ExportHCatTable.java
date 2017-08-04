@@ -68,7 +68,6 @@ public class ExportHCatTable {
 
         // Dynamic partitions
         List<String> exaColNames = getExaSourceColumnNames(exportSpec);
-
         List<Integer> dynamicPartsExaColNums;
         if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
             // Dynamic columns were specified
