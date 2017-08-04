@@ -6,6 +6,7 @@
 3. [Parameters](#parameters)
 4. [Options](#options)
 5. [Partitions](#partitions)
+6. [Debugging](#debugging)
 
 ## Overview
 Hadoop ETL UDFs are the main way to load data from EXASOL into Hadoop (HCatalog tables on HDFS).
