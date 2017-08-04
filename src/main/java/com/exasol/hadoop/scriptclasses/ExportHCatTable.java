@@ -71,7 +71,7 @@ public class ExportHCatTable {
         List<Integer> dynamicPartsExaColNums;
         if (dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
             // Dynamic columns were specified
-            dynamicPartsExaColNums = getExaColumnNumbersOfSpecifiedDynamicPartitions(exportSpec, dynamicPartitionExaCols, exaColNames);
+            dynamicPartsExaColNums = getExaColumnNumbersOfSpecifiedDynamicPartitions(dynamicPartitionExaCols, exaColNames);
         } else {
             // Dynamic columns were not specified
             boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
@@ -153,8 +153,7 @@ public class ExportHCatTable {
         return colNames;
     }
 
-    private static List<Integer> getExaColumnNumbersOfSpecifiedDynamicPartitions(ExaExportSpecification exportSpec,
-                                                                                 String dynamicPartitionExaCols,
+    private static List<Integer> getExaColumnNumbersOfSpecifiedDynamicPartitions(String dynamicPartitionExaCols,
                                                                                  List<String> exaColNames) {
         List<String> dynamicCols = new ArrayList<>();
         String[] dynamicPartitions = dynamicPartitionExaCols.split("/");
