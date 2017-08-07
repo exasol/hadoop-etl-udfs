@@ -26,7 +26,7 @@ Please follow the [step-by-step deployment guide](doc/deployment-guide.md).
 
 After deloying the UDFs, you can begin using them to easily transfer data to and from Hadoop.
 
-### IMPORT UDF
+### IMPORT
 
 The IMPORT UDFs load data into EXASOL from Hadoop (HCatalog tables on HDFS). To import data, you just need to execute the SQL statement ```IMPORT INTO ... FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH ...``` with the appropriate parameters. This calls the ```ETL.IMPORT_HCAT_TABLE``` UDF, which was previously created during deployment.
 
@@ -44,7 +44,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
 
 Please see [IMPORT details](doc/import.md) for a full description.
 
-### EXPORT UDF
+### EXPORT
 
 The EXPORT UDFs load data from EXASOL into Hadoop (HCatalog tables on HDFS). To export data, you just need to execute the SQL statement ```EXPORT ... INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH ...``` with the appropriate parameters. This calls the ```ETL.EXPORT_HCAT_TABLE``` UDF, which was previously created during deployment.
 
