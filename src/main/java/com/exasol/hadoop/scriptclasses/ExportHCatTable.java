@@ -5,6 +5,8 @@ import com.exasol.ExaConnectionInformation;
 import com.exasol.ExaExportSpecification;
 import com.exasol.ExaMetadata;
 import com.exasol.hadoop.hcat.HCatMetadataService;
+import com.exasol.hadoop.hcat.HCatSerDeParameter;
+import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
@@ -48,6 +50,10 @@ public class ExportHCatTable {
         String compressionType = getParameter(params, "COMPRESSION_TYPE", "uncompressed");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
 
+        // Only used for unit testing
+        String unitTestMode = getParameter(params, "UNIT_TEST_MODE", "");
+        boolean isUnitTestMode = unitTestMode.equals("true");
+
         if (!debugAddress.isEmpty()) {
             try {
                 String debugHost = debugAddress.split(":")[0];
@@ -87,7 +93,12 @@ public class ExportHCatTable {
             }
             HCatTableMetadata tableMeta;
             try {
-                tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+                if (isUnitTestMode) {
+                    // Don't try to connect to HCat service in unit test mode
+                    tableMeta = new HCatTableMetadata("", new ArrayList<>(), new ArrayList<>(), "", "", "", "", new ArrayList<>());
+                } else {
+                    tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Exception while fetching metadata for " + hcatTable + ": " + e.toString(), e);
             }
@@ -123,9 +134,9 @@ public class ExportHCatTable {
         sql.append("\"").append(Joiner.on("\", \"").join(exaColNames)).append("\"");
         sql.append(") ");
         sql.append("FROM ");
-        sql.append("DUAL "); // Dummy placeholder
+        sql.append("DUAL"); // Dummy placeholder
         if (!groupByColumns.isEmpty()) {
-            sql.append("GROUP BY ");
+            sql.append(" GROUP BY ");
             sql.append("\"").append(Joiner.on("\", \"").join(groupByColumns)).append("\"");
         }
         sql.append(";");
