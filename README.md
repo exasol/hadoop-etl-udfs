@@ -10,7 +10,6 @@
 2. [Getting Started](#getting-started)
 3. [Using the Import UDFs](#using-the-import-udfs)
 4. [Using the Export UDFs](#using-the-export-udfs)
-5. [Debugging](#debugging)
 
 
 ## Overview
@@ -35,19 +34,3 @@ The IMPORT UDFs load data into EXASOL from Hadoop (HCatalog tables on HDFS). Ple
 ## Using the Export UDFs
 
 The EXPORT UDFs load data from EXASOL into Hadoop (HCatalog tables on HDFS). Please see the [EXPORT details](doc/export.md) for a full description.
-
-
-## Debugging
-To see debug output for the Hadoop UDFs, you can use the Python script [udf_debug.py](tools/udf_debug.py).
-
-First, start the udf_debug.py script, which will listen on the specified address and port and print all incoming text.
-```
-python tools/udf_debug.py -s myhost -p 3000
-```
-Then set the ```DEBUG_ADDRESS``` UDF argument so that stdout of the UDFs will be forwarded to the specified address.
-```sql
-IMPORT FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
- HCAT_DB         = 'default'
- ...
- DEBUG_ADDRESS   = 'myhost:3000';
-```
