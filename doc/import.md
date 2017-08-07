@@ -2,7 +2,7 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+2. [Using the IMPORT ETL UDFs](#using-the-import-etl-udfs)
 3. [Parameters](#parameters)
 4. [Debugging](#debugging)
 
@@ -21,7 +21,7 @@ The features in detail:
   * Parallelization is applied if the HCatalog table consists of multiple files.
   * Degree of parallelism can be controlled via an UDF parameter. The maximum degree is determined by the number of HDFS files and the number of EXASOL nodes and cores.
 
-## Using the Hadoop ETL UDFs
+## Using the IMPORT ETL UDFs
 
 The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
