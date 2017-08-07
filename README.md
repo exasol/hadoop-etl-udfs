@@ -42,7 +42,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HDFS_USER       = 'hdfs';
 ```
 
-Please see [IMPORT details](doc/import.md) for a full description.
+Please see the [IMPORT details](doc/import.md) for a full description.
 
 ### EXPORT
 
