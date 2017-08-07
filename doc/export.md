@@ -2,7 +2,7 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [Using the Hadoop ETL UDFs](#using-the-hadoop-etl-udfs)
+2. [Using the EXPORT ETL UDFs](#using-the-export-etl-udfs)
 3. [Parameters](#parameters)
 4. [Options](#options)
 5. [Partitions](#partitions)
@@ -25,7 +25,7 @@ Current limitations:
 * Supports only Parquet compression.
 * Supports only non-complex data types.
 
-## Using the Hadoop ETL UDFs
+## Using the EXPORT ETL UDFs
 
 The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
 
