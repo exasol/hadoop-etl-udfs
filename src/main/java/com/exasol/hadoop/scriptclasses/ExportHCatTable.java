@@ -64,6 +64,11 @@ public class ExportHCatTable {
             }
         }
 
+        if (staticPartition != null && !staticPartition.isEmpty() &&
+            dynamicPartitionExaCols != null && !dynamicPartitionExaCols.isEmpty()) {
+            throw new RuntimeException("Static and dynamic partitions cannot both be specified.");
+        }
+
         // JDBC statements
         List<String> jdbcSqlStatements = getJdbcStatements(exportSpec, hcatDB, hcatTable);
         if (jdbcSqlStatements.size() > 0) {
