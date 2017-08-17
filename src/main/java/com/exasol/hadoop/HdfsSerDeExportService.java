@@ -56,29 +56,6 @@ import parquet.schema.*;
 import com.exasol.hadoop.parquet.Tuple;
 import com.exasol.hadoop.parquet.TupleWriteSupport;
 
-/**
- * org.apache.hadoop.mapred is old, ...mapreduce is new. However, mapred was undeprecated
- * http://stackoverflow.com/questions/7598422/is-it-better-to-use-the-mapred-or-the-mapreduce-package-to-create-a-hadoop-job
- *
- * Note that org.apache.hadoop.hive.serde is the deprecated old SerDe library. Please look at org.apache.hadoop.hive.serde2 for the latest version.
- * https://cwiki.apache.org/confluence/display/Hive/DeveloperGuide#DeveloperGuide-HiveSerDe
- *
- * Missing features (ordered by priority):
- * TODO Re-enable single file import
- * TODO Run tests with many different datatypes, partitions, compression, etc.
- * TODO Understand security workarounds. Test Kerberos.
- * TODO Reintroduce column selection during import (deserialize only selected columns)
- * TODO Return partitions with correct data types (or give option to do so)
- * TODO Make Export generic (to use any kind of SerDe)
- *
- * Refactoring:
- * TODO Write Unit Tests
- * TODO Make ExaIterator (and all other classes) available as Interface
- *
- *
- *
- * See HCatCreateTableDesc.Builder
- */
 public class HdfsSerDeExportService {
 
     // TODO Refactor and remove this

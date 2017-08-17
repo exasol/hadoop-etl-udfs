@@ -4,16 +4,27 @@ import com.exasol.ExaIterator;
 import com.exasol.ExaIteratorDummy;
 import com.exasol.ExaMetadata;
 import com.exasol.ExaMetadataDummy;
+import com.exasol.hadoop.hcat.HCatSerDeParameter;
+import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
+import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
+import com.exasol.jsonpath.OutputColumnSpec;
+import com.exasol.jsonpath.OutputColumnSpecUtil;
+import com.exasol.utils.UdfUtils;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.mapred.InputFormat;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import parquet.schema.DecimalMetadata;
 import parquet.schema.OriginalType;
 import parquet.schema.PrimitiveType;
@@ -25,6 +36,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.File;
 
+import static org.mockito.Matchers.anyVararg;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 public class HdfsSerDeExportServiceTest {
 
     /**
@@ -32,7 +49,101 @@ public class HdfsSerDeExportServiceTest {
      * ssh ws64-2.dev.exasol.com -L 9083:vm031.cos.dev.exasol.com:9083 -L 8020:vm031.cos.dev.exasol.com:8020 -L 8888:vm031.cos.dev.exasol.com:8888
      * before running this test
      */
+
+    static final int FIRST_DATA_COLUMN = 11; // UDF argument number that has the first data column (see ExportIntoHiveTable class)
+
+    static final String PARQUET_INPUT_FORMAT_CLASS_NAME = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat";
+    static final String PARQUET_SERDE_CLASS_NAME = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe";
+
+    @Rule
+    public TemporaryFolder testFolder = new TemporaryFolder();
+
     @Test
+    public void testExportParquetNumeric() throws Exception {
+
+        List<Integer> dynamicCols = new ArrayList<>();
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "ti", OriginalType.INT_8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "si", OriginalType.INT_16));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "i", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT64, "bi", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FLOAT, "f", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.DOUBLE, "d", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec1"));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec2"));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"dec3"));
+
+        List<List<Object>> dataSet = new ArrayList<>();
+        List<Object> row = new ArrayList<>();
+        row.add(55);
+        row.add(5555);
+        row.add(555555555);
+        row.add(555555555555555555L);
+        row.add(55.55);
+        row.add(55555.55555);
+        row.add(new BigDecimal("555555555555555555555555555555555555"));
+        row.add(new BigDecimal("5555555555555555555555555555555.55555"));
+        row.add(new BigDecimal("0.12345678"));
+        addRow(dataSet, row);
+        ExaIterator iter = new ExaIteratorDummy(dataSet);
+
+        File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
+
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
+
+        ExaIterator ctx = mock(ExaIterator.class);
+        List<HCatTableColumn> columns = new ArrayList<>();
+        columns.add(new HCatTableColumn("ti", "tinyint"));
+        columns.add(new HCatTableColumn("si", "smallint"));
+        columns.add(new HCatTableColumn("i", "int"));
+        columns.add(new HCatTableColumn("bi", "bigint"));
+        columns.add(new HCatTableColumn("f", "float"));
+        columns.add(new HCatTableColumn("d", "double"));
+        columns.add(new HCatTableColumn("dec1", "decimal(36,0)"));
+        columns.add(new HCatTableColumn("dec2", "decimal(36,5)"));
+        columns.add(new HCatTableColumn("dec3", "decimal(8,8)"));
+
+        List<HCatTableColumn> partitionColumns = null;
+        importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
+
+        int expectedNumRows = 1;
+        verify(ctx, times(expectedNumRows)).emit(anyVararg());
+        verify(ctx, times(1)).emit(
+                eq((byte)55),
+                eq((short)5555),
+                eq(555555555),
+                eq(555555555555555555L),
+                eq(55.55f),
+                eq(55555.55555),
+                eq(new BigDecimal("555555555555555555555555555555555555")),
+                eq(new BigDecimal("5555555555555555555555555555555.55555")),
+                eq(new BigDecimal("0.12345678")));
+    }
+
+    private void addRow(List<List<Object>> dataSet, List<Object> row) {
+        // Insert null values for non-data columns of data set
+        for (int i = 0; i < FIRST_DATA_COLUMN; i++) {
+            row.add(0, null);
+        }
+        dataSet.add(row);
+    }
+
+    private void importFile(ExaIterator ctx, List<HCatTableColumn> columns, List<HCatTableColumn> partitionColumns, String file, String inputFormatName, String serdeName) throws Exception {
+        List<HCatSerDeParameter> serDeParameters = new ArrayList<>();
+        serDeParameters.add(new HCatSerDeParameter("serialization.format", "1"));
+        String hdfsUser = "hdfs";
+        boolean useKerberos = false;
+        List<String> hdfsServers = new ArrayList<>();
+        hdfsServers.add("file:///");
+        final Configuration conf = new Configuration();
+        FileSystem fs = HdfsService.getFileSystem(hdfsServers, conf);
+        InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatName);
+        SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serdeName);
+        List<OutputColumnSpec> outputColumns = OutputColumnSpecUtil.generateDefaultOutputSpecification(columns, new ArrayList<HCatTableColumn>());
+        HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, ctx);
+    }
+
+    //@Test
     public void exportToTableUdf() throws Exception {
         String dbName = "default";
         String table = "parquet_partition";

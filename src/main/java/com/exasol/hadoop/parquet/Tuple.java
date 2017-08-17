@@ -82,7 +82,8 @@ public class Tuple {
                     recordConsumer.addDouble(iter.getDouble(iterIndex));
                     break;
                 case FIXED_LEN_BYTE_ARRAY:
-                    if (originalType == OriginalType.DECIMAL) {
+                    if (originalType == null || // If not set, assume it's OK
+                        originalType == OriginalType.DECIMAL) {
                         byte[] decimalBytes = null;
                         BigDecimal bigDecimalVal = iter.getBigDecimal(iterIndex);
                         if (bigDecimalVal != null)

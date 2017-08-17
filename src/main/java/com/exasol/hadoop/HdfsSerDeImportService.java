@@ -20,8 +20,11 @@ import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.*;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveDecimalObjectInspector;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapred.*;
@@ -318,6 +321,16 @@ public class HdfsSerDeImportService {
         assert(objInsp.getCategory() == Category.PRIMITIVE);
         if (data == null) {
             return null;
+        }
+        if (data instanceof BytesWritable) {
+            if (objInsp instanceof WritableHiveDecimalObjectInspector) {
+                // BytesWritable cannot be directly cast to HiveDecimalWritable
+                WritableHiveDecimalObjectInspector oi = (WritableHiveDecimalObjectInspector)objInsp;
+                byte[] bytes = ((BytesWritable) data).getBytes();
+                HiveDecimalWritable hdw = new HiveDecimalWritable();
+                hdw.set(bytes, oi.scale());
+                data = hdw;
+            }
         }
         Object obj = ObjectInspectorUtils.copyToStandardJavaObject(data, objInsp);
         if (obj instanceof HiveDecimal) {
