@@ -125,6 +125,7 @@ public class HdfsSerDeExportServiceTest {
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
+        // Hive automatically adjusts values to UTC when reading (Impala does not)
         ZonedDateTime zdtUtc1 = ZonedDateTime.now(ZoneId.of("UTC"));
         ZonedDateTime zdtUtc2 = zdtUtc1.minusMonths(6).minusHours(12);
         ZonedDateTime zdtDefault1 = zdtUtc1.withZoneSameInstant(ZoneId.of(TimeZone.getDefault().getID().toString()));
