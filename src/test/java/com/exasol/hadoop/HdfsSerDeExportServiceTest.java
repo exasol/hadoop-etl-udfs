@@ -3,7 +3,6 @@ package com.exasol.hadoop;
 import com.exasol.ExaIterator;
 import com.exasol.ExaIteratorDummy;
 import com.exasol.ExaMetadata;
-import com.exasol.ExaMetadataDummy;
 import com.exasol.hadoop.hcat.HCatSerDeParameter;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
@@ -13,19 +12,13 @@ import com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.jsonpath.OutputColumnSpecUtil;
 import com.exasol.utils.UdfUtils;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.mapred.InputFormat;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import parquet.schema.DecimalMetadata;
 import parquet.schema.OriginalType;
 import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
@@ -33,6 +26,8 @@ import parquet.schema.Type;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.io.File;
 
@@ -120,6 +115,42 @@ public class HdfsSerDeExportServiceTest {
                 eq(new BigDecimal("0.12345678")));
     }
 
+    @Test
+    public void testExportParquetTimestamp() throws Exception {
+
+        List<Integer> dynamicCols = new ArrayList<>();
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t1", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t2", null));
+
+        List<List<Object>> dataSet = new ArrayList<>();
+        List<Object> row = new ArrayList<>();
+        ZonedDateTime zdtUtc1 = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime zdtUtc2 = zdtUtc1.minusMonths(6).minusHours(12);
+        ZonedDateTime zdtDefault1 = zdtUtc1.withZoneSameInstant(ZoneId.of(TimeZone.getDefault().getID().toString()));
+        ZonedDateTime zdtDefault2 = zdtUtc2.withZoneSameInstant(ZoneId.of(TimeZone.getDefault().getID().toString()));
+        row.add(Timestamp.valueOf(zdtUtc1.toLocalDateTime()));
+        row.add(Timestamp.valueOf(zdtUtc2.toLocalDateTime()));
+        addRow(dataSet, row);
+        ExaIterator iter = new ExaIteratorDummy(dataSet);
+
+        File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
+
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
+
+        ExaIterator ctx = mock(ExaIterator.class);
+        List<HCatTableColumn> columns = new ArrayList<>();
+        columns.add(new HCatTableColumn("t1", "timestamp"));
+        columns.add(new HCatTableColumn("t2", "timestamp"));
+
+        List<HCatTableColumn> partitionColumns = null;
+        importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
+
+        int expectedNumRows = 1;
+        verify(ctx, times(expectedNumRows)).emit(anyVararg());
+        verify(ctx, times(1)).emit(eq(Timestamp.valueOf(zdtDefault1.toLocalDateTime())), eq(Timestamp.valueOf(zdtDefault2.toLocalDateTime())));
+    }
+
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set
         for (int i = 0; i < FIRST_DATA_COLUMN; i++) {
@@ -142,6 +173,15 @@ public class HdfsSerDeExportServiceTest {
         List<OutputColumnSpec> outputColumns = OutputColumnSpecUtil.generateDefaultOutputSpecification(columns, new ArrayList<HCatTableColumn>());
         HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, ctx);
     }
+
+
+
+
+
+
+
+
+
 
     //@Test
     public void exportToTableUdf() throws Exception {
