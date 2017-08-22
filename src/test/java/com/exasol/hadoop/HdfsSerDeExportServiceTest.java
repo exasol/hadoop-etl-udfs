@@ -184,6 +184,47 @@ public class HdfsSerDeExportServiceTest {
         verify(ctx, times(1)).emit(eq(Boolean.TRUE), eq(Boolean.FALSE));
     }
 
+    @Test
+    public void testExportParquetString() throws Exception {
+
+        List<Integer> dynamicCols = new ArrayList<>();
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c1", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c2", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v1", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v2", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "s1", OriginalType.UTF8));
+
+        List<List<Object>> dataSet = new ArrayList<>();
+        List<Object> row = new ArrayList<>();
+        row.add("a");
+        row.add("aaaaaaaaaa");
+        row.add("b");
+        row.add("bbbbbbbbbb");
+        row.add("cccccccccccccccccccc");
+        addRow(dataSet, row);
+        ExaIterator iter = new ExaIteratorDummy(dataSet);
+
+        File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
+
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
+
+        ExaIterator ctx = mock(ExaIterator.class);
+        List<HCatTableColumn> columns = new ArrayList<>();
+        columns.add(new HCatTableColumn("c1", "char(1)"));
+        columns.add(new HCatTableColumn("c2", "char(12)"));
+        columns.add(new HCatTableColumn("v1", "varchar(1)"));
+        columns.add(new HCatTableColumn("v2", "varchar(10)"));
+        columns.add(new HCatTableColumn("s1", "string"));
+
+        List<HCatTableColumn> partitionColumns = null;
+        importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
+
+        int expectedNumRows = 1;
+        verify(ctx, times(expectedNumRows)).emit(anyVararg());
+        verify(ctx, times(1)).emit(eq("a"), eq("aaaaaaaaaa  "), eq("b"), eq("bbbbbbbbbb"), eq("cccccccccccccccccccc"));
+    }
+
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set
         for (int i = 0; i < FIRST_DATA_COLUMN; i++) {
