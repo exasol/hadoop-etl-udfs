@@ -152,6 +152,38 @@ public class HdfsSerDeExportServiceTest {
         verify(ctx, times(1)).emit(eq(Timestamp.valueOf(zdtDefault1.toLocalDateTime())), eq(Timestamp.valueOf(zdtDefault2.toLocalDateTime())));
     }
 
+    @Test
+    public void testExportParquetBoolean() throws Exception {
+
+        List<Integer> dynamicCols = new ArrayList<>();
+        List<Type> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b1", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b2", null));
+
+        List<List<Object>> dataSet = new ArrayList<>();
+        List<Object> row = new ArrayList<>();
+        row.add(Boolean.TRUE);
+        row.add(Boolean.FALSE);
+        addRow(dataSet, row);
+        ExaIterator iter = new ExaIteratorDummy(dataSet);
+
+        File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
+
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
+
+        ExaIterator ctx = mock(ExaIterator.class);
+        List<HCatTableColumn> columns = new ArrayList<>();
+        columns.add(new HCatTableColumn("b1", "boolean"));
+        columns.add(new HCatTableColumn("b2", "boolean"));
+
+        List<HCatTableColumn> partitionColumns = null;
+        importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
+
+        int expectedNumRows = 1;
+        verify(ctx, times(expectedNumRows)).emit(anyVararg());
+        verify(ctx, times(1)).emit(eq(Boolean.TRUE), eq(Boolean.FALSE));
+    }
+
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set
         for (int i = 0; i < FIRST_DATA_COLUMN; i++) {
