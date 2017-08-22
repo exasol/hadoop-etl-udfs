@@ -249,7 +249,7 @@ public class HdfsSerDeExportServiceTest {
     }
 
 
-    
+
 
     //@Test
     public void exportToTableUdf() throws Exception {
