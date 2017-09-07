@@ -69,19 +69,15 @@ Parameter           | Value
 **HDFS_URL**        | One or more URLs for HDFS/WebHDFS/HttpFS. E.g. ```'hdfs://hdfs-namenode:8020'``` (native HDFS) or ```'webhdfs://hdfs-namenode:50070'``` (WebHDFS) ```'webhdfs://hdfs-namenode:14000'``` (HttpFS). If you do not set this parameter the HDFS URL will be retrieved from HCatalog, but you have to set this parameter to overwrite the retrieved valie in several cases: First, if you have an HDFS HA environment you have to specify all namenodes (comma separated). Second, if you want to use WebHDFS instead of the native HDFS interface. And third, if HCatalog returns a non fully-qualified HDFS hostname unreachable from EXASOL. Make sure EXASOL can connect to the specified HDFS service (see prerequisites above).
 **AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
-**DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below. 
 
 ## Debugging
-To see debug output for the Hadoop UDFs, you can use the Python script [udf_debug.py](../tools/udf_debug.py).
+To see debug output relating to Hadoop and the UDFs, you can use the Python script udf_debug.py located in the [tools](../tools) directory.
 
 First, start the udf_debug.py script, which will listen on the specified address and port and print all incoming text.
 ```
 python tools/udf_debug.py -s myhost -p 3000
 ```
-Then set the ```DEBUG_ADDRESS``` UDF argument so that stdout of the UDFs will be forwarded to the specified address.
+Then run the following SQL statement in your session to redirect all stdout and stderr from the adapter script to the udf_debug.py script we started before.
 ```sql
-IMPORT FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
- HCAT_DB         = 'default'
- ...
- DEBUG_ADDRESS   = 'myhost:3000';
+ALTER SESSION SET SCRIPT_OUTPUT_ADDRESS='host-where-udf-debug-script-runs:3000';
 ```
