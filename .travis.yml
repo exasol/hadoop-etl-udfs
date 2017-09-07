@@ -6,7 +6,7 @@ matrix:
     - jdk: "oraclejdk8"   # New Hadoop and new Java
       env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.11.0 -Dhive.version=1.1.0-cdh5.11.0"
     - jdk: "oraclejdk8"     # HDP from README
-      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.1.2.3.0.0-2557 -Dhive.version=1.2.1.2.3.0.0-2557"
+      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.6.0.2.2.9.9-1 -Dhive.version=1.2.1.2.3.0.0-2557"
 #    - jdk: "oraclejdk8"    # HDP 2.3.2 (Oct. 2015)
 #      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.1.2.3.2.0-2950 -Dhive.version=1.2.1.2.3.2.0-2950"
 
