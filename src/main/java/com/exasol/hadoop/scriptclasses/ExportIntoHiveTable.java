@@ -7,12 +7,9 @@ import com.exasol.hadoop.HdfsSerDeExportService;
 import com.exasol.hadoop.hcat.HCatMetadataService;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
-import com.exasol.hadoop.hive.HiveMetastoreService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
-import org.apache.hadoop.security.UserGroupInformation;
 
-import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
