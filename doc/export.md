@@ -88,7 +88,6 @@ Parameter           | Value
 **AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
 **JDBC_AUTH_TYPE**       | The authentication type to be used for JDBC optional connections. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, user/password authentication will be used.
 **JDBC_CONNECTION**        | The connection name to used for optional JDBC connections.
-**DEBUG_ADDRESS**   | The IP address/hostname and port of the UDF debugging service, e.g. ```'myhost:3000'```. Debug output from the UDFs will be sent to this address. See the section on debugging below. 
 
 ## Options
 
@@ -211,16 +210,13 @@ CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED B
 ```
 
 ## Debugging
-To see debug output for the Hadoop UDFs, you can use the Python script [udf_debug.py](../tools/udf_debug.py).
+To see debug output relating to Hadoop and the UDFs, you can use the Python script udf_debug.py located in the [tools](../tools) directory.
 
 First, start the udf_debug.py script, which will listen on the specified address and port and print all incoming text.
 ```
 python tools/udf_debug.py -s myhost -p 3000
 ```
-Then set the ```DEBUG_ADDRESS``` UDF argument so that stdout of the UDFs will be forwarded to the specified address.
+Then run the following SQL statement in your session to redirect all stdout and stderr from the adapter script to the udf_debug.py script we started before.
 ```sql
-EXPORT TABLE1 INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
- HCAT_DB         = 'default'
- ...
- DEBUG_ADDRESS   = 'myhost:3000';
+ALTER SESSION SET SCRIPT_OUTPUT_ADDRESS='host-where-udf-debug-script-runs:3000';
 ```
