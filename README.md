@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/EXASOL/hadoop-etl-udfs.svg?branch=master)](https://travis-ci.org/EXASOL/hadoop-etl-udfs)
 
 
-###### Please note that this is an open source project which is officially supported by EXASOL. For any questions, you can contact our support team.
+###### Please note that this is an open source project which is officially supported by EXASOL. For any questions, you can contact our support team. Please note, however, that the EXPORT functionality is still in BETA mode.
 
 ## Overview
 Hadoop ETL UDFs are the main way to transfer data between EXASOL and Hadoop (HCatalog tables on HDFS). The SQL syntax for calling the UDFs is similar to that of EXASOL's native IMPORT and EXPORT commands, but with added UDF paramters for specifying the various necessary and optional Hadoop properties.
@@ -45,6 +45,8 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
 Please see the [IMPORT details](doc/import.md) for a full description.
 
 ### EXPORT
+
+###### Note: This functionality is available in EXASOL starting with version 6.0.3.
 
 The EXPORT UDFs load data from EXASOL into Hadoop (HCatalog tables on HDFS). To export data, you just need to execute the SQL statement ```EXPORT ... INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH ...``` with the appropriate parameters. This calls the ```ETL.EXPORT_HCAT_TABLE``` UDF, which was previously created during deployment.
 
