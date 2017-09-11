@@ -23,10 +23,11 @@ public class WebHCatJsonParser {
         List<HCatTableColumn> partitionColumns = parseColumnArray(response.getJsonArray("partitionColumns"));
         String tableType = response.getString("tableType");
         String inputFormat = response.getString("inputFormat");
+        String outputFormat = response.getString("outputFormat");
         String serDe = response.getJsonObject("sd").getJsonObject("serdeInfo").getString("serializationLib");
         List<HCatSerDeParameter> serDeParameters = parseSerDeParameters(response.getJsonObject("sd").getJsonObject("serdeInfo").getJsonObject("parameters"));
 
-        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, serDe, serDeParameters);
+        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, outputFormat, serDe, serDeParameters);
     }
     
     private static List<HCatTableColumn> parseColumnArray(JsonArray array) {

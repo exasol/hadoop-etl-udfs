@@ -39,4 +39,28 @@ public class HCatMetadataService {
         });
         return tableMeta;
     }
+
+    /**
+     * Create a table partition, if it does not exist.
+     * Returns if a partition was created.
+     */
+    public static boolean createTablePartitionIfNotExists(
+            final String dbName,
+            final String tableName,
+            final String partitionName,
+            final String hCatAddress,
+            final String hCatUser,  // In case of Kerberos, this is the principle of the Hadoop HDFS namenode (value of dfs.namenode.kerberos.principal in hdfs-site.xml)
+            final boolean useKerberos,
+            final KerberosCredentials kerberosCredentials) throws Exception {
+
+        UserGroupInformation ugi = useKerberos ?
+                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hCatUser);
+        boolean partitionCreated = ugi.doAs(new PrivilegedExceptionAction<Boolean>() {
+            public Boolean run() throws Exception {
+                return HiveMetastoreService.createPartitionIfNotExists(hCatAddress, useKerberos, hCatUser.replaceAll("hdfs", "hive"), dbName, tableName, partitionName);
+            }
+        });
+        return partitionCreated;
+    }
+
 }

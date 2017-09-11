@@ -113,6 +113,7 @@ public class HiveTableInformation {
         StorageDescriptor sd = table.getSd();
         String location = sd.getLocation();
         String inputFormat = sd.getInputFormat();
+        String outputFormat = sd.getOutputFormat();
         String serDeClass = sd.getSerdeInfo().getSerializationLib();
         List<FieldSchema> cols = sd.getCols();
 
@@ -135,6 +136,6 @@ public class HiveTableInformation {
             serDeParameters.add(new HCatSerDeParameter(key, parameters.get(key)));
         }
 
-        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, serDeClass, serDeParameters);
+        return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, outputFormat, serDeClass, serDeParameters);
     }
 }
