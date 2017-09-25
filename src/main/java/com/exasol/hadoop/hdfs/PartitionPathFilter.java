@@ -75,7 +75,7 @@ public class PartitionPathFilter implements PathFilter {
             }
             partitionValues.put(keyVal[0], keyVal[1]);
             if (i+1<numPartitionsInPaths) {    // Don't go up if we don't enter the loop again
-                current = path.getParent();
+                current = current.getParent();
             }
         }
         return partitionValues;
