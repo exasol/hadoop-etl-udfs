@@ -27,7 +27,7 @@ Current limitations:
 
 ## Using the EXPORT ETL UDFs
 
-The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
+The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](deployment-guide.md#5-kerberos-authentication) section.
 
 Exporting data using the ETL UDFs works in much the way as the normal EXPORT command.
 
