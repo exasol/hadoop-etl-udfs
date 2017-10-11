@@ -50,6 +50,7 @@ public class HdfsService {
      * Try creating a FileSystem for any of the provided hdfs urls
      */
     public static FileSystem getFileSystem(List<String> hdfsURLs, Configuration conf) throws IOException {
+        HashMap<String, Exception> exceptions = new HasMap();
         Exception lastException = null;
         for (String hdfsURL : hdfsURLs) {
             try {
@@ -66,10 +67,11 @@ public class HdfsService {
                 return realFs;
             }
             catch (Exception e) {
+                exceptions.put(hdfsURL, e);
                 lastException = e;
             }
         }
-        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + hdfsURLs.toString() + ". The error for the last URL '" + hdfsURLs.get(hdfsURLs.size()-1) + "' was: " + lastException.getClass().getName() + ": " + lastException.getMessage());
+        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + exceptions, lastException);
     }
 
     /**
