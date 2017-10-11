@@ -74,7 +74,7 @@ public class HdfsService {
                 lastException = e;
             }
         }
-        
+
         throw new RuntimeException("None of the provided HDFS URLs is reachable: " + exceptions, lastException);
     }
 
