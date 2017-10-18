@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HdfsService {
     
@@ -50,7 +52,9 @@ public class HdfsService {
      * Try creating a FileSystem for any of the provided hdfs urls
      */
     public static FileSystem getFileSystem(List<String> hdfsURLs, Configuration conf) throws IOException {
+        Map<String, Exception> exceptions = new HashMap<>();
         Exception lastException = null;
+
         for (String hdfsURL : hdfsURLs) {
             try {
                 System.out.println("Filesystem to connect to: " + hdfsURL);
@@ -66,10 +70,12 @@ public class HdfsService {
                 return realFs;
             }
             catch (Exception e) {
+                exceptions.put(hdfsURL, e);
                 lastException = e;
             }
         }
-        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + hdfsURLs.toString() + ". The error for the last URL '" + hdfsURLs.get(hdfsURLs.size()-1) + "' was: " + lastException.getClass().getName() + ": " + lastException.getMessage());
+
+        throw new RuntimeException("None of the provided HDFS URLs is reachable: " + exceptions, lastException);
     }
 
     /**
