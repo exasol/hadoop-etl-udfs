@@ -23,7 +23,7 @@ The features in detail:
 
 ## Using the IMPORT ETL UDFs
 
-The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/deployment-guide.md#5-kerberos-authentication) section.
+The following examples assume that you have simple authentication. If your Hadoop requires Kerberos authentication, please refer to the [Kerberos Authentication](doc/kerberos.md) documentation.
 
 Run the following query to show the contents of the HCatalog table sample_07.
 ```sql
