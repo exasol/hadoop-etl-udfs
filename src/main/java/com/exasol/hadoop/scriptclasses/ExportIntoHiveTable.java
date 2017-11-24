@@ -40,9 +40,9 @@ public class ExportIntoHiveTable {
         String staticPartition = iter.getString(PARAM_IDX_STATIC_PARTITION);
         String dynamicPartitionExaCols = iter.getString(PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS);
         String authType = iter.getString(PARAM_IDX_AUTH_TYPE);
-        String connName = iter.getString(PARAM_IDX_AUTH_CONNECTION);
+        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_CONNECTION, "");
         String compressionType = iter.getString(PARAM_IDX_COMPRESSION_TYPE);
-        String debugAddress = iter.getString(PARAM_IDX_DEBUG_ADDRESS);
+        String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
 
         if (!debugAddress.isEmpty()) {
