@@ -7,8 +7,11 @@ import com.exasol.hadoop.HdfsSerDeExportService;
 import com.exasol.hadoop.hcat.HCatMetadataService;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
+import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.utils.UdfUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,7 +37,7 @@ public class ExportIntoHiveTable {
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
-        String hdfsUrl = iter.getString(PARAM_IDX_HDFS_ADDRESS);
+        String hdfsServerUrls = iter.getString(PARAM_IDX_HDFS_ADDRESS);
         String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
         String hcatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
         String staticPartition = iter.getString(PARAM_IDX_STATIC_PARTITION);
@@ -44,6 +47,7 @@ public class ExportIntoHiveTable {
         String compressionType = iter.getString(PARAM_IDX_COMPRESSION_TYPE);
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
+        List<String> hdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
 
         if (!debugAddress.isEmpty()) {
             try {
@@ -61,6 +65,11 @@ public class ExportIntoHiveTable {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
             kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
+        Configuration conf = new Configuration();
+        if (useKerberos) {
+            conf.set("dfs.namenode.kerberos.principal", hdfsUser);
+        }
+        FileSystem fs = HdfsService.getFileSystem(hdfsAddresses, conf);
 
         HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
@@ -91,7 +100,7 @@ public class ExportIntoHiveTable {
 
         // HDFS path
         StringBuilder hdfsPath = new StringBuilder();
-        hdfsPath.append(tableMeta.getHdfsAddress());
+        hdfsPath.append(fs.getUri());
         hdfsPath.append(tableMeta.getHdfsTableRootPath());
 
         // Partitions
