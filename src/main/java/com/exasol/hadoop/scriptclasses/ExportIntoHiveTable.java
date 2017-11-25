@@ -9,10 +9,13 @@ import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
+import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.utils.UdfUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.security.UserGroupInformation;
 
+import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -65,11 +68,18 @@ public class ExportIntoHiveTable {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
             kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
-        Configuration conf = new Configuration();
-        if (useKerberos) {
-            conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-        }
-        FileSystem fs = HdfsService.getFileSystem(hdfsAddresses, conf);
+
+        UserGroupInformation ugi = useKerberos ?
+                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+        FileSystem fs = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+            public FileSystem run() throws Exception {
+                final Configuration conf = new Configuration();
+                if (useKerberos) {
+                    conf.set("dfs.namenode.kerberos.principal", hdfsUser);
+                }
+                return HdfsService.getFileSystem(hdfsAddresses, conf);
+            }
+        });
 
         HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
