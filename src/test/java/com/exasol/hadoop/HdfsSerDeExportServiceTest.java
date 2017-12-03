@@ -56,6 +56,13 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec1"));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec2"));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"dec3"));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "tinyintnull", OriginalType.INT_8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "smallintnull", OriginalType.INT_16));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "intnull", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT64, "bigintnull", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FLOAT, "floatnull", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.DOUBLE, "doublenull", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"decimalnull"));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -68,6 +75,13 @@ public class HdfsSerDeExportServiceTest {
         row.add(new BigDecimal("555555555555555555555555555555555555"));
         row.add(new BigDecimal("5555555555555555555555555555555.55555"));
         row.add(new BigDecimal("0.12345678"));
+        row.add(null);
+        row.add(null);
+        row.add(null);
+        row.add(null);
+        row.add(null);
+        row.add(null);
+        row.add(null);
         addRow(dataSet, row);
         ExaIterator iter = new ExaIteratorDummy(dataSet);
 
@@ -86,6 +100,13 @@ public class HdfsSerDeExportServiceTest {
         columns.add(new HCatTableColumn("dec1", "decimal(36,0)"));
         columns.add(new HCatTableColumn("dec2", "decimal(36,5)"));
         columns.add(new HCatTableColumn("dec3", "decimal(8,8)"));
+        columns.add(new HCatTableColumn("tinyintnull", "tinyint"));
+        columns.add(new HCatTableColumn("smallintnull", "smallint"));
+        columns.add(new HCatTableColumn("intnull", "int"));
+        columns.add(new HCatTableColumn("bigintnull", "bigint"));
+        columns.add(new HCatTableColumn("floatnull", "float"));
+        columns.add(new HCatTableColumn("doublenull", "double"));
+        columns.add(new HCatTableColumn("decimalnull", "decimal(8,8)"));
 
         List<HCatTableColumn> partitionColumns = null;
         importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
@@ -101,7 +122,15 @@ public class HdfsSerDeExportServiceTest {
                 eq(55555.55555),
                 eq(new BigDecimal("555555555555555555555555555555555555")),
                 eq(new BigDecimal("5555555555555555555555555555555.55555")),
-                eq(new BigDecimal("0.12345678")));
+                eq(new BigDecimal("0.12345678")),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(null),
+                eq(null)
+        );
     }
 
     @Test
@@ -111,6 +140,7 @@ public class HdfsSerDeExportServiceTest {
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t1", null));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t2", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "timestampnull", null));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -121,6 +151,7 @@ public class HdfsSerDeExportServiceTest {
         ZonedDateTime zdtDefault2 = zdtUtc2.withZoneSameInstant(ZoneId.of(TimeZone.getDefault().getID().toString()));
         row.add(Timestamp.valueOf(zdtUtc1.toLocalDateTime()));
         row.add(Timestamp.valueOf(zdtUtc2.toLocalDateTime()));
+        row.add(null);
         addRow(dataSet, row);
         ExaIterator iter = new ExaIteratorDummy(dataSet);
 
@@ -132,13 +163,18 @@ public class HdfsSerDeExportServiceTest {
         List<HCatTableColumn> columns = new ArrayList<>();
         columns.add(new HCatTableColumn("t1", "timestamp"));
         columns.add(new HCatTableColumn("t2", "timestamp"));
+        columns.add(new HCatTableColumn("timestampnull", "timestamp"));
 
         List<HCatTableColumn> partitionColumns = null;
         importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
 
         int expectedNumRows = 1;
         verify(ctx, times(expectedNumRows)).emit(anyVararg());
-        verify(ctx, times(1)).emit(eq(Timestamp.valueOf(zdtDefault1.toLocalDateTime())), eq(Timestamp.valueOf(zdtDefault2.toLocalDateTime())));
+        verify(ctx, times(1)).emit(
+                eq(Timestamp.valueOf(zdtDefault1.toLocalDateTime())),
+                eq(Timestamp.valueOf(zdtDefault2.toLocalDateTime())),
+                eq(null)
+        );
     }
 
     @Test
@@ -148,11 +184,13 @@ public class HdfsSerDeExportServiceTest {
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b1", null));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b2", null));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "booleannull", null));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
         row.add(Boolean.TRUE);
         row.add(Boolean.FALSE);
+        row.add(null);
         addRow(dataSet, row);
         ExaIterator iter = new ExaIteratorDummy(dataSet);
 
@@ -164,13 +202,18 @@ public class HdfsSerDeExportServiceTest {
         List<HCatTableColumn> columns = new ArrayList<>();
         columns.add(new HCatTableColumn("b1", "boolean"));
         columns.add(new HCatTableColumn("b2", "boolean"));
+        columns.add(new HCatTableColumn("booleannull", "boolean"));
 
         List<HCatTableColumn> partitionColumns = null;
         importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
 
         int expectedNumRows = 1;
         verify(ctx, times(expectedNumRows)).emit(anyVararg());
-        verify(ctx, times(1)).emit(eq(Boolean.TRUE), eq(Boolean.FALSE));
+        verify(ctx, times(1)).emit(
+                eq(Boolean.TRUE),
+                eq(Boolean.FALSE),
+                eq(null)
+        );
     }
 
     @Test
@@ -183,6 +226,9 @@ public class HdfsSerDeExportServiceTest {
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v1", OriginalType.UTF8));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v2", OriginalType.UTF8));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "s1", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "charnull", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "varcharnull", OriginalType.UTF8));
+        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "stringnull", OriginalType.UTF8));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -191,6 +237,9 @@ public class HdfsSerDeExportServiceTest {
         row.add("b");
         row.add("bbbbbbbbbb");
         row.add("cccccccccccccccccccc");
+        row.add(null);
+        row.add(null);
+        row.add(null);
         addRow(dataSet, row);
         ExaIterator iter = new ExaIteratorDummy(dataSet);
 
@@ -205,13 +254,25 @@ public class HdfsSerDeExportServiceTest {
         columns.add(new HCatTableColumn("v1", "varchar(1)"));
         columns.add(new HCatTableColumn("v2", "varchar(10)"));
         columns.add(new HCatTableColumn("s1", "string"));
+        columns.add(new HCatTableColumn("charnull", "string"));
+        columns.add(new HCatTableColumn("varcharnulll", "string"));
+        columns.add(new HCatTableColumn("stringnull", "string"));
 
         List<HCatTableColumn> partitionColumns = null;
         importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
 
         int expectedNumRows = 1;
         verify(ctx, times(expectedNumRows)).emit(anyVararg());
-        verify(ctx, times(1)).emit(eq("a"), eq("aaaaaaaaaa  "), eq("b"), eq("bbbbbbbbbb"), eq("cccccccccccccccccccc"));
+        verify(ctx, times(1)).emit(
+                eq("a"),
+                eq("aaaaaaaaaa  "),
+                eq("b"),
+                eq("bbbbbbbbbb"),
+                eq("cccccccccccccccccccc"),
+                eq(null),
+                eq(null),
+                eq(null)
+        );
     }
 
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
