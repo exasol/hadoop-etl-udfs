@@ -3,7 +3,6 @@ package com.exasol.hadoop.parquet;
 import com.exasol.ExaDataTypeException;
 import com.exasol.ExaIterationException;
 import com.exasol.ExaIterator;
-
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
 import parquet.io.api.Binary;
 import parquet.io.api.RecordConsumer;
@@ -52,6 +51,24 @@ public class Tuple {
         }
         else {
             throw new RuntimeException("Object at index " + index + " is of type " + data[index].getClass().getName() + ", not of type Tuple");
+        }
+    }
+
+    public boolean isNull(int index) {
+        if (index >= data.length) {
+            throw new RuntimeException("Tuple index " + index + " is out of bounds.");
+        }
+
+        int iterIndex = firstColumnIndex + hiveToExaColNumMap[index];
+        try {
+            if (iter.getObject(iterIndex) == null)
+                return true;
+            else
+                return false;
+        } catch (ExaIterationException ex) {
+            throw new RuntimeException("Caught ExaIterationException: " + ex.toString());
+        } catch (ExaDataTypeException ex) {
+            throw new RuntimeException("Caught ExaDataTypeException: " + ex.toString());
         }
     }
 
