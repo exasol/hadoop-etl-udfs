@@ -254,8 +254,8 @@ public class HdfsSerDeExportServiceTest {
         columns.add(new HCatTableColumn("v1", "varchar(1)"));
         columns.add(new HCatTableColumn("v2", "varchar(10)"));
         columns.add(new HCatTableColumn("s1", "string"));
-        columns.add(new HCatTableColumn("charnull", "string"));
-        columns.add(new HCatTableColumn("varcharnulll", "string"));
+        columns.add(new HCatTableColumn("charnull", "char(1)"));
+        columns.add(new HCatTableColumn("varcharnulll", "varchar(1)"));
         columns.add(new HCatTableColumn("stringnull", "string"));
 
         List<HCatTableColumn> partitionColumns = null;
