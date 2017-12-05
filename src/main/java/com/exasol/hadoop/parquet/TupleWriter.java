@@ -24,6 +24,9 @@ public class TupleWriter {
         for (int index = 0; index < type.getFieldCount(); index++) {
             Type fieldType = type.getType(index);
             String fieldName = fieldType.getName();
+            // empty fields have to be omitted
+            if (tuple.isNull(index))
+                continue;
             recordConsumer.startField(fieldName, index);
             if (fieldType.isPrimitive()) {
                 tuple.writePrimitiveValue(recordConsumer, index, (PrimitiveType)fieldType);
