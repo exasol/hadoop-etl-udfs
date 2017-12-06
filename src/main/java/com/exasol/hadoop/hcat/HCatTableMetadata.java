@@ -15,7 +15,7 @@ public class HCatTableMetadata {
     private List<HCatTableColumn> partitionColumns = new ArrayList<>();
     private String tableType = "";          // E.g. "MANAGED_TABLE" or "EXTERNAL_TABLE"
     private String inputFormatClass = "";   // E.g. "org.apache.hadoop.hive.ql.io.RCFileInputFormat"
-    private String outputFormatClass = "";
+    private String outputFormatClass = "";  // E.g. "org.apache.hadoop.hive.ql.io.RCFileOutputFormat"
     private String serDeClass = "";         // E.g. "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe"
     private List<HCatSerDeParameter> serDeParameters = new ArrayList<>();
     

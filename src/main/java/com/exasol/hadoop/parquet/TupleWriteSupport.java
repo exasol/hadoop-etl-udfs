@@ -8,19 +8,23 @@ import parquet.schema.MessageTypeParser;
 
 import java.util.HashMap;
 
+/**
+ * Extends WriteSupport to support Tuple (see Tuple.java).
+ */
 public class TupleWriteSupport extends WriteSupport<Tuple> {
     private MessageType schema;
     private TupleWriter writer;
+    private static final String PARQUET_SCHEMA_PROPERTY_NAME = "exasol.parquet.schema";
 
     public TupleWriteSupport() {
     }
 
     public static void setSchema(MessageType schema, Configuration configuration) {
-        configuration.set("exasol.parquet.schema", schema.toString());
+        configuration.set(PARQUET_SCHEMA_PROPERTY_NAME, schema.toString());
     }
 
     public static MessageType getSchema(Configuration configuration) {
-        return MessageTypeParser.parseMessageType(configuration.get("exasol.parquet.schema"));
+        return MessageTypeParser.parseMessageType(configuration.get(PARQUET_SCHEMA_PROPERTY_NAME));
     }
 
     public WriteContext init(Configuration configuration) {

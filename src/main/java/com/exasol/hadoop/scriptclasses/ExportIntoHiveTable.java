@@ -52,6 +52,7 @@ public class ExportIntoHiveTable {
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
         List<String> hdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
 
+        // Optional: Define a udf debug service address to which stdout will be redirected.
         if (!debugAddress.isEmpty()) {
             try {
                 String debugHost = debugAddress.split(":")[0];
@@ -84,6 +85,7 @@ public class ExportIntoHiveTable {
         HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
 
+        // Check partition specification
         boolean hasStaticPartition = false;
         boolean hasDynamicPartition = false;
         List<HCatTableColumn> hivePartitions = tableMeta.getPartitionColumns();
@@ -113,12 +115,14 @@ public class ExportIntoHiveTable {
         hdfsPath.append(fs.getUri());
         hdfsPath.append(tableMeta.getHdfsTableRootPath());
 
-        // Partitions
+        // Create partitions if necessary
         List<Integer> dynamicPartitionExaColNums = new ArrayList<>();
         if (hasStaticPartition) {
+            // Static partition
             HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
             hdfsPath.append("/").append(staticPartition);
         } else if (hasDynamicPartition) {
+            // Dynamic partition
             int[] exaColumnNums = new int[hivePartitions.size()];
             String[] exaColumnNumsStr = dynamicPartitionExaCols.split(",");
             for (int i = 0; i < exaColumnNumsStr.length; i++) {
@@ -143,7 +147,10 @@ public class ExportIntoHiveTable {
             hdfsPath.append(dynamicPartition);
         }
 
-        // Filename
+        // Parquet filename
+        // Format: 'exa_export_<yyyyMMdd_HHmmss>_<UUID>.parq'
+        //             <yyyyMMdd_HHmmss>: current date
+        //             <UUID>: random UUID
         StringBuilder file = new StringBuilder();
         file.append("exa_export_");
         file.append(new SimpleDateFormat("yyyyMMdd_HHmmss_").format(new Date()));

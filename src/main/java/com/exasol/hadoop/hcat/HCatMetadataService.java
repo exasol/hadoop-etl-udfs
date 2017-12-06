@@ -17,7 +17,7 @@ public class HCatMetadataService {
             final String dbName,
             final String tableName,
             final String hCatAddress,
-            final String hCatUser,  // In case of Kerberos, this is the principle of the Hadoop HDFS namenode (value of dfs.namenode.kerberos.principal in hdfs-site.xml)
+            final String hCatUser,  // In case of Kerberos, this is the principal of the Hadoop HDFS namenode (value of dfs.namenode.kerberos.principal in hdfs-site.xml)
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials) throws Exception {
         
@@ -31,7 +31,7 @@ public class HCatMetadataService {
                     tableMeta = HiveMetastoreService.getTableMetadata(hCatAddress, dbName, tableName, useKerberos, hCatUser.replaceAll("hdfs", "hive"));
                 } else {
                     // Get table metadata from webHCat
-                    String responseJson = WebHdfsAndHCatService.getExtendedTableInfo(hCatAddress, dbName, tableName, useKerberos?kerberosCredentials.getPrinciple():hCatUser);
+                    String responseJson = WebHdfsAndHCatService.getExtendedTableInfo(hCatAddress, dbName, tableName, useKerberos?kerberosCredentials.getPrincipal():hCatUser);
                     tableMeta = WebHCatJsonParser.parse(responseJson);
                 }
                 return tableMeta;
@@ -49,7 +49,7 @@ public class HCatMetadataService {
             final String tableName,
             final String partitionName,
             final String hCatAddress,
-            final String hCatUser,  // In case of Kerberos, this is the principle of the Hadoop HDFS namenode (value of dfs.namenode.kerberos.principal in hdfs-site.xml)
+            final String hCatUser,  // In case of Kerberos, this is the principal of the Hadoop HDFS namenode (value of dfs.namenode.kerberos.principal in hdfs-site.xml)
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials) throws Exception {
 

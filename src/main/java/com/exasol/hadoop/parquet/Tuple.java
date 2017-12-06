@@ -18,11 +18,14 @@ import java.time.temporal.JulianFields;
 import java.util.List;
 import java.util.TimeZone;
 
+/**
+ * Represents a data row for ParquetWriter. (Usage: HdfsSerDeExportService.exportToParquetTable())
+ */
 public class Tuple {
     private Object[] data;
     private ExaIterator iter;
-    private int firstColumnIndex;
-    private int[] hiveToExaColNumMap;
+    private int firstColumnIndex; // First ExaIterator column which contains table data
+    private int[] hiveToExaColNumMap; // Maps Hive columns to Exasol columns
 
     public Tuple(ExaIterator iter, final int numCols, final int firstColumnIndex, final List<Integer> dynamicPartitionExaColNums) {
         this.iter = iter;
@@ -31,7 +34,8 @@ public class Tuple {
         this.hiveToExaColNumMap = new int[numCols];
         for (int hiveIdx = 0, exaIdx = 0; hiveIdx < hiveToExaColNumMap.length; exaIdx++) {
             if (dynamicPartitionExaColNums.contains(this.firstColumnIndex + exaIdx)) {
-                // Skip column, partition values are not in data
+                // Column is a dynamically created partition.
+                // Skip column, partition values are not in data.
                 continue;
             }
             this.hiveToExaColNumMap[hiveIdx++] = exaIdx;
@@ -39,6 +43,7 @@ public class Tuple {
     }
 
     public boolean next() throws ExaIterationException {
+        // Update ExaIterator to reference next data row.
         return iter.next();
     }
 
@@ -72,11 +77,15 @@ public class Tuple {
         }
     }
 
+    /**
+     * Write primitive data value from Exasol to RecordConsumer (ParquetWriter interface).
+     */
     public void writePrimitiveValue(RecordConsumer recordConsumer, int index, PrimitiveType primitiveType) {
         if (index >= data.length) {
             throw new RuntimeException("Tuple index " + index + " is out of bounds.");
         }
 
+        // Get ExaIterator column for Hive column
         int iterIndex = firstColumnIndex + hiveToExaColNumMap[index];
         PrimitiveType.PrimitiveTypeName primitiveTypeName = primitiveType.getPrimitiveTypeName();
         OriginalType originalType = primitiveType.getOriginalType();

@@ -6,6 +6,9 @@ import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import java.sql.*;
 import java.util.List;
 
+/**
+ * Uses the Hive JDBC driver to execute necessary statements for Export into Hive.
+ */
 public class JdbcUtils {
     public static String HIVE_JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver";
 

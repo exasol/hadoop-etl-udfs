@@ -5,6 +5,9 @@ import parquet.schema.GroupType;
 import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
 
+/**
+ * Writes Tuple (see Tuple.java) fields to RecordConsumer for TupleWriteSupport (TupleWriteSupport.java).
+ */
 public class TupleWriter {
     private final RecordConsumer recordConsumer;
     private final GroupType schema;

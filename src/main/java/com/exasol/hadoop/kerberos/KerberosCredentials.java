@@ -5,18 +5,18 @@ import com.exasol.utils.UdfUtils;
 
 public class KerberosCredentials {
 
-    private String principle;   // Kerberos Principle, e.g. kerbuser@EXAMPLE.COM
+    private String principal;   // Kerberos Principal, e.g. kerbuser@EXAMPLE.COM
     private byte[] configFile;  // Content of the kerberos config file
     private byte[] keytabFile;  // Content of the kerberos keytab file
     
-    public KerberosCredentials(String principle, byte[] configFile, byte[] keytabFile) {
-        this.principle = principle;
+    public KerberosCredentials(String principal, byte[] configFile, byte[] keytabFile) {
+        this.principal = principal;
         this.configFile = configFile;
         this.keytabFile = keytabFile;
     }
 
     public KerberosCredentials(ExaConnectionInformation kerberosConn) {
-        principle = kerberosConn.getUser();
+        principal = kerberosConn.getUser();
         final String krbKey = "ExaAuthType=Kerberos";
         String[] confKeytab = kerberosConn.getPassword().split(";");
         if (confKeytab.length != 3 || !confKeytab[0].equals(krbKey)) {
@@ -26,8 +26,8 @@ public class KerberosCredentials {
         keytabFile = UdfUtils.base64ToByteArray(confKeytab[2]);
     }
     
-    public String getPrinciple() {
-        return principle;
+    public String getPrincipal() {
+        return principal;
     }
     
     public byte[] getConfigFile() {

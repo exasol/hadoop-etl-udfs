@@ -84,6 +84,10 @@ public class HiveMetastoreService {
         return new HCatTableMetadata(location, columns, partitionColumns, tableType, inputFormat, outputFormat, serDeClass, serDeParameters);
     }
 
+    /**
+     * Create a partition in Hive if it does not already exist.
+     * We use the HiveMetaStoreClient API to access the Hive Metastore Thrift Server.
+     */
     public static boolean createPartitionIfNotExists(String hiveMetastoreUrl, boolean useKerberos, String kerberosPrincipal,
                                                      String dbName, String tableName, String partitionName) {
         HiveMetaStoreClient hiveClient = getHiveMetastoreClient(hiveMetastoreUrl, useKerberos, kerberosPrincipal);

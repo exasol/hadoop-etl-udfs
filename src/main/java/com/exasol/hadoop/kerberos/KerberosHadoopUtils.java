@@ -20,7 +20,7 @@ public class KerberosHadoopUtils {
         conf.set("hadoop.security.authentication", "kerberos");
         UserGroupInformation.setConfiguration(conf);
         String keytabPath = writeTempKeytabFile(kerberosCredentials.getKeytabFile(), tmpDir);
-        ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(kerberosCredentials.getPrinciple(), keytabPath);
+        ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(kerberosCredentials.getPrincipal(), keytabPath);
         new File(keytabPath).delete(); // Delete keytab file after login
         return ugi;
     }
@@ -33,6 +33,9 @@ public class KerberosHadoopUtils {
         return UdfUtils.writeTempFile(data, path, "kt_", ".keytab");
     }
 
+    /**
+     * Configure JAAS for Export if JDBC statements must be executed using Kerberos authentication.
+     */
     public static void configKerberosJaas(String path, String user, String password) throws Exception {
         final String krbKey = "ExaAuthType=Kerberos";
         String[] confKeytab = password.split(";");
@@ -67,7 +70,7 @@ public class KerberosHadoopUtils {
         System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
 
         // Set login user. The value is actually not important, but something must be specified.
-        // UnixLoginModule makes a native system call to get the username
+        // UnixLoginModule makes a native system call to get the username.
         int endIndex = StringUtils.indexOfAny(user, "/@");
         if (endIndex != -1) {
             user = user.substring(0, endIndex);
