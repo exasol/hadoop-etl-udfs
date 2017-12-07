@@ -40,17 +40,16 @@ public class ExportIntoHiveTable {
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
-        String hdfsServerUrls = iter.getString(PARAM_IDX_HDFS_ADDRESS);
+        String hdfsServerUrls = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
         String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
         String hcatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
-        String staticPartition = iter.getString(PARAM_IDX_STATIC_PARTITION);
-        String dynamicPartitionExaCols = iter.getString(PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS);
+        String staticPartition = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_STATIC_PARTITION, "");
+        String dynamicPartitionExaCols = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS, "");
         String authType = iter.getString(PARAM_IDX_AUTH_TYPE);
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_CONNECTION, "");
         String compressionType = iter.getString(PARAM_IDX_COMPRESSION_TYPE);
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
-        List<String> hdfsAddresses = Arrays.asList(hdfsServerUrls.split(","));
 
         // Optional: Define a udf debug service address to which stdout will be redirected.
         if (!debugAddress.isEmpty()) {
@@ -70,18 +69,6 @@ public class ExportIntoHiveTable {
             kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
 
-        UserGroupInformation ugi = useKerberos ?
-                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
-        FileSystem fs = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
-            public FileSystem run() throws Exception {
-                final Configuration conf = new Configuration();
-                if (useKerberos) {
-                    conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                }
-                return HdfsService.getFileSystem(hdfsAddresses, conf);
-            }
-        });
-
         HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
 
@@ -89,12 +76,6 @@ public class ExportIntoHiveTable {
         boolean hasStaticPartition = false;
         boolean hasDynamicPartition = false;
         List<HCatTableColumn> hivePartitions = tableMeta.getPartitionColumns();
-        if (staticPartition == null) {
-            staticPartition = "";
-        }
-        if (dynamicPartitionExaCols == null) {
-            dynamicPartitionExaCols = "";
-        }
         if (!staticPartition.isEmpty() && !dynamicPartitionExaCols.isEmpty()) {
             throw new RuntimeException("A static and dynamic partition cannot both be specified.");
         } else if (!staticPartition.isEmpty()) {
@@ -109,6 +90,22 @@ public class ExportIntoHiveTable {
         } else if (!dynamicPartitionExaCols.isEmpty() && hivePartitions.isEmpty()) {
             throw new RuntimeException("A dynamic partition was specified although the target table does not have any partitions.");
         }
+
+        // If the user defined an webHDFS URL (e.g. "webhdfs://domain.namenode:50070" or "hdfs://namenode:8020") we use this and ignore the hdfs URL returned from HCat (e.g. "hdfs://namenode:8020")
+        // Two use cases: 1) Use webHDFS instead of HDFS and 2) If Hadoop returns a namenode hostname unreachable from EXASOL (e.g. not fully-qualified) we can overwrite e.g. by "hdfs://domain.namenode:8020"
+        List<String> hdfsAddresses = hdfsServerUrls.equals("") ? Arrays.asList(tableMeta.getHdfsAddress()) : Arrays.asList(hdfsServerUrls.split(","));
+
+        UserGroupInformation ugi = useKerberos ?
+                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+        FileSystem fs = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+            public FileSystem run() throws Exception {
+                final Configuration conf = new Configuration();
+                if (useKerberos) {
+                    conf.set("dfs.namenode.kerberos.principal", hdfsUser);
+                }
+                return HdfsService.getFileSystem(hdfsAddresses, conf);
+            }
+        });
 
         // HDFS path
         StringBuilder hdfsPath = new StringBuilder();
