@@ -29,7 +29,7 @@ You have to build the sources depending on your Hive and Hadoop version as follo
 #### Cloudera CDH
 You can look up the version numbers for Hadoop and Hive in the [CDH Maven documentation](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo.html) (search for the artifactId ```hadoop-common``` and ```hive-serde```).
 ```
-mvn clean -DskipTests package assembly:single -P cloudera -Dhadoop.version=2.5.0-cdh5.2.0 -Dhive.version=0.13.1-cdh5.2.0
+mvn clean -DskipTests package assembly:single -P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2
 ```
 
 #### Hortonworks HDP
