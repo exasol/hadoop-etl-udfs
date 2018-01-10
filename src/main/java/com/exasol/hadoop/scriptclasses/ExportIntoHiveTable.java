@@ -40,9 +40,9 @@ public class ExportIntoHiveTable {
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
-        String hdfsServerUrls = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
-        String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
         String hcatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
+        String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
+        String hdfsServerUrls = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
         String staticPartition = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_STATIC_PARTITION, "");
         String dynamicPartitionExaCols = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS, "");
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
