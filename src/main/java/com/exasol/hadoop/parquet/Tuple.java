@@ -16,7 +16,6 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.JulianFields;
 import java.util.List;
-import java.util.TimeZone;
 
 /**
  * Represents a data row for ParquetWriter. (Usage: HdfsSerDeExportService.exportToParquetTable())
