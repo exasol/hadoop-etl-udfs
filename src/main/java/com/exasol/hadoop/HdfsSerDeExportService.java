@@ -18,7 +18,8 @@ import java.util.List;
 
 import parquet.hadoop.ParquetWriter;
 import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.schema.*;
+import parquet.schema.MessageType;
+import parquet.schema.Type;
 import com.exasol.hadoop.parquet.Tuple;
 import com.exasol.hadoop.parquet.TupleWriteSupport;
 
@@ -86,9 +87,14 @@ public class HdfsSerDeExportService {
                     if (useKerberos) {
                         conf.set("dfs.namenode.kerberos.principal", hdfsUser);
                     }
-                    TupleWriteSupport.setSchema(schema, conf);
                     Path path = new Path(hdfsUrl, file);
                     System.out.println("Path: " + path.toString());
+                    int rowsExported = 0;
+
+
+
+
+                    TupleWriteSupport.setSchema(schema, conf);
                     ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
                             new TupleWriteSupport(),
                             CompressionCodecName.fromConf(compressionType),
@@ -102,13 +108,16 @@ public class HdfsSerDeExportService {
                     // Create Tuple object with ExaIterator reference.
                     // Calling 'row.next()' accesses next Exasol row to write.
                     Tuple row = new Tuple(ctx, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
-                    int rowsExported = 0;
                     do {
                         // Write data row
                         writer.write(row);
                         rowsExported++;
                     } while (row.next()); // Get next row
                     writer.close();
+
+
+
+
                     // Emit 'Rows affected' value
                     ctx.emit(rowsExported);
                 }
