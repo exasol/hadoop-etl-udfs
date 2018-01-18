@@ -5,23 +5,12 @@ import com.exasol.ExaConnectionInformation;
 import com.exasol.ExaExportSpecification;
 import com.exasol.ExaMetadata;
 import com.exasol.hadoop.hcat.HCatMetadataService;
-import com.exasol.hadoop.hcat.HCatSerDeParameter;
-import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
-import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.utils.JdbcUtils;
 import com.exasol.utils.UdfUtils;
 import com.google.common.base.Joiner;
-import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.security.UserGroupInformation;
 
-import javax.xml.bind.DatatypeConverter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.nio.charset.Charset;
-import java.security.PrivilegedExceptionAction;
-import java.sql.*;
 import java.util.*;
 
 /**
