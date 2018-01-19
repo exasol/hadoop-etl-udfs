@@ -1,27 +1,19 @@
 package com.exasol.hadoop;
 
 import com.exasol.ExaIterator;
-import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
+import com.exasol.hadoop.parquet.ExaParquetWriter;
+import com.exasol.hadoop.parquet.ExaParquetWriterImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.io.parquet.convert.HiveSchemaConverter;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.List;
 
-import parquet.hadoop.ParquetWriter;
-import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.schema.MessageType;
 import parquet.schema.Type;
-import com.exasol.hadoop.parquet.Tuple;
-import com.exasol.hadoop.parquet.TupleWriteSupport;
 
 /**
  * Writes files to (web)HDFS using the appropriate Hadoop OutputFormat and Hive SerDe.
@@ -45,34 +37,6 @@ public class HdfsSerDeExportService {
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted export to hive Parquet table\n----------");
 
-        int numColumns;
-        MessageType schema;
-        if (tableMeta != null) {
-            // Use HCat table metadata to build Parquet schema.
-            // This should normally be used (except for testing).
-            List<String> colNames = new ArrayList<>();
-            for (HCatTableColumn col : tableMeta.getColumns()) {
-                colNames.add(col.getName());
-            }
-            List<String> colTypeNames = new ArrayList<>();
-            for (HCatTableColumn col : tableMeta.getColumns()) {
-                colTypeNames.add(col.getDataType());
-            }
-            List<TypeInfo> colTypes = new ArrayList<>();
-            for (String col : colTypeNames) {
-                colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
-            }
-            schema = HiveSchemaConverter.convert(colNames, colTypes);
-            numColumns = tableMeta.getColumns().size();
-        }
-        else {
-            // Use the schemaTypes provided since HCat table metadata isn't available.
-            // This should normally only be used for testing.
-            schema = new MessageType("hive_schema", schemaTypes);
-            numColumns = schemaTypes.size();
-        }
-        System.out.println("Parquet schema:\n" + schema);
-
         UserGroupInformation ugi;
         if (useKerberos) {
             ugi = KerberosHadoopUtils.getKerberosUGI(kerberosCredentials);
@@ -88,35 +52,21 @@ public class HdfsSerDeExportService {
                         conf.set("dfs.namenode.kerberos.principal", hdfsUser);
                     }
                     Path path = new Path(hdfsUrl, file);
-                    System.out.println("Path: " + path.toString());
                     int rowsExported = 0;
 
+                    ExaParquetWriter parquetWriter;
+                    if (tableMeta != null) {
+                        parquetWriter = new ExaParquetWriterImpl(tableMeta, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
+                    } else {
+                        parquetWriter = new ExaParquetWriterImpl(schemaTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
+                    }
 
-
-
-                    TupleWriteSupport.setSchema(schema, conf);
-                    ParquetWriter<Tuple> writer = new ParquetWriter<Tuple>(path,
-                            new TupleWriteSupport(),
-                            CompressionCodecName.fromConf(compressionType),
-                            ParquetWriter.DEFAULT_BLOCK_SIZE,
-                            ParquetWriter.DEFAULT_PAGE_SIZE,
-                            ParquetWriter.DEFAULT_PAGE_SIZE,
-                            ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
-                            ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                            conf);
-
-                    // Create Tuple object with ExaIterator reference.
-                    // Calling 'row.next()' accesses next Exasol row to write.
-                    Tuple row = new Tuple(ctx, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
                     do {
                         // Write data row
-                        writer.write(row);
+                        parquetWriter.write();
                         rowsExported++;
-                    } while (row.next()); // Get next row
-                    writer.close();
-
-
-
+                    } while (parquetWriter.next()); // Get next row
+                    parquetWriter.close();
 
                     // Emit 'Rows affected' value
                     ctx.emit(rowsExported);
