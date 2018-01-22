@@ -8,6 +8,7 @@ import com.exasol.hadoop.parquet.ExaParquetWriter;
 import com.exasol.hadoop.parquet.ExaParquetWriterImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.security.PrivilegedExceptionAction;
@@ -34,7 +35,9 @@ public class HdfsSerDeExportService {
             final List<Type> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
             final int firstColumnIndex, // First column containing data to be exported. (see ExportIntoHiveTable.java)
             final List<Integer> dynamicPartitionExaColNums, // Exasol column numbers of dynamic partitions.
-            final ExaIterator ctx) throws Exception {
+            final ExaIterator ctx,
+            final List<String> colNames,
+            final List<TypeInfo> colTypes) throws Exception {
         System.out.println("----------\nStarted export to hive Parquet table\n----------");
 
         UserGroupInformation ugi;
@@ -57,6 +60,8 @@ public class HdfsSerDeExportService {
                     ExaParquetWriter parquetWriter;
                     if (tableMeta != null) {
                         parquetWriter = new ExaParquetWriterImpl(tableMeta, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
+                    } else if (colNames != null && colTypes != null) {
+                        parquetWriter = new ExaParquetWriterImpl(colNames, colTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     } else {
                         parquetWriter = new ExaParquetWriterImpl(schemaTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     }

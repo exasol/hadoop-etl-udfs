@@ -56,6 +56,21 @@ public class ExaParquetWriterImpl implements ExaParquetWriter {
         init(conf, path, compressionType, exa, firstColumnIndex, dynamicPartitionExaColNums);
     }
 
+    public ExaParquetWriterImpl(final List<String> colNames,
+                                final List<TypeInfo> colTypes,
+                                final Configuration conf,
+                                final Path path,
+                                final String compressionType,
+                                final ExaIterator exa,
+                                final int firstColumnIndex,
+                                final List<Integer> dynamicPartitionExaColNums) throws Exception {
+        this.schema = HiveSchemaConverter.convert(colNames, colTypes);
+        System.out.println("Parquet schema:\n" + schema);
+        this.numColumns = colNames.size();
+
+        init(conf, path, compressionType, exa, firstColumnIndex, dynamicPartitionExaColNums);
+    }
+
     public ExaParquetWriterImpl(final List<Type> schemaTypes,
                                 final Configuration conf,
                                 final Path path,

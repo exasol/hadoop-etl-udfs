@@ -156,7 +156,7 @@ public class ExportIntoHiveTable {
 
         String fileFormat = tableMeta.getSerDeClass();
         if (fileFormat.toLowerCase().contains("parquet")) {
-            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUser, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUser, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter, null, null);
         } else {
             throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }
