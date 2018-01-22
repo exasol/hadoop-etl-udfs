@@ -1,6 +1,7 @@
 package com.exasol.hadoop;
 
 import com.exasol.ExaIterator;
+import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
@@ -9,9 +10,11 @@ import com.exasol.hadoop.parquet.ExaParquetWriterImpl;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
 import java.util.List;
 
 import parquet.schema.Type;
@@ -59,7 +62,21 @@ public class HdfsSerDeExportService {
 
                     ExaParquetWriter parquetWriter;
                     if (tableMeta != null) {
-                        parquetWriter = new ExaParquetWriterImpl(tableMeta, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
+                        // Use HCat table metadata to build Parquet schema.
+                        // This should normally be used (except for testing).
+                        List<String> metaColNames = new ArrayList<>();
+                        for (HCatTableColumn col : tableMeta.getColumns()) {
+                            metaColNames.add(col.getName());
+                        }
+                        List<String> metaColTypeNames = new ArrayList<>();
+                        for (HCatTableColumn col : tableMeta.getColumns()) {
+                            metaColTypeNames.add(col.getDataType());
+                        }
+                        List<TypeInfo> metaColTypes = new ArrayList<>();
+                        for (String col : metaColTypeNames) {
+                            metaColTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
+                        }
+                        parquetWriter = new ExaParquetWriterImpl(metaColNames, metaColTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     } else if (colNames != null && colTypes != null) {
                         parquetWriter = new ExaParquetWriterImpl(colNames, colTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     } else {
