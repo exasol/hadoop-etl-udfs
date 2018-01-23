@@ -18,15 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaParquetWriter {
-    private MessageType schema;
-    private int numColumns;
-    private Configuration conf;
-    private Path path;
-    private String compressionType;
-    private ExaIterator exa;
-    private int firstColumnIndex;
-    private List<Integer> dynamicPartitionExaColNums;
-    private ParquetWriter<Tuple> writer;
     private Tuple row;
 
     public ExaParquetWriterImpl(final List<String> colNames,
@@ -49,11 +40,11 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 WriterVersion.fromString("v1"),
                 conf);
 
-        this.schema = HiveSchemaConverter.convert(colNames, colTypes);
+        System.out.println("Path: " + path.toString());
+        MessageType schema = HiveSchemaConverter.convert(colNames, colTypes);
         System.out.println("Parquet schema:\n" + schema);
-        this.numColumns = colNames.size();
 
-        init(conf, path, compressionType, exa, firstColumnIndex, dynamicPartitionExaColNums);
+        init(exa, colNames.size(), firstColumnIndex, dynamicPartitionExaColNums);
     }
 
     public ExaParquetWriterImpl(final List<ExaParquetTypeInfo> schemaTypes,
@@ -76,31 +67,22 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 WriterVersion.fromString("v1"),
                 conf);
 
+        System.out.println("Path: " + path.toString());
         // Use the schemaTypes provided since HCat table metadata isn't available.
         // This should normally only be used for testing.
-        this.schema = new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes));
+        MessageType schema = new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes));
         System.out.println("Parquet schema:\n" + schema);
-        this.numColumns = schemaTypes.size();
 
-        init(conf, path, compressionType, exa, firstColumnIndex, dynamicPartitionExaColNums);
+        init(exa, schemaTypes.size(), firstColumnIndex, dynamicPartitionExaColNums);
     }
 
-    private void init(final Configuration conf,
-                      final Path path,
-                      final String compressionType,
-                      final ExaIterator exa,
+    private void init(final ExaIterator exa,
+                      final int numColumns,
                       final int firstColumnIndex,
                       final List<Integer> dynamicPartitionExaColNums) throws Exception {
-        this.conf = conf;
-        this.path = path;
-        System.out.println("Path: " + path.toString());
-        this.compressionType = compressionType;
-        this.exa = exa;
-        this.firstColumnIndex = firstColumnIndex;
-        this.dynamicPartitionExaColNums = dynamicPartitionExaColNums;
 
         // Create Tuple object with ExaIterator reference.
-        this.row = new Tuple(this.exa, this.numColumns, this.firstColumnIndex, this.dynamicPartitionExaColNums);
+        this.row = new Tuple(exa, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
     }
 
     @Override
