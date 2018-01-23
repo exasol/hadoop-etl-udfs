@@ -44,7 +44,9 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
 
         System.out.println("Path: " + path.toString());
         System.out.println("Parquet schema:\n" + schema);
-        init(exa, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
+
+        // Create Tuple object with ExaIterator reference.
+        this.row = new Tuple(exa, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
     }
 
     public ExaParquetWriterImpl(final List<String> colNames,
@@ -84,15 +86,6 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 exa,
                 firstColumnIndex,
                 dynamicPartitionExaColNums);
-    }
-
-    private void init(final ExaIterator exa,
-                      final int numColumns,
-                      final int firstColumnIndex,
-                      final List<Integer> dynamicPartitionExaColNums) throws Exception {
-
-        // Create Tuple object with ExaIterator reference.
-        this.row = new Tuple(exa, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
     }
 
     @Override
