@@ -1,5 +1,7 @@
 package com.exasol.hadoop.parquet;
 
+import java.io.IOException;
+
 public interface ExaParquetWriter {
 
     /**
@@ -17,5 +19,5 @@ public interface ExaParquetWriter {
     /**
      * Closes the Writer.
      */
-    void close() throws Exception;
+    void close() throws IOException;
 }

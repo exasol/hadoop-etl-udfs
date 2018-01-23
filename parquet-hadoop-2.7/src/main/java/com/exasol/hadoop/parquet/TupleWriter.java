@@ -1,9 +1,9 @@
 package com.exasol.hadoop.parquet;
 
-import parquet.io.api.RecordConsumer;
-import parquet.schema.GroupType;
-import parquet.schema.PrimitiveType;
-import parquet.schema.Type;
+import org.apache.parquet.io.api.RecordConsumer;
+import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
 
 /**
  * Writes Tuple (see Tuple.java) fields to RecordConsumer for TupleWriteSupport (TupleWriteSupport.java).

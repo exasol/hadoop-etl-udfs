@@ -10,19 +10,20 @@ import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.schema.MessageType;
 import parquet.schema.Type;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ExaParquetWriterImpl implements ExaParquetWriter {
     private MessageType schema;
     private int numColumns;
-    Configuration conf;
-    Path path;
-    String compressionType;
-    ExaIterator exa;
-    int firstColumnIndex;
-    List<Integer> dynamicPartitionExaColNums;
-    ParquetWriter<Tuple> writer;
-    Tuple row;
+    private Configuration conf;
+    private Path path;
+    private String compressionType;
+    private ExaIterator exa;
+    private int firstColumnIndex;
+    private List<Integer> dynamicPartitionExaColNums;
+    private ParquetWriter<Tuple> writer;
+    private Tuple row;
 
     public ExaParquetWriterImpl(final List<String> colNames,
                                 final List<TypeInfo> colTypes,
@@ -84,15 +85,18 @@ public class ExaParquetWriterImpl implements ExaParquetWriter {
         this.row = new Tuple(this.exa, this.numColumns, this.firstColumnIndex, this.dynamicPartitionExaColNums);
     }
 
+    @Override
     public void write() throws Exception {
         this.writer.write(this.row);
     }
 
+    @Override
     public boolean next() throws Exception {
         return this.row.next();
     }
 
-    public void close() throws Exception {
+    @Override
+    public void close() throws IOException {
         this.writer.close();
     }
 }

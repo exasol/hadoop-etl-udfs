@@ -1,11 +1,11 @@
 package com.exasol.hadoop;
 
-/*
 import com.exasol.ExaIterator;
 import com.exasol.ExaIteratorDummy;
 import com.exasol.hadoop.hcat.HCatSerDeParameter;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hdfs.HdfsService;
+import com.exasol.hadoop.parquet.ExaParquetTypeInfo;
 import com.exasol.jsonpath.OutputColumnSpec;
 import com.exasol.jsonpath.OutputColumnSpecUtil;
 import com.exasol.utils.UdfUtils;
@@ -18,9 +18,6 @@ import org.apache.hadoop.mapred.InputFormat;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import parquet.schema.OriginalType;
-import parquet.schema.PrimitiveType;
-import parquet.schema.Type;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -45,6 +42,7 @@ public class HdfsSerDeExportServiceTest {
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
 
+/*
     @Test
     public void testExportParquetNumeric() throws Exception {
 
@@ -178,15 +176,23 @@ public class HdfsSerDeExportServiceTest {
                 eq(null)
         );
     }
+*/
 
     @Test
     public void testExportParquetTimestamp() throws Exception {
 
         List<Integer> dynamicCols = new ArrayList<>();
+
+        /*
         List<Type> schemaTypes = new ArrayList<>();
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t1", null));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t2", null));
         schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "timestampnull", null));
+        */
+        List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new ExaParquetTypeInfo("t1","OPTIONAL", "INT96"));
+        schemaTypes.add(new ExaParquetTypeInfo("t2","OPTIONAL", "INT96"));
+        schemaTypes.add(new ExaParquetTypeInfo("timestampnull","OPTIONAL", "INT96"));
 
 
 
@@ -239,6 +245,7 @@ public class HdfsSerDeExportServiceTest {
         );
     }
 
+/*
     @Test
     public void testExportParquetBoolean() throws Exception {
 
@@ -336,6 +343,7 @@ public class HdfsSerDeExportServiceTest {
                 eq(null)
         );
     }
+    */
 
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set
@@ -361,4 +369,3 @@ public class HdfsSerDeExportServiceTest {
     }
 
 }
-*/

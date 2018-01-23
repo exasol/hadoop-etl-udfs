@@ -4,10 +4,10 @@ import com.exasol.ExaDataTypeException;
 import com.exasol.ExaIterationException;
 import com.exasol.ExaIterator;
 import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
-import parquet.io.api.Binary;
-import parquet.io.api.RecordConsumer;
-import parquet.schema.OriginalType;
-import parquet.schema.PrimitiveType;
+import org.apache.parquet.io.api.Binary;
+import org.apache.parquet.io.api.RecordConsumer;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;

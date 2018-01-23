@@ -5,6 +5,7 @@ import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
+import com.exasol.hadoop.parquet.ExaParquetTypeInfo;
 import com.exasol.hadoop.parquet.ExaParquetWriter;
 import com.exasol.hadoop.parquet.ExaParquetWriterImpl;
 import org.apache.hadoop.conf.Configuration;
@@ -16,8 +17,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-
-import parquet.schema.Type;
 
 /**
  * Writes files to (web)HDFS using the appropriate Hadoop OutputFormat and Hive SerDe.
@@ -35,7 +34,7 @@ public class HdfsSerDeExportService {
             final String file,
             final HCatTableMetadata tableMeta,
             final String compressionType, // Defined in parquet.hadoop.metadata.CompressionCodecName.java
-            final List<Type> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
+            final List<ExaParquetTypeInfo> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
             final int firstColumnIndex, // First column containing data to be exported. (see ExportIntoHiveTable.java)
             final List<Integer> dynamicPartitionExaColNums, // Exasol column numbers of dynamic partitions.
             final ExaIterator ctx,
