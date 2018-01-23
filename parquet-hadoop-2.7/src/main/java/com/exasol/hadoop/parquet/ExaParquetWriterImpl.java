@@ -18,9 +18,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaParquetWriter {
+
     static final String PARQUET_WRITER_VERSION = "v1";
 
     private Tuple row;
+
+    private ExaParquetWriterImpl(final MessageType schema,
+                                 final int numColumns,
+                                 final Configuration conf,
+                                 final Path path,
+                                 final String compressionType,
+                                 final ExaIterator exa,
+                                 final int firstColumnIndex,
+                                 final List<Integer> dynamicPartitionExaColNums) throws Exception {
+        super(path,
+                new TupleWriteSupport(schema, conf),
+                CompressionCodecName.fromConf(compressionType),
+                ParquetWriter.DEFAULT_BLOCK_SIZE,
+                ParquetWriter.DEFAULT_PAGE_SIZE,
+                ParquetWriter.DEFAULT_PAGE_SIZE,
+                ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
+                ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
+                WriterVersion.fromString(PARQUET_WRITER_VERSION),
+                conf);
+
+        System.out.println("Path: " + path.toString());
+        System.out.println("Parquet schema:\n" + schema);
+        init(exa, numColumns, firstColumnIndex, dynamicPartitionExaColNums);
+    }
 
     public ExaParquetWriterImpl(final List<String> colNames,
                                 final List<TypeInfo> colTypes,
@@ -31,22 +56,14 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                                 final int firstColumnIndex,
                                 final List<Integer> dynamicPartitionExaColNums) throws Exception {
 
-        super(path,
-                new TupleWriteSupport(HiveSchemaConverter.convert(colNames, colTypes), conf),
-                CompressionCodecName.fromConf(compressionType),
-                ParquetWriter.DEFAULT_BLOCK_SIZE,
-                ParquetWriter.DEFAULT_PAGE_SIZE,
-                ParquetWriter.DEFAULT_PAGE_SIZE,
-                ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
-                ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                WriterVersion.fromString(PARQUET_WRITER_VERSION),
-                conf);
-
-        System.out.println("Path: " + path.toString());
-        MessageType schema = HiveSchemaConverter.convert(colNames, colTypes);
-        System.out.println("Parquet schema:\n" + schema);
-
-        init(exa, colNames.size(), firstColumnIndex, dynamicPartitionExaColNums);
+        this(HiveSchemaConverter.convert(colNames, colTypes),
+                colNames.size(),
+                conf,
+                path,
+                compressionType,
+                exa,
+                firstColumnIndex,
+                dynamicPartitionExaColNums);
     }
 
     public ExaParquetWriterImpl(final List<ExaParquetTypeInfo> schemaTypes,
@@ -57,25 +74,16 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                                 final int firstColumnIndex,
                                 final List<Integer> dynamicPartitionExaColNums) throws Exception {
 
-
-        super(path,
-                new TupleWriteSupport(new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes)), conf),
-                CompressionCodecName.fromConf(compressionType),
-                ParquetWriter.DEFAULT_BLOCK_SIZE,
-                ParquetWriter.DEFAULT_PAGE_SIZE,
-                ParquetWriter.DEFAULT_PAGE_SIZE,
-                ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
-                ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                WriterVersion.fromString(PARQUET_WRITER_VERSION),
-                conf);
-
-        System.out.println("Path: " + path.toString());
         // Use the schemaTypes provided since HCat table metadata isn't available.
         // This should normally only be used for testing.
-        MessageType schema = new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes));
-        System.out.println("Parquet schema:\n" + schema);
-
-        init(exa, schemaTypes.size(), firstColumnIndex, dynamicPartitionExaColNums);
+        this(new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes)),
+                schemaTypes.size(),
+                conf,
+                path,
+                compressionType,
+                exa,
+                firstColumnIndex,
+                dynamicPartitionExaColNums);
     }
 
     private void init(final ExaIterator exa,
