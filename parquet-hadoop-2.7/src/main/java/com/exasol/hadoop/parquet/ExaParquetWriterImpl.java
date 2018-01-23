@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaParquetWriter {
+    static final String PARQUET_WRITER_VERSION = "v1";
+
     private Tuple row;
 
     public ExaParquetWriterImpl(final List<String> colNames,
@@ -37,7 +39,7 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 ParquetWriter.DEFAULT_PAGE_SIZE,
                 ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
                 ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                WriterVersion.fromString("v1"),
+                WriterVersion.fromString(PARQUET_WRITER_VERSION),
                 conf);
 
         System.out.println("Path: " + path.toString());
@@ -64,7 +66,7 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 ParquetWriter.DEFAULT_PAGE_SIZE,
                 ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
                 ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                WriterVersion.fromString("v1"),
+                WriterVersion.fromString(PARQUET_WRITER_VERSION),
                 conf);
 
         System.out.println("Path: " + path.toString());
