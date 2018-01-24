@@ -42,71 +42,27 @@ public class HdfsSerDeExportServiceTest {
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
 
-/*
     @Test
     public void testExportParquetNumeric() throws Exception {
 
         List<Integer> dynamicCols = new ArrayList<>();
-        List<Type> schemaTypes = new ArrayList<>();
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "ti", OriginalType.INT_8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "si", OriginalType.INT_16));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "i", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT64, "bi", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FLOAT, "f", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.DOUBLE, "d", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec1"));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 15,"dec2"));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"dec3"));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "tinyintnull", OriginalType.INT_8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "smallintnull", OriginalType.INT_16));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT32, "intnull", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT64, "bigintnull", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FLOAT, "floatnull", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.DOUBLE, "doublenull", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, 4,"decimalnull"));
-
-
-
-        List<String> colNames = new ArrayList<>();
-        List<TypeInfo> colTypes = new ArrayList<>();
-        colNames.add("ti");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("tinyint"));
-        colNames.add("si");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("smallint"));
-        colNames.add("i");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("int"));
-        colNames.add("bi");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("bigint"));
-        colNames.add("f");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("float"));
-        colNames.add("d");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("double"));
-        colNames.add("dec1");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("decimal(36,0)"));
-        colNames.add("dec2");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("decimal(36,5)"));
-        colNames.add("dec3");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("decimal(8,8)"));
-        colNames.add("tinyintnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("tinyint"));
-        colNames.add("smallintnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("smallint"));
-        colNames.add("intnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("int"));
-        colNames.add("bigintnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("bigint"));
-        colNames.add("floatnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("float"));
-        colNames.add("doublenull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("double"));
-        colNames.add("decimalnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("decimal(8,8)"));
-
-
-
-
-
-
+        List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new ExaParquetTypeInfo("ti","OPTIONAL", "INT32", "INT_8"));
+        schemaTypes.add(new ExaParquetTypeInfo("si","OPTIONAL", "INT32", "INT_16"));
+        schemaTypes.add(new ExaParquetTypeInfo("i","OPTIONAL", "INT32"));
+        schemaTypes.add(new ExaParquetTypeInfo("bi","OPTIONAL", "INT64"));
+        schemaTypes.add(new ExaParquetTypeInfo("f","OPTIONAL", "FLOAT"));
+        schemaTypes.add(new ExaParquetTypeInfo("d","OPTIONAL", "DOUBLE"));
+        schemaTypes.add(new ExaParquetTypeInfo("dec1","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 15));
+        schemaTypes.add(new ExaParquetTypeInfo("dec2","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 15));
+        schemaTypes.add(new ExaParquetTypeInfo("dec3","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("tinyintnull","OPTIONAL", "INT32", "INT_8"));
+        schemaTypes.add(new ExaParquetTypeInfo("smallintnull","OPTIONAL", "INT32", "INT_16"));
+        schemaTypes.add(new ExaParquetTypeInfo("intnull","OPTIONAL", "INT32"));
+        schemaTypes.add(new ExaParquetTypeInfo("bigintnull","OPTIONAL", "INT64"));
+        schemaTypes.add(new ExaParquetTypeInfo("floatnull","OPTIONAL", "FLOAT"));
+        schemaTypes.add(new ExaParquetTypeInfo("doublenull","OPTIONAL", "DOUBLE"));
+        schemaTypes.add(new ExaParquetTypeInfo("decimalnull","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -131,7 +87,7 @@ public class HdfsSerDeExportServiceTest {
 
         File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
 
-        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter, colNames, colTypes);
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
 
         ExaIterator ctx = mock(ExaIterator.class);
         List<HCatTableColumn> columns = new ArrayList<>();
@@ -176,39 +132,15 @@ public class HdfsSerDeExportServiceTest {
                 eq(null)
         );
     }
-*/
 
     @Test
     public void testExportParquetTimestamp() throws Exception {
 
         List<Integer> dynamicCols = new ArrayList<>();
-
-        /*
-        List<Type> schemaTypes = new ArrayList<>();
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t1", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "t2", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.INT96, "timestampnull", null));
-        */
         List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
         schemaTypes.add(new ExaParquetTypeInfo("t1","OPTIONAL", "INT96"));
         schemaTypes.add(new ExaParquetTypeInfo("t2","OPTIONAL", "INT96"));
         schemaTypes.add(new ExaParquetTypeInfo("timestampnull","OPTIONAL", "INT96"));
-
-
-
-
-
-        List<String> colNames = new ArrayList<>();
-        List<TypeInfo> colTypes = new ArrayList<>();
-        colNames.add("t1");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("timestamp"));
-        colNames.add("t2");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("timestamp"));
-        colNames.add("timestampnull");
-        colTypes.add(TypeInfoFactory.getPrimitiveTypeInfo("timestamp"));
-
-
-
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -225,7 +157,7 @@ public class HdfsSerDeExportServiceTest {
 
         File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
 
-        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter, colNames, colTypes);
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
 
         ExaIterator ctx = mock(ExaIterator.class);
         List<HCatTableColumn> columns = new ArrayList<>();
@@ -245,15 +177,14 @@ public class HdfsSerDeExportServiceTest {
         );
     }
 
-/*
     @Test
     public void testExportParquetBoolean() throws Exception {
 
         List<Integer> dynamicCols = new ArrayList<>();
-        List<Type> schemaTypes = new ArrayList<>();
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b1", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "b2", null));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BOOLEAN, "booleannull", null));
+        List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new ExaParquetTypeInfo("b1","OPTIONAL", "BOOLEAN"));
+        schemaTypes.add(new ExaParquetTypeInfo("b2","OPTIONAL", "BOOLEAN"));
+        schemaTypes.add(new ExaParquetTypeInfo("booleannull","OPTIONAL", "BOOLEAN"));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -265,7 +196,7 @@ public class HdfsSerDeExportServiceTest {
 
         File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
 
-        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter, null, null);
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
 
         ExaIterator ctx = mock(ExaIterator.class);
         List<HCatTableColumn> columns = new ArrayList<>();
@@ -289,15 +220,15 @@ public class HdfsSerDeExportServiceTest {
     public void testExportParquetString() throws Exception {
 
         List<Integer> dynamicCols = new ArrayList<>();
-        List<Type> schemaTypes = new ArrayList<>();
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c1", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "c2", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v1", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "v2", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "s1", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "charnull", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "varcharnull", OriginalType.UTF8));
-        schemaTypes.add(new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, "stringnull", OriginalType.UTF8));
+        List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new ExaParquetTypeInfo("c1","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("c2","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("v1","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("v2","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("s1","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("charnull","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("varcharnull","OPTIONAL", "BINARY", "UTF8"));
+        schemaTypes.add(new ExaParquetTypeInfo("stringnull","OPTIONAL", "BINARY", "UTF8"));
 
         List<List<Object>> dataSet = new ArrayList<>();
         List<Object> row = new ArrayList<>();
@@ -314,7 +245,7 @@ public class HdfsSerDeExportServiceTest {
 
         File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
 
-        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter, null, null);
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
 
         ExaIterator ctx = mock(ExaIterator.class);
         List<HCatTableColumn> columns = new ArrayList<>();
@@ -343,7 +274,6 @@ public class HdfsSerDeExportServiceTest {
                 eq(null)
         );
     }
-    */
 
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set

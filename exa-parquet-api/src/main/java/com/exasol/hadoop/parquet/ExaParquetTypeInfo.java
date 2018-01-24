@@ -15,6 +15,10 @@ public class ExaParquetTypeInfo {
         this(name, typeRepitition, primitiveTypeName, originalType, 0);
     }
 
+    public ExaParquetTypeInfo(String name, String typeRepitition, String primitiveTypeName, int length) {
+        this(name, typeRepitition, primitiveTypeName, null, length);
+    }
+
     public ExaParquetTypeInfo(String name, String typeRepitition, String primitiveTypeName, String originalType, int length) {
         this.name = name;
         this.typeRepitition = typeRepitition;

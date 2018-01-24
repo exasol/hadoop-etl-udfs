@@ -37,9 +37,7 @@ public class HdfsSerDeExportService {
             final List<ExaParquetTypeInfo> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
             final int firstColumnIndex, // First column containing data to be exported. (see ExportIntoHiveTable.java)
             final List<Integer> dynamicPartitionExaColNums, // Exasol column numbers of dynamic partitions.
-            final ExaIterator ctx,
-            final List<String> colNames,
-            final List<TypeInfo> colTypes) throws Exception {
+            final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted export to hive Parquet table\n----------");
 
         UserGroupInformation ugi;
@@ -76,9 +74,9 @@ public class HdfsSerDeExportService {
                             metaColTypes.add(TypeInfoFactory.getPrimitiveTypeInfo(col));
                         }
                         parquetWriter = new ExaParquetWriterImpl(metaColNames, metaColTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
-                    } else if (colNames != null && colTypes != null) {
-                        parquetWriter = new ExaParquetWriterImpl(colNames, colTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     } else {
+                        // Use the schemaTypes provided since HCat table metadata isn't available.
+                        // This should normally only be used for testing.
                         parquetWriter = new ExaParquetWriterImpl(schemaTypes, conf, path, compressionType, ctx, firstColumnIndex, dynamicPartitionExaColNums);
                     }
 
