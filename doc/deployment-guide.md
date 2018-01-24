@@ -102,12 +102,12 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportHCatTable;
-%jar /buckets/testing/test_bucket/etludf/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECTED INT) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
-%jar /buckets/testing/test_bucket/etludf/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 ```
 
