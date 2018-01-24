@@ -34,7 +34,7 @@
 
     <profiles>
         <profile>
-            <id>cloudera-hadoop-2.6</id>
+            <id>cloudera</id>
             <!-- If true, this profile is automatically active for all builds, unless another profile gets activated-->
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -47,7 +47,7 @@
             </modules>
         </profile>
         <profile>
-            <id>cloudera</id>
+            <id>cloudera-hadoop-2.7</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>

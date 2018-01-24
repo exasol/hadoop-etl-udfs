@@ -17,7 +17,7 @@
 
     <profiles>
         <profile>
-            <id>cloudera-hadoop-2.6</id>
+            <id>cloudera</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -30,7 +30,7 @@
             </dependencies>
         </profile>
         <profile>
-            <id>cloudera</id>
+            <id>cloudera-hadoop-2.7</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
