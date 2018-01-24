@@ -44,12 +44,6 @@
                 <module>exa-parquet-api</module>
                 <module>parquet-hadoop-2.6</module>
             </modules>
-            <repositories>
-                <repository>
-                    <id>cloudera</id>
-                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-                </repository>
-            </repositories>
         </profile>
         <profile>
             <id>cloudera</id>
@@ -61,12 +55,6 @@
                 <module>exa-parquet-api</module>
                 <module>parquet-hadoop-2.7</module>
             </modules>
-            <repositories>
-                <repository>
-                    <id>cloudera</id>
-                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-                </repository>
-            </repositories>
         </profile>
         <profile>
             <id>hortonworks</id>
@@ -78,143 +66,7 @@
                 <module>exa-parquet-api</module>
                 <module>parquet-hadoop-2.7</module>
             </modules>
-            <repositories>
-                <repository>
-                    <id>hortonworks releases</id>
-                    <url>http://repo.hortonworks.com/content/repositories/releases/</url>
-                </repository>
-                <!-- Hortonworks introduces a strange dependency to org.mortbay.jetty:jetty:jar:6.1.26.hwx, available in a special repo -->
-                <repository>
-                    <id>hortonworks jetty</id>
-                    <url>http://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
-                </repository>
-            </repositories>
         </profile>
     </profiles>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.exasol</groupId>
-			<artifactId>exasol-script-api</artifactId>
-			<version>6.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.exasol</groupId>
-			<artifactId>virtualschema-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<!-- This contains the api and implementation -->
-		<dependency>
-			<groupId>org.glassfish</groupId>
-			<artifactId>javax.json</artifactId>
-			<version>1.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-            <groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>2.0.31-beta</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>18.0</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.4</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-annotations</artifactId>
-			<version>${hadoop.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-common</artifactId>
-			<version>${hadoop.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-hdfs</artifactId>
-			<version>${hadoop.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-mapreduce-client-core</artifactId>
-			<version>${hadoop.version}</version>
-		</dependency>
-		<!-- hadoop-mapreduce-client-common seems to be only needed for newer CDH versions. Without it there was an runtime error: java.lang.NoClassDefFoundError: org/apache/hadoop/mapred/MRVersion -->
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-mapreduce-client-common</artifactId>
-			<version>${hadoop.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-serde</artifactId>
-			<version>${hive.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-exec</artifactId>
-			<version>${hive.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-jdbc</artifactId>
-			<version>${hive.version}</version>
-		</dependency>
-		<!--
-		<dependency>
-			<groupId>org.anarres.lzo</groupId>
-			<artifactId>lzo-hadoop</artifactId>
-			<version>1.0.4</version>
-		</dependency>
-		-->
-
-	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.2</version>
-				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-				</configuration>
-			</plugin>
-			<!-- This can be started with the goal assembly:single -->
-			<!-- Example (creates regular jar and all-dependencies jar): mvn clean
-				compile package assembly:single -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.4.1</version>
-				<configuration>
-					<descriptors>
-						<descriptor>src/main/assembly/all-dependencies.xml</descriptor>
-					</descriptors>
-				</configuration>
-				<executions>
-					<execution>
-						<id>job</id>
-						<!-- <phase>package</phase> -->
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 
 </project>
