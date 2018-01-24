@@ -78,7 +78,7 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
 
         // Use the schemaTypes provided since HCat table metadata isn't available.
         // This should normally only be used for testing.
-        this(new MessageType("hive_schema", ExaParquetWriterImpl.toParquetTypes(schemaTypes)),
+        this(new MessageType("hive_schema", ExaParquetWriterImpl.typeInfoToParquetTypes(schemaTypes)),
                 schemaTypes.size(),
                 conf,
                 path,
@@ -103,7 +103,7 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
         super.close();
     }
 
-    static private List<Type> toParquetTypes(final List<ExaParquetTypeInfo> exaParquetTypeInfos) {
+    static private List<Type> typeInfoToParquetTypes(final List<ExaParquetTypeInfo> exaParquetTypeInfos) {
         List<Type> types = new ArrayList<>();
         for (ExaParquetTypeInfo exaType: exaParquetTypeInfos) {
             if (exaType.length != 0) {
