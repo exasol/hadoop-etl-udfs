@@ -8,9 +8,12 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import parquet.hadoop.ParquetWriter;
 import parquet.hadoop.metadata.CompressionCodecName;
 import parquet.schema.MessageType;
+import parquet.schema.OriginalType;
+import parquet.schema.PrimitiveType;
 import parquet.schema.Type;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExaParquetWriterImpl implements ExaParquetWriter {
@@ -40,7 +43,7 @@ public class ExaParquetWriterImpl implements ExaParquetWriter {
         init(conf, path, compressionType, exa, firstColumnIndex, dynamicPartitionExaColNums);
     }
 
-    public ExaParquetWriterImpl(final List<Type> schemaTypes,
+    public ExaParquetWriterImpl(final List<ExaParquetTypeInfo> schemaTypes,
                                 final Configuration conf,
                                 final Path path,
                                 final String compressionType,
@@ -49,7 +52,7 @@ public class ExaParquetWriterImpl implements ExaParquetWriter {
                                 final List<Integer> dynamicPartitionExaColNums) throws Exception {
         // Use the schemaTypes provided since HCat table metadata isn't available.
         // This should normally only be used for testing.
-        this.schema = new MessageType("hive_schema", schemaTypes);
+        this.schema = new MessageType("hive_schema", ExaParquetWriterImpl.typeInfoToParquetTypes(schemaTypes));
         System.out.println("Parquet schema:\n" + schema);
         this.numColumns = schemaTypes.size();
 
@@ -99,4 +102,25 @@ public class ExaParquetWriterImpl implements ExaParquetWriter {
     public void close() throws IOException {
         this.writer.close();
     }
+
+    static private List<Type> typeInfoToParquetTypes(final List<ExaParquetTypeInfo> exaParquetTypeInfos) {
+        List<Type> types = new ArrayList<>();
+        for (ExaParquetTypeInfo exaType: exaParquetTypeInfos) {
+            if (exaType.length != 0) {
+                types.add(new PrimitiveType(
+                        Type.Repetition.valueOf(exaType.typeRepitition),
+                        PrimitiveType.PrimitiveTypeName.valueOf(exaType.primitiveTypeName),
+                        exaType.length,
+                        exaType.name));
+            } else {
+                types.add(new PrimitiveType(
+                        Type.Repetition.valueOf(exaType.typeRepitition),
+                        PrimitiveType.PrimitiveTypeName.valueOf(exaType.primitiveTypeName),
+                        exaType.name,
+                        exaType.originalType == null ? null : OriginalType.valueOf(exaType.originalType)));
+            }
+        }
+        return types;
+    }
+
 }
