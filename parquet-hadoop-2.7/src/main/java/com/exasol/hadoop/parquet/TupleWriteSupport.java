@@ -7,7 +7,6 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Extends WriteSupport to support Tuple (see Tuple.java).
