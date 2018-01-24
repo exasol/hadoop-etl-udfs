@@ -2,14 +2,13 @@ language: java
 
 matrix:
   include:
-    - jdk: "oraclejdk8"     # Maven build with default Hadoop (CDH)
-    - jdk: "oraclejdk8"   # New Hadoop and new Java
-      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.12.1 -Dhive.version=1.1.0-cdh5.12.1"
-    - jdk: "oraclejdk8"   # New Hadoop and new Java
-      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2"
-    - jdk: "oraclejdk8"    # Hortonworks HDP Sandbox 2.6.3 (11.10.2017)
+    - jdk: "oraclejdk8"   # Maven build with default Hadoop (CDH)
+    - jdk: "oraclejdk8"   # Cloudera Hadoop 2.6
+      env: MVN_ARGS="-P cloudera-hadoop-2.6 -Dhadoop.version=2.6.0-cdh5.12.1 -Dhive.version=1.1.0-cdh5.12.1"
+    - jdk: "oraclejdk8"   # Cloudera Hadoop 2.6
+      env: MVN_ARGS="-P cloudera-hadoop-2.6 -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2"
+    - jdk: "oraclejdk8"   # Hortonworks HDP Sandbox 2.6.3 (11.10.2017)
       env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.3.0-235 -Dhive.version=1.2.1000.2.6.3.0-235"
 
 # build a jar with all dependencies. Will also run tests.
-script: "mvn $MVN_ARGS install assembly:single"
-
+script: "mvn $MVN_ARGS install assembly"

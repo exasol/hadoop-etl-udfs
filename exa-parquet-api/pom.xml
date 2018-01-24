@@ -11,4 +11,6 @@
 
 	<artifactId>exa-parquet-api</artifactId>
 
+    <dependencies />
+
 </project>
