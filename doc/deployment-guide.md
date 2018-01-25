@@ -24,18 +24,18 @@ git clone https://github.com/EXASOL/hadoop-etl-udfs.git
 cd hadoop-etl-udfs
 ```
 
-You have to build the sources depending on your Hive and Hadoop version as follows. The resulting fat JAR (including all dependencies) is stored in ```target/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar```.
+You have to build the sources depending on your Hive and Hadoop version as follows. The resulting fat JAR (including all dependencies) is stored in ```hadoop-etl-dist/target/hadoop-etl-dist-0.0.1-SNAPSHOT.jar```.
 
 #### Cloudera CDH
 You can look up the version numbers for Hadoop and Hive in the [CDH Maven documentation](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo.html) (search for the artifactId ```hadoop-common``` and ```hive-serde```).
 ```
-mvn clean -DskipTests package assembly:single -P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2
+mvn clean -DskipTests package -P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2
 ```
 
 #### Hortonworks HDP
 You can look up the version numbers in the HDP release notes.
 ```
-mvn clean -DskipTests package assembly:single -P hortonworks -Dhadoop.version=2.7.1.2.3.0.0-2557 -Dhive.version=1.2.1.2.3.0.0-2557
+mvn clean -DskipTests package -P hortonworks -Dhadoop.version=2.7.3.2.6.3.0-235 -Dhive.version=1.2.1000.2.6.3.0-235
 ```
 
 #### Other Hadoop Distributions
@@ -43,7 +43,7 @@ You may have to add a Maven repository to pom.xml for your distribution. Then yo
 
 #### Standard Apache Hadoop and Hive (no distribution)
 ```
-mvn clean -DskipTests package assembly:single -P-cloudera -Dhadoop.version=1.2.1 -Dhive.version=1.2.1
+mvn clean -DskipTests package assembly:single -P cloudera -Dhadoop.version=1.2.1 -Dhive.version=1.2.1
 ```
 This command deactivates the Cloudera Maven profile which is active by default.
 
@@ -56,8 +56,8 @@ Following steps are required to upload a file to a bucket:
 * Check if you have a bucket in the BucketFS. Simply click on the name of the BucketFS in EXAOperation and add a bucket there, e.g. ```bucket1```. Also make sure you know the write password. For simplicity we assume that the bucket is defined as a public bucket, i.e. it can be read by any script.
 * Now upload the file into this bucket, e.g. using curl (adapt the hostname, BucketFS port, bucket name and bucket write password).
 ```
-curl -X PUT -T target/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar \
- http://w:write-password@your.exasol.host.com:2580/bucket1/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar
+curl -X PUT -T target/hadoop-etl-dist-0.0.1-SNAPSHOT.jar \
+ http://w:write-password@your.exasol.host.com:2580/bucket1/hadoop-etl-dist-0.0.1-SNAPSHOT.jar
 ```
 
 See chapter 3.6.4. "The synchronous cluster file system BucketFS" in the EXASolution User Manual for more details about BucketFS.
@@ -71,13 +71,13 @@ CREATE SCHEMA ETL;
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHCatTable;
-%jar /buckets/your-bucket-fs/your-bucket/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HIVE_TABLE_FILES(...) EMITS (...) AS
 %env LD_LIBRARY_PATH=/tmp/;
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHiveTableFiles;
-%jar /buckets/your-bucket-fs/your-bucket/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
@@ -97,17 +97,17 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
   debug_address VARCHAR(200))
  AS
 %scriptclass com.exasol.hadoop.scriptclasses.HCatTableFiles;
-%jar /buckets/your-bucket-fs/your-bucket/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportHCatTable;
-%jar /buckets/testing/test_bucket/etludf/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECTED INT) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
-%jar /buckets/testing/test_bucket/etludf/exa-hadoop-etl-udfs-0.0.1-SNAPSHOT-all-dependencies.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
 /
 ```
 

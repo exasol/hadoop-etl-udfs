@@ -7,6 +7,7 @@ target/
 .settings/
 target
 .cache
+dependency-reduced-pom.xml
 
 # Intellij
 .idea/
