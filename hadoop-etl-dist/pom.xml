@@ -24,20 +24,20 @@
             <dependencies>
                 <dependency>
                     <groupId>com.exasol</groupId>
-                    <artifactId>parquet-hadoop-2.6</artifactId>
+                    <artifactId>parquet-pre-1.7</artifactId>
                     <version>0.0.1-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
         <profile>
-            <id>cloudera-hadoop-2.7</id>
+            <id>cloudera-parquet</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>
                     <groupId>com.exasol</groupId>
-                    <artifactId>parquet-hadoop-2.7</artifactId>
+                    <artifactId>parquet</artifactId>
                     <version>0.0.1-SNAPSHOT</version>
                 </dependency>
             </dependencies>
@@ -50,7 +50,7 @@
             <dependencies>
                 <dependency>
                     <groupId>com.exasol</groupId>
-                    <artifactId>parquet-hadoop-2.7</artifactId>
+                    <artifactId>parquet</artifactId>
                     <version>0.0.1-SNAPSHOT</version>
                 </dependency>
             </dependencies>
