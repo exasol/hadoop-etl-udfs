@@ -19,7 +19,9 @@ import java.util.List;
 
 public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaParquetWriter {
 
-    static final String PARQUET_WRITER_VERSION = "v1";
+    // There is not a default value for the Parquet version enum.
+    // Use v1 for compatibility reasons.
+    static final WriterVersion PARQUET_WRITER_VERSION = WriterVersion.PARQUET_1_0;
 
     private Tuple row;
 
@@ -39,7 +41,7 @@ public class ExaParquetWriterImpl extends ParquetWriter<Tuple> implements ExaPar
                 ParquetWriter.DEFAULT_PAGE_SIZE,
                 ParquetWriter.DEFAULT_IS_DICTIONARY_ENABLED,
                 ParquetWriter.DEFAULT_IS_VALIDATING_ENABLED,
-                WriterVersion.fromString(PARQUET_WRITER_VERSION),
+                PARQUET_WRITER_VERSION,
                 conf);
 
         System.out.println("Path: " + path.toString());
