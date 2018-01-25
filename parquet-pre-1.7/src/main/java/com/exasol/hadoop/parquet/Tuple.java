@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.JulianFields;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,6 +114,18 @@ public class Tuple {
                         BigDecimal bigDecimalVal = iter.getBigDecimal(iterIndex);
                         if (bigDecimalVal != null)
                             decimalBytes = bigDecimalVal.unscaledValue().toByteArray();
+                        int typeLength = primitiveType.getTypeLength();
+                        if (decimalBytes != null && decimalBytes.length < typeLength) {
+                            // Must add padding to decimal values
+                            byte[] paddedDecimalBytes = new byte[typeLength];
+                            boolean isNegative = ((decimalBytes[0] & 0x80) != 0);
+                            byte padding = isNegative ? (byte)0xFF : (byte)0x0;
+                            Arrays.fill(paddedDecimalBytes, 0, typeLength - decimalBytes.length, padding);
+                            for (int i = 0; i < decimalBytes.length; i++) {
+                                paddedDecimalBytes[typeLength - decimalBytes.length + i] = decimalBytes[i];
+                            }
+                            decimalBytes = paddedDecimalBytes;
+                        }
                         recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
                     }
                     else
