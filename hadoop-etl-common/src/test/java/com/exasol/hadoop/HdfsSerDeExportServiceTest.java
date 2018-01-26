@@ -273,6 +273,123 @@ public class HdfsSerDeExportServiceTest {
         );
     }
 
+    @Test
+    public void testExportDecimalPadding() throws Exception {
+
+        List<Integer> dynamicCols = new ArrayList<>();
+        List<ExaParquetTypeInfo> schemaTypes = new ArrayList<>();
+        schemaTypes.add(new ExaParquetTypeInfo("dec1","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 2));
+        schemaTypes.add(new ExaParquetTypeInfo("dec1neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 2));
+        schemaTypes.add(new ExaParquetTypeInfo("dec2","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 3));
+        schemaTypes.add(new ExaParquetTypeInfo("dec2neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 3));
+        schemaTypes.add(new ExaParquetTypeInfo("dec3","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec3neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec4","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 6));
+        schemaTypes.add(new ExaParquetTypeInfo("dec4neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 6));
+        schemaTypes.add(new ExaParquetTypeInfo("dec5","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec5neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec6","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 7));
+        schemaTypes.add(new ExaParquetTypeInfo("dec6neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 7));
+        schemaTypes.add(new ExaParquetTypeInfo("dec7","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 8));
+        schemaTypes.add(new ExaParquetTypeInfo("dec7neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 9));
+        schemaTypes.add(new ExaParquetTypeInfo("dec8","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 6));
+        schemaTypes.add(new ExaParquetTypeInfo("dec8neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 6));
+        schemaTypes.add(new ExaParquetTypeInfo("dec9","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 12));
+        schemaTypes.add(new ExaParquetTypeInfo("dec9neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 12));
+        schemaTypes.add(new ExaParquetTypeInfo("dec10","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 14));
+        schemaTypes.add(new ExaParquetTypeInfo("dec10neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 14));
+        schemaTypes.add(new ExaParquetTypeInfo("dec11","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 16));
+        schemaTypes.add(new ExaParquetTypeInfo("dec11neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 16));
+        schemaTypes.add(new ExaParquetTypeInfo("dec12","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec12neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 4));
+        schemaTypes.add(new ExaParquetTypeInfo("dec13","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 5));
+        schemaTypes.add(new ExaParquetTypeInfo("dec13neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 5));
+        schemaTypes.add(new ExaParquetTypeInfo("dec14","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 10));
+        schemaTypes.add(new ExaParquetTypeInfo("dec14neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 10));
+        schemaTypes.add(new ExaParquetTypeInfo("dec15","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 16));
+        schemaTypes.add(new ExaParquetTypeInfo("dec15neg","OPTIONAL", "FIXED_LEN_BYTE_ARRAY", 16));
+
+        List<List<Object>> dataSet = new ArrayList<>();
+        List<Object> row = new ArrayList<>();
+        row.add(new BigDecimal("1")); row.add(new BigDecimal("-1"));
+        row.add(new BigDecimal("255")); row.add(new BigDecimal("-255"));
+        row.add(new BigDecimal("256")); row.add(new BigDecimal("-256"));
+        row.add(new BigDecimal("1023")); row.add(new BigDecimal("-1023"));
+        row.add(new BigDecimal("64000")); row.add(new BigDecimal("-64000"));
+        row.add(new BigDecimal("72000")); row.add(new BigDecimal("-72000"));
+        row.add(new BigDecimal("16777211")); row.add(new BigDecimal("-16777211"));
+        row.add(new BigDecimal("4294968234")); row.add(new BigDecimal("-4294968234"));
+        row.add(new BigDecimal("87509812398888234")); row.add(new BigDecimal("-87509812398888234"));
+        row.add(new BigDecimal("698234872384787230490982344234")); row.add(new BigDecimal("-698234872384787230490982344234"));
+        row.add(new BigDecimal("871234870814250986098124309821039456")); row.add(new BigDecimal("-871234870814250986098124309821039456"));
+        row.add(new BigDecimal("1.123")); row.add(new BigDecimal("-1.123"));
+        row.add(new BigDecimal("6400.2")); row.add(new BigDecimal("-6400.2"));
+        row.add(new BigDecimal("8750981239.8888234")); row.add(new BigDecimal("-8750981239.8888234"));
+        row.add(new BigDecimal("0.871234870814250986098124309821039456")); row.add(new BigDecimal("-0.871234870814250986098124309821039456"));
+        addRow(dataSet, row);
+        ExaIterator iter = new ExaIteratorDummy(dataSet);
+
+        File tempFile = new File(testFolder.getRoot(),UUID.randomUUID().toString().replaceAll("-", "") + ".parq");
+
+        HdfsSerDeExportService.exportToParquetTable(testFolder.getRoot().toString(), "hdfs", false, null, tempFile.getName(), null, "uncompressed", schemaTypes, FIRST_DATA_COLUMN, dynamicCols, iter);
+
+        ExaIterator ctx = mock(ExaIterator.class);
+        List<HCatTableColumn> columns = new ArrayList<>();
+        columns.add(new HCatTableColumn("dec1", "decimal(1,0)"));
+        columns.add(new HCatTableColumn("dec1neg", "decimal(1,0)"));
+        columns.add(new HCatTableColumn("dec2", "decimal(4,0)"));
+        columns.add(new HCatTableColumn("dec2neg", "decimal(4,0)"));
+        columns.add(new HCatTableColumn("dec3", "decimal(5,0)"));
+        columns.add(new HCatTableColumn("dec3neg", "decimal(6,0)"));
+        columns.add(new HCatTableColumn("dec4", "decimal(15,0)"));
+        columns.add(new HCatTableColumn("dec4neg", "decimal(15,0)"));
+        columns.add(new HCatTableColumn("dec5", "decimal(5,0)"));
+        columns.add(new HCatTableColumn("dec5neg", "decimal(5,0)"));
+        columns.add(new HCatTableColumn("dec6", "decimal(7,0)"));
+        columns.add(new HCatTableColumn("dec6neg", "decimal(7,0)"));
+        columns.add(new HCatTableColumn("dec7", "decimal(11,0)"));
+        columns.add(new HCatTableColumn("dec7neg", "decimal(11,0)"));
+        columns.add(new HCatTableColumn("dec8", "decimal(16,0)"));
+        columns.add(new HCatTableColumn("dec8neg", "decimal(16,0)"));
+        columns.add(new HCatTableColumn("dec9", "decimal(19,0)"));
+        columns.add(new HCatTableColumn("dec9neg", "decimal(19,0)"));
+        columns.add(new HCatTableColumn("dec10", "decimal(33,0)"));
+        columns.add(new HCatTableColumn("dec10neg", "decimal(33,0)"));
+        columns.add(new HCatTableColumn("dec11", "decimal(36,0)"));
+        columns.add(new HCatTableColumn("dec11neg", "decimal(36,0)"));
+        columns.add(new HCatTableColumn("dec12", "decimal(5,3)"));
+        columns.add(new HCatTableColumn("dec12neg", "decimal(5,3)"));
+        columns.add(new HCatTableColumn("dec13", "decimal(5,1)"));
+        columns.add(new HCatTableColumn("dec13neg", "decimal(5,1)"));
+        columns.add(new HCatTableColumn("dec14", "decimal(17,7)"));
+        columns.add(new HCatTableColumn("dec14neg", "decimal(17,7)"));
+        columns.add(new HCatTableColumn("dec15", "decimal(38,36)"));
+        columns.add(new HCatTableColumn("dec15neg", "decimal(38,36)"));
+
+        List<HCatTableColumn> partitionColumns = null;
+        importFile(ctx, columns, partitionColumns, tempFile.getCanonicalPath(), PARQUET_INPUT_FORMAT_CLASS_NAME, PARQUET_SERDE_CLASS_NAME);
+
+        int expectedNumRows = 1;
+        verify(ctx, times(expectedNumRows)).emit(anyVararg());
+        verify(ctx, times(1)).emit(
+                eq(new BigDecimal("1")), eq(new BigDecimal("-1")),
+                eq(new BigDecimal("255")), eq(new BigDecimal("-255")),
+                eq(new BigDecimal("256")), eq(new BigDecimal("-256")),
+                eq(new BigDecimal("1023")), eq(new BigDecimal("-1023")),
+                eq(new BigDecimal("64000")), eq(new BigDecimal("-64000")),
+                eq(new BigDecimal("72000")), eq(new BigDecimal("-72000")),
+                eq(new BigDecimal("16777211")), eq(new BigDecimal("-16777211")),
+                eq(new BigDecimal("4294968234")), eq(new BigDecimal("-4294968234")),
+                eq(new BigDecimal("87509812398888234")), eq(new BigDecimal("-87509812398888234")),
+                eq(new BigDecimal("698234872384787230490982344234")), eq(new BigDecimal("-698234872384787230490982344234")),
+                eq(new BigDecimal("871234870814250986098124309821039456")), eq(new BigDecimal("-871234870814250986098124309821039456")),
+                eq(new BigDecimal("1.123")), eq(new BigDecimal("-1.123")),
+                eq(new BigDecimal("6400.2")), eq(new BigDecimal("-6400.2")),
+                eq(new BigDecimal("8750981239.8888234")), eq(new BigDecimal("-8750981239.8888234")),
+                eq(new BigDecimal("0.871234870814250986098124309821039456")), eq(new BigDecimal("-0.871234870814250986098124309821039456"))
+        );
+    }
+
     private void addRow(List<List<Object>> dataSet, List<Object> row) {
         // Insert null values for non-data columns of data set
         for (int i = 0; i < FIRST_DATA_COLUMN; i++) {
