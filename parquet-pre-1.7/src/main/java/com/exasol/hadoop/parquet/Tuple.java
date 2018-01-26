@@ -117,14 +117,7 @@ public class Tuple {
                         int typeLength = primitiveType.getTypeLength();
                         if (decimalBytes != null && decimalBytes.length < typeLength) {
                             // Must add padding to decimal values
-                            byte[] paddedDecimalBytes = new byte[typeLength];
-                            boolean isNegative = ((decimalBytes[0] & 0x80) != 0);
-                            byte padding = isNegative ? (byte)0xFF : (byte)0x0;
-                            Arrays.fill(paddedDecimalBytes, 0, typeLength - decimalBytes.length, padding);
-                            for (int i = 0; i < decimalBytes.length; i++) {
-                                paddedDecimalBytes[typeLength - decimalBytes.length + i] = decimalBytes[i];
-                            }
-                            decimalBytes = paddedDecimalBytes;
+                            decimalBytes = padDecimalValues(decimalBytes, typeLength);
                         }
                         recordConsumer.addBinary(Binary.fromReusedByteArray(decimalBytes));
                     }
@@ -165,5 +158,19 @@ public class Tuple {
         } catch (ExaDataTypeException ex) {
             throw new RuntimeException("Caught ExaDataTypeException: " + ex.toString());
         }
+    }
+
+    /**
+     * Pad decimal values if the size (byte length) is smaller than the target size.
+     */
+    private byte[] padDecimalValues(byte[] decimalBytes, int typeLength) {
+        byte[] paddedDecimalBytes = new byte[typeLength];
+        boolean isNegative = ((decimalBytes[0] & 0x80) != 0);
+        byte padding = isNegative ? (byte)0xFF : (byte)0x0;
+        Arrays.fill(paddedDecimalBytes, 0, typeLength - decimalBytes.length, padding);
+        for (int i = 0; i < decimalBytes.length; i++) {
+            paddedDecimalBytes[typeLength - decimalBytes.length + i] = decimalBytes[i];
+        }
+        return paddedDecimalBytes;
     }
 }
