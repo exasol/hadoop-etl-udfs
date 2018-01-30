@@ -33,6 +33,8 @@ public class HCatTableFiles {
     
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
 
+        System.setProperty("sun.security.krb5.debug", "true");
+
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
         String hCatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);

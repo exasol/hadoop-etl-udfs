@@ -31,6 +31,8 @@ public class ImportHiveTableFiles {
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
 
+        System.setProperty("sun.security.krb5.debug", "true");
+
         String inputFormatClassName = iter.getString(PARAM_IDX_INPUT_FORMAT);
         String serDeClassName = iter.getString(PARAM_IDX_SERDE);
         String colInfo = iter.getString(PARAM_IDX_COLUMNS);
