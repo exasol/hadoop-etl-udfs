@@ -3,6 +3,7 @@ package com.exasol.hadoop.hdfs;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -28,7 +29,16 @@ public class HdfsService {
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
             final List<String> hdfsAddressesToUse) throws Exception {
-        
+
+
+        // Set login user. The value is actually not important, but something must be specified.
+        // UnixLoginModule makes a native system call to get the username
+        String loginUser = useKerberos ? kerberosCredentials.getPrincipal() : hdfsUser;
+        int endIndex = StringUtils.indexOfAny(loginUser, "/@");
+        if (endIndex != -1) {
+            loginUser = loginUser.substring(0, endIndex);
+        }
+        UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(loginUser));
         UserGroupInformation ugi = useKerberos ? KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
         List<String> tableInfo = ugi.doAs(new PrivilegedExceptionAction<List<String>>() {
             @Override
