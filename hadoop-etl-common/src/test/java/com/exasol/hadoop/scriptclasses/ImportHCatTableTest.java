@@ -24,6 +24,7 @@ public class ImportHCatTableTest {
         params.put("HCAT_TABLE", "hcat_table");
         params.put("HCAT_ADDRESS", "hcat_address");
         params.put("HDFS_USER", "hdfs_user");
+        params.put("HCAT_USER", "hcat_user");
     }
     
     @Test
@@ -46,7 +47,7 @@ public class ImportHCatTableTest {
         String sqlExpected = "SELECT"
                 + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, debug_address)"
                 + " FROM ("
-                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', nproc(), '', '', '', '', '', '')"
+                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', 'hcat_user', nproc(), '', '', '', '', '', '')"
                 + ") GROUP BY import_partition;";
         sqlExpected = normalizeSql(sqlExpected);
         
@@ -99,7 +100,7 @@ public class ImportHCatTableTest {
         String sqlExpected = "SELECT"
                 + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, debug_address)"
                 + " EMITS (\"c1\" DECIMAL(16,0),\"c2\" VARCHAR(1000)) FROM ("
-                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', nproc(), 'p1=01', 'f1[0],f2', 'hdfs://custom', 'kerberos', 'MyKerberosConn', 'host:1234')"
+                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', 'hcat_user', nproc(), 'p1=01', 'f1[0],f2', 'hdfs://custom', 'kerberos', 'MyKerberosConn', 'host:1234')"
                 + ") GROUP BY import_partition;";
         sqlExpected = normalizeSql(sqlExpected);
         

@@ -22,6 +22,7 @@ public class ImportHCatTable {
         String hcatTable = getMandatoryParameter(params, "HCAT_TABLE");
         String hCatAddress = getMandatoryParameter(params, "HCAT_ADDRESS");
         String hdfsUser = getMandatoryParameter(params, "HDFS_USER");
+        String hcatUser = getMandatoryParameter(params, "HCAT_USER");  // If non-kerberos: use for createRemoteUser(), if kerberos: use as hdfs service principle
         
         // Optional Parameters
         String parallelism = getParameter(params, "PARALLELISM", "nproc()");
@@ -66,6 +67,7 @@ public class ImportHCatTable {
         hcatUDFArgs.add("'" + hcatTable + "'");
         hcatUDFArgs.add("'" + hCatAddress + "'");
         hcatUDFArgs.add("'" + hdfsUser + "'");
+        hcatUDFArgs.add("'" + hcatUser + "'");
         hcatUDFArgs.add(parallelism);
         hcatUDFArgs.add("'" + partitions + "'");
         hcatUDFArgs.add("'" + outputColumnsSpec + "'");

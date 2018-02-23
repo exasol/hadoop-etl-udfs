@@ -27,6 +27,7 @@ public class ExportHCatTable {
         String hcatTable = getMandatoryParameter(params, "HCAT_TABLE");
         String hcatAddress = getMandatoryParameter(params, "HCAT_ADDRESS");
         String hdfsUser = getMandatoryParameter(params, "HDFS_USER");
+        String hcatUser = getMandatoryParameter(params, "HCAT_USER");
 
         // Optional parameters
         String hdfsAddress = getParameter(params, "HDFS_URL", "");
@@ -93,7 +94,7 @@ public class ExportHCatTable {
                     // Don't try to connect to HCat service in unit test mode
                     tableMeta = new HCatTableMetadata("", new ArrayList<>(), new ArrayList<>(), "", "", "", "", new ArrayList<>());
                 } else {
-                    tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+                    tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hcatUser, useKerberos, kerberosCredentials);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Exception while fetching metadata for " + hcatTable + ": " + e.toString(), e);
@@ -113,6 +114,7 @@ public class ExportHCatTable {
         exportUDFArgs.add(hcatTable);
         exportUDFArgs.add(hcatAddress);
         exportUDFArgs.add(hdfsUser);
+        exportUDFArgs.add(hcatUser);
         exportUDFArgs.add(hdfsAddress);
         exportUDFArgs.add(staticPartition);
         exportUDFArgs.add(Joiner.on(",").join(dynamicPartsExaColNums));

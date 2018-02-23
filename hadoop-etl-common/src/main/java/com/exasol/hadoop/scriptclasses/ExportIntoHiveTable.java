@@ -28,20 +28,22 @@ public class ExportIntoHiveTable {
     private static final int PARAM_IDX_HCAT_TABLE = 1;
     private static final int PARAM_IDX_HCAT_ADDRESS = 2;
     private static final int PARAM_IDX_HDFS_USER = 3;
-    private static final int PARAM_IDX_HDFS_ADDRESS = 4;
-    private static final int PARAM_IDX_STATIC_PARTITION = 5;
-    private static final int PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS = 6;
-    private static final int PARAM_IDX_AUTH_TYPE = 7;
-    private static final int PARAM_IDX_AUTH_CONNECTION = 8;
-    private static final int PARAM_IDX_COMPRESSION_TYPE = 9;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 10;
-    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 11;
+    private static final int PARAM_IDX_HCAT_USER = 4;
+    private static final int PARAM_IDX_HDFS_ADDRESS = 5;
+    private static final int PARAM_IDX_STATIC_PARTITION = 6;
+    private static final int PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS = 7;
+    private static final int PARAM_IDX_AUTH_TYPE = 8;
+    private static final int PARAM_IDX_AUTH_CONNECTION = 9;
+    private static final int PARAM_IDX_COMPRESSION_TYPE = 10;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
+    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 12;
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
         String hcatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
         String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
+        String hcatUser = iter.getString(PARAM_IDX_HCAT_USER);
         String hdfsServerUrls = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
         String staticPartition = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_STATIC_PARTITION, "");
         String dynamicPartitionExaCols = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS, "");
@@ -69,7 +71,7 @@ public class ExportIntoHiveTable {
             kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
 
-        HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+        HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hcatUser, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
 
         // Check partition specification
@@ -116,7 +118,7 @@ public class ExportIntoHiveTable {
         List<Integer> dynamicPartitionExaColNums = new ArrayList<>();
         if (hasStaticPartition) {
             // Static partition
-            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hcatUser, useKerberos, kerberosCredentials);
             hdfsPath.append("/").append(staticPartition);
         } else if (hasDynamicPartition) {
             // Dynamic partition
@@ -140,7 +142,7 @@ public class ExportIntoHiveTable {
                 dynamicPart.append("/").append(hivePartitions.get(i).getName()).append("=").append(iter.getString(colNum));
             }
             String dynamicPartition = dynamicPart.toString();
-            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hcatUser, useKerberos, kerberosCredentials);
             hdfsPath.append(dynamicPartition);
         }
 

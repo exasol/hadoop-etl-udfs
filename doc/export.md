@@ -43,6 +43,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive';
  HDFS_USER       = 'hdfs';
 ```
 
@@ -53,6 +54,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive';
  HDFS_USER       = 'hdfs';
 ```
 
@@ -63,6 +65,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive';
  HDFS_USER       = 'hdfs';
 ```
 ## Parameters
@@ -75,6 +78,7 @@ Parameter           | Value
 **HCAT_TABLE**      | HCatalog Table Name. E.g. ```'sample_07'```.
 **HCAT_ADDRESS**    | (Web)HCatalog Address. E.g. ```'thrift://hive-metastore-host:9083'``` if you want to use the Hive Metastore (recommended), or ```'webhcat-host:50111'``` if you want to use WebHCatalog. Make sure EXASOL can connect to these services (see prerequisites above).
 **HDFS_USER**       | Username for HDFS authentication. E.g. ```'hdfs'```, or ```'hdfs/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
+**HCAT_USER**       | Username for Hive authentication. E.g. ```'hive'```, or ```'hive/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
 
 ### Optional Parameters
 
@@ -114,6 +118,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
+ HCAT_USER       = 'hive';
  JDBC_CONNECTION = 'hive_jdbc_conn'
 CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS PARQUET';
 ```
@@ -126,6 +131,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
+ HCAT_USER       = 'hive';
  JDBC_CONNECTION = 'hive_jdbc_conn'
 TRUNCATE;
 ```
@@ -138,6 +144,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
+ HCAT_USER       = 'hive';
  JDBC_CONNECTION = 'hive_jdbc_conn'
 REPLACE
 CREATED BY 'CREATE TABLE default.test_table(co1 INT, col2 TIMESTAMP) STORED AS PARQUET';
@@ -165,6 +172,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE       = 'test_table'
  HCAT_ADDRESS     = 'thrift://hive-metastore-host:9083'
  HDFS_USER        = 'hdfs';
+ HCAT_USER        = 'hive';
  JDBC_CONNECTION  = 'hive_jdbc_conn'
  STATIC_PARTITION = 'year=2017/month=8'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (year INT, month INT) STORED AS PARQUET';
@@ -189,6 +197,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE                  = 'test_table'
  HCAT_ADDRESS                = 'thrift://hive-metastore-host:9083'
  HDFS_USER                   = 'hdfs';
+ HCAT_USER                   = 'hive';
  JDBC_CONNECTION             = 'hive_jdbc_conn'
  DYNAMIC_PARTITION_EXA_COLS  = 'COUNTRY/YEAR'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
@@ -205,6 +214,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
  HDFS_USER       = 'hdfs';
+ HCAT_USER       = 'hive';
  JDBC_CONNECTION = 'hive_jdbc_conn'
 CREATED BY 'CREATE TABLE default.test_table(data_col VARCHAR(200)) PARTITIONED BY (country VARCHAR(200), year INT) STORED AS PARQUET';
 ```

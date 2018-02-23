@@ -32,6 +32,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'sample_07'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive'
  HDFS_USER       = 'hdfs';
 ```
 
@@ -44,6 +45,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'sample_07'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive'
  HDFS_USER       = 'hdfs';
 ```
 The EMITS specification is not required because the columns are inferred from the target table.
@@ -58,6 +60,7 @@ Parameter           | Value
 **HCAT_TABLE**      | HCatalog Table Name. E.g. ```'sample_07'```.
 **HCAT_ADDRESS**    | (Web)HCatalog Address. E.g. ```'thrift://hive-metastore-host:9083'``` if you want to use the Hive Metastore (recommended), or ```'webhcat-host:50111'``` if you want to use WebHCatalog. Make sure EXASOL can connect to these services (see prerequisites above).
 **HDFS_USER**       | Username for HDFS authentication. E.g. ```'hdfs'```, or ```'hdfs/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
+**HCAT_USER**       | Username for HCatalog authentication. E.g. ```'hive'```, or ```'hive/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
 
 ### Optional Parameters
 

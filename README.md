@@ -39,6 +39,7 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'sample_07'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive'
  HDFS_USER       = 'hdfs';
 ```
 
@@ -59,6 +60,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
+ HCAT_USER       = 'hive'
  HDFS_USER       = 'hdfs';
 ```
 
