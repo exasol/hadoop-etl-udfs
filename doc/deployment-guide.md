@@ -84,7 +84,8 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
  EMITS (
   hdfs_server_port VARCHAR(200),
   hdfspath VARCHAR(200),
-  hdfs_user VARCHAR(100),
+  hdfs_user_or_service_principal VARCHAR(100),
+  hcat_user_or_service_principal VARCHAR(100),
   input_format VARCHAR(200),
   serde VARCHAR(200),
   column_info VARCHAR(100000),

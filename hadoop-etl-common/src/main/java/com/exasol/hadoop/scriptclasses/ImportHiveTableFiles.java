@@ -25,7 +25,7 @@ public class ImportHiveTableFiles {
     private static final int PARAM_IDX_HDFS_ADDRESS = 6;
     private static final int PARAM_IDX_HDFS_USER = 7;
     private static final int PARAM_IDX_AUTH_TYPE = 8;
-    private static final int PARAM_IDX_AUTH_KERBEROS_CONNECTION = 9;
+    private static final int PARAM_IDX_KERBEROS_CONNECTION = 9;
     private static final int PARAM_IDX_OUTPUT_COLUMNS = 10;
     private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
 
@@ -45,7 +45,7 @@ public class ImportHiveTableFiles {
         // Optional: Kerberos authentication
         boolean useKerberos = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "").equalsIgnoreCase("kerberos");
         KerberosCredentials kerberosCredentials = null;
-        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
+        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_KERBEROS_CONNECTION, "");
         if (!connName.isEmpty()) {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
             String principal = kerberosConnection.getUser();

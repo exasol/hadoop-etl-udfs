@@ -22,7 +22,7 @@ import java.util.Map;
 public class HdfsService {
     
     public static List<String> getFilesFromTable(
-            final String hdfsUser,
+            final String hdfsUserOrServicePrincipal,
             final String tableRootPath,
             final String partitionFilterSpec,
             final List<HCatTableColumn> partitionColumns,
@@ -33,20 +33,17 @@ public class HdfsService {
 
         // Set login user. The value is actually not important, but something must be specified.
         // UnixLoginModule makes a native system call to get the username
-        String loginUser = useKerberos ? kerberosCredentials.getPrincipal() : hdfsUser;
+        String loginUser = useKerberos ? kerberosCredentials.getPrincipal() : hdfsUserOrServicePrincipal;
         int endIndex = StringUtils.indexOfAny(loginUser, "/@");
         if (endIndex != -1) {
             loginUser = loginUser.substring(0, endIndex);
         }
         UserGroupInformation.setLoginUser(UserGroupInformation.createRemoteUser(loginUser));
-        UserGroupInformation ugi = useKerberos ? KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+        UserGroupInformation ugi = useKerberos ? KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
         List<String> tableInfo = ugi.doAs(new PrivilegedExceptionAction<List<String>>() {
             @Override
             public List<String> run() throws Exception {
-                Configuration conf = new Configuration();
-                if (useKerberos) {
-                    conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                }
+                Configuration conf = getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
                 // Get all directories (leafs only) of the table
                 FileSystem realFs = getFileSystem(hdfsAddressesToUse, conf);
                 FileSystemWrapper fs = new FileSystemWrapperImpl(realFs);
@@ -127,5 +124,18 @@ public class HdfsService {
         }
         return filePaths;
     }
-    
+
+    /**
+     * Get default Hadoop configuration for Hdfs
+     *
+     * @param useKerberos
+     * @param kerberosHdfsServicePrincipal if kerberos is true, then service principal for Hdfs, otherwise null or empty string
+     */
+    public static Configuration getHdfsConfiguration(boolean useKerberos, String kerberosHdfsServicePrincipal) {
+        final Configuration conf = new Configuration();
+        if (useKerberos) {
+            conf.set("dfs.namenode.kerberos.principal", kerberosHdfsServicePrincipal);
+        }
+        return conf;
+    }
 }

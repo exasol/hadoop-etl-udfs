@@ -77,8 +77,17 @@ Parameter           | Value
 **HCAT_DB**         | HCatalog Database Name. E.g. ```'default'```
 **HCAT_TABLE**      | HCatalog Table Name. E.g. ```'sample_07'```.
 **HCAT_ADDRESS**    | (Web)HCatalog Address. E.g. ```'thrift://hive-metastore-host:9083'``` if you want to use the Hive Metastore (recommended), or ```'webhcat-host:50111'``` if you want to use WebHCatalog. Make sure EXASOL can connect to these services (see prerequisites above).
-**HDFS_USER**       | Username for HDFS authentication. E.g. ```'hdfs'```, or ```'hdfs/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
-**HCAT_USER**       | Username for Hive authentication. E.g. ```'hive'```, or ```'hive/_HOST@EXAMPLE.COM'``` for Kerberos (see Kerberos Authentication below).
+
+### Authentication Parameters
+
+Parameter           | Value
+------------------- | -----------
+**HDFS_USER**       | Username for HDFS authentication (only if Kerberos is not used). E.g. ```'hdfs'```.
+**HCAT_USER**       | Username for HCatalog authentication (only if Kerberos is not used). E.g. ```'hive'```.
+**AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
+**KERBEROS_CONNECTION**               | The name of the connection to be used if Kerberos authentication is enabled. It contains the credentials (user principal, keytab and kerberos config file) for the user to be used for HCatalog and Hdfs.
+**KERBEROS_HDFS_SERVICE_PRINCIPAL**   | Kerberos Service Principal for HDFS. E.g. ```'hdfs/_HOST@EXAMPLE.COM'```.
+**KERBEROS_HCAT_SERVICE_PRINCIPAL**   | Kerberos Service Principal for HCatalog. E.g. ```'hive/_HOST@EXAMPLE.COM'```. Since HCatalog is access through Hive, typically the service principal of Hive must be specified.
 
 ### Optional Parameters
 
@@ -88,8 +97,6 @@ Parameter           | Value
 **STATIC_PARTITION**  | The partition into which the exported data should be written (e.g., ```'part1=2015-01-01/part2=EU'```). If the partition does not exist, it will be created.
 **DYNAMIC_PARTITION_EXA_COLS**  | The names of the Exasol columns to be used as the table's partitions while loading the data using dynamic partitioning (e.g., ```'COL1/COL2'```). Multiple column names can be separated by ```/```. If any partitions do not exist, they will be created. If the table has partitions and neither ```STATIC_PARTITION``` nor ```DYNAMIC_PARTITION_EXA_COLS``` are specified, the last Exasol columns are used as the table's partitions.
 **COMPRESSION_TYPE**        | The name of the compression codec to be used for file compression (e.g., ```'snappy'```). The default value is uncompressed.
-**AUTH_TYPE**       | The authentication type to be used. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, simple authentication will be used.
-**AUTH_KERBEROS_CONNECTION**        | The connection name to use with Kerberos authentication.
 **JDBC_AUTH_TYPE**       | The authentication type to be used for JDBC optional connections. Specify ```'kerberos'``` (case insensitive) to use Kerberos. Otherwise, user/password authentication will be used.
 **JDBC_CONNECTION**        | The connection name to used for optional JDBC connections.
 

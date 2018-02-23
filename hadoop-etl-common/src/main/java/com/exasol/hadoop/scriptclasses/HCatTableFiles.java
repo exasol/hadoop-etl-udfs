@@ -22,14 +22,14 @@ public class HCatTableFiles {
     private static final int PARAM_IDX_HCAT_DB = 0;
     private static final int PARAM_IDX_HCAT_TABLE = 1;
     private static final int PARAM_IDX_HCAT_ADDRESS = 2;
-    private static final int PARAM_IDX_HDFS_USER = 3;
-    private static final int PARAM_IDX_HCAT_USER = 4;
+    private static final int PARAM_IDX_HDFS_USER_OR_SERVICE_PRINCIPAL = 3;
+    private static final int PARAM_IDX_HCAT_USER_OR_SERVICE_PRINCIPAL = 4;
     private static final int PARAM_IDX_PARALLELISM = 5;
     private static final int PARAM_IDX_PARTITIONS = 6;
     private static final int PARAM_IDX_OUTPUT_COLUMNS = 7;
     private static final int PARAM_IDX_HDFS_ADDRESS = 8;
     private static final int PARAM_IDX_AUTH_TYPE = 9;
-    private static final int PARAM_IDX_AUTH_KERBEROS_CONNECTION = 10;
+    private static final int PARAM_IDX_KERBEROS_CONNECTION = 10;
     private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
     
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
@@ -39,8 +39,8 @@ public class HCatTableFiles {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
         String hCatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
-        String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
-        String hcatUser = iter.getString(PARAM_IDX_HCAT_USER);
+        String hdfsUserOrServicePrincipal = iter.getString(PARAM_IDX_HDFS_USER_OR_SERVICE_PRINCIPAL);
+        String hcatUserOrServicePrincipal = iter.getString(PARAM_IDX_HCAT_USER_OR_SERVICE_PRINCIPAL);
         int parallelism = iter.getInteger(PARAM_IDX_PARALLELISM);
         // Optional parameters
         String partitionFilterSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_PARTITIONS, "");
@@ -55,7 +55,7 @@ public class HCatTableFiles {
         }
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         boolean useKerberos = authType.equalsIgnoreCase("kerberos");
-        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
+        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_KERBEROS_CONNECTION, "");
         KerberosCredentials kerberosCredentials = null;
         if (!connName.isEmpty()) {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
@@ -85,7 +85,7 @@ public class HCatTableFiles {
             hcatDB,
             hcatTable,
             hCatAddress,
-                hcatUser,
+                hcatUserOrServicePrincipal,
             useKerberos,
             kerberosCredentials);
         
@@ -102,7 +102,7 @@ public class HCatTableFiles {
         }
 
         List<String> filePaths = HdfsService.getFilesFromTable(
-                hdfsUser,
+                hdfsUserOrServicePrincipal,
                 tableMeta.getHdfsTableRootPath(),
                 partitionFilterSpec,
                 tableMeta.getPartitionColumns(),
@@ -115,7 +115,7 @@ public class HCatTableFiles {
             iter.emit(
                     StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
-                    hdfsUser,
+                    hdfsUserOrServicePrincipal,
                     tableMeta.getInputFormatClass(),
                     tableMeta.getSerDeClass(),
                     WebHCatJsonSerializer.serializeColumnArray(tableMeta.getColumns()),

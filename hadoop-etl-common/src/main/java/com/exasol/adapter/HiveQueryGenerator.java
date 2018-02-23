@@ -26,7 +26,7 @@ public class HiveQueryGenerator {
         }
         if(isKerberosAuth(connection.getPassword())){
             credentialsAndConn += " AUTH_TYPE = 'kerberos'";
-            credentialsAndConn += " AUTH_KERBEROS_CONNECTION = '" + HiveAdapterProperties.getConnectionName(meta.getProperties()) + "'";
+            credentialsAndConn += " KERBEROS_CONNECTION = '" + HiveAdapterProperties.getConnectionName(meta.getProperties()) + "'";
         }
         if(HiveAdapterProperties.getHdfsUrls(meta.getProperties()) != ""){
             credentialsAndConn += " HDFS_URL = '" + HiveAdapterProperties.getHdfsUrls(meta.getProperties()) + "'";

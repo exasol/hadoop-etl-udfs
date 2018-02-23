@@ -13,6 +13,8 @@ import com.google.common.base.Joiner;
 
 import java.util.*;
 
+import static com.exasol.hadoop.scriptclasses.ImportHCatTable.checkAuthParameters;
+
 /**
  * Main UDF entry point. Per convention, the UDF Script must have the same name
  * as the main class.
@@ -26,19 +28,26 @@ public class ExportHCatTable {
         String hcatDB = getMandatoryParameter(params, "HCAT_DB");
         String hcatTable = getMandatoryParameter(params, "HCAT_TABLE");
         String hcatAddress = getMandatoryParameter(params, "HCAT_ADDRESS");
-        String hdfsUser = getMandatoryParameter(params, "HDFS_USER");
-        String hcatUser = getMandatoryParameter(params, "HCAT_USER");
 
         // Optional parameters
+        String hdfsUser = getParameter(params, "HDFS_USER", "");
+        String hcatUser = getParameter(params, "HCAT_USER", "");
         String hdfsAddress = getParameter(params, "HDFS_URL", "");
         String staticPartition = getParameter(params, "STATIC_PARTITION", "");
         String dynamicPartitionExaCols = getParameter(params, "DYNAMIC_PARTITION_EXA_COLS", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
-        String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
+        String kerberosConnection = getParameter(params, "KERBEROS_CONNECTION", "");
+        String kerberosHCatServicePrincipal = getParameter(params, "KERBEROS_HCAT_SERVICE_PRINCIPAL", "");
+        String kerberosHdfsServicePrincipal = getParameter(params, "KERBEROS_HDFS_SERVICE_PRINCIPAL", "");
         String jdbcAuthType = getParameter(params, "JDBC_AUTH_TYPE", "");
         String jdbcConnection = getParameter(params, "JDBC_CONNECTION", "");
         String compressionType = getParameter(params, "COMPRESSION_TYPE", "uncompressed");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
+
+        boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
+        checkAuthParameters(hdfsUser, hcatUser, kerberosHCatServicePrincipal, kerberosHdfsServicePrincipal, useKerberos);
+        String hcatUserOrServicePrincipal = useKerberos ? kerberosHCatServicePrincipal : hcatUser;
+        String hdfsUserOrServicePrincipal = useKerberos ? kerberosHdfsServicePrincipal : hdfsUser;
 
         // Only used for unit testing
         String unitTestMode = getParameter(params, "UNIT_TEST_MODE", "");
@@ -65,8 +74,8 @@ public class ExportHCatTable {
         List<String> jdbcSqlStatements = getJdbcStatements(exportSpec, hcatDB, hcatTable);
         if (jdbcSqlStatements.size() > 0) {
             ExaConnectionInformation jdbcConn = getJdbcConnection(meta, jdbcConnection);
-            boolean useKerberos = jdbcAuthType.equalsIgnoreCase("kerberos");
-            JdbcUtils.executeJdbcStatements(jdbcSqlStatements, jdbcConn, useKerberos);
+            boolean jdbcUseKerberos = jdbcAuthType.equalsIgnoreCase("kerberos");
+            JdbcUtils.executeJdbcStatements(jdbcSqlStatements, jdbcConn, jdbcUseKerberos);
         }
 
         // Dynamic partitions
@@ -77,7 +86,6 @@ public class ExportHCatTable {
             dynamicPartsExaColNums = getExaColumnNumbersOfSpecifiedDynamicPartitions(dynamicPartitionExaCols, exaColNames);
         } else {
             // Dynamic columns were not specified
-            boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
             KerberosCredentials kerberosCredentials = null;
             if (!kerberosConnection.isEmpty()) {
                 ExaConnectionInformation kerberosConn;
@@ -94,7 +102,7 @@ public class ExportHCatTable {
                     // Don't try to connect to HCat service in unit test mode
                     tableMeta = new HCatTableMetadata("", new ArrayList<>(), new ArrayList<>(), "", "", "", "", new ArrayList<>());
                 } else {
-                    tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hcatUser, useKerberos, kerberosCredentials);
+                    tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hcatUserOrServicePrincipal, useKerberos, kerberosCredentials);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Exception while fetching metadata for " + hcatTable + ": " + e.toString(), e);
@@ -113,8 +121,8 @@ public class ExportHCatTable {
         exportUDFArgs.add(hcatDB);
         exportUDFArgs.add(hcatTable);
         exportUDFArgs.add(hcatAddress);
-        exportUDFArgs.add(hdfsUser);
-        exportUDFArgs.add(hcatUser);
+        exportUDFArgs.add(hdfsUserOrServicePrincipal);
+        exportUDFArgs.add(hcatUserOrServicePrincipal);
         exportUDFArgs.add(hdfsAddress);
         exportUDFArgs.add(staticPartition);
         exportUDFArgs.add(Joiner.on(",").join(dynamicPartsExaColNums));
@@ -136,7 +144,7 @@ public class ExportHCatTable {
         sql.append("\"").append(Joiner.on("\", \"").join(exaColNames)).append("\"");
         sql.append(") ");
         sql.append("FROM ");
-        sql.append("DUAL"); // Dummy placeholder
+        sql.append("DUAL"); // Dummy placeholder, will be replaced by the query or table to be exported.
         if (!groupByColumns.isEmpty()) {
             sql.append(" GROUP BY ");
             sql.append("\"").append(Joiner.on("\", \"").join(groupByColumns)).append("\"");

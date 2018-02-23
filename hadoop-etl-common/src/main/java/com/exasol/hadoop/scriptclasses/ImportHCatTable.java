@@ -21,18 +21,25 @@ public class ImportHCatTable {
         String hcatDB = getMandatoryParameter(params, "HCAT_DB");
         String hcatTable = getMandatoryParameter(params, "HCAT_TABLE");
         String hCatAddress = getMandatoryParameter(params, "HCAT_ADDRESS");
-        String hdfsUser = getMandatoryParameter(params, "HDFS_USER");
-        String hcatUser = getMandatoryParameter(params, "HCAT_USER");  // If non-kerberos: use for createRemoteUser(), if kerberos: use as hdfs service principle
-        
+
         // Optional Parameters
+        String hdfsUser = getParameter(params, "HDFS_USER", "");
+        String hcatUser = getParameter(params, "HCAT_USER", "");
         String parallelism = getParameter(params, "PARALLELISM", "nproc()");
         String partitions = getParameter(params, "PARTITIONS", "");
         String outputColumnsSpec = getParameter(params, "OUTPUT_COLUMNS", "");
         String hdfsURLs = getParameter(params, "HDFS_URL", "");
         String authenticationType = getParameter(params, "AUTH_TYPE", "");
-        String kerberosConnection = getParameter(params, "AUTH_KERBEROS_CONNECTION", "");
+        String kerberosConnection = getParameter(params, "KERBEROS_CONNECTION", "");
+        String kerberosHCatServicePrincipal = getParameter(params, "KERBEROS_HCAT_SERVICE_PRINCIPAL", "");
+        String kerberosHdfsServicePrincipal = getParameter(params, "KERBEROS_HDFS_SERVICE_PRINCIPAL", "");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
-        
+
+        boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
+        checkAuthParameters(hdfsUser, hcatUser, kerberosHCatServicePrincipal, kerberosHdfsServicePrincipal, useKerberos);
+        String hcatUserOrServicePrincipal = useKerberos ? kerberosHCatServicePrincipal : hcatUser;
+        String hdfsUserOrServicePrincipal = useKerberos ? kerberosHdfsServicePrincipal : hdfsUser;
+
         // Construct EMITS specification
         String emitsSpec = "";  // "EMITS (col1 INT, col2 varchar(100))"
         if (importSpec.isSubselect()) {
@@ -66,8 +73,8 @@ public class ImportHCatTable {
         hcatUDFArgs.add("'" + hcatDB + "'");
         hcatUDFArgs.add("'" + hcatTable + "'");
         hcatUDFArgs.add("'" + hCatAddress + "'");
-        hcatUDFArgs.add("'" + hdfsUser + "'");
-        hcatUDFArgs.add("'" + hcatUser + "'");
+        hcatUDFArgs.add("'" + hdfsUserOrServicePrincipal + "'");
+        hcatUDFArgs.add("'" + hcatUserOrServicePrincipal + "'");
         hcatUDFArgs.add(parallelism);
         hcatUDFArgs.add("'" + partitions + "'");
         hcatUDFArgs.add("'" + outputColumnsSpec + "'");
@@ -99,7 +106,25 @@ public class ImportHCatTable {
 
         return sql;
     }
-    
+
+    static void checkAuthParameters(String hdfsUser, String hcatUser, String kerberosHCatServicePrincipal, String kerberosHdfsServicePrincipal, boolean useKerberos) {
+        if (useKerberos) {
+            if (!hdfsUser.isEmpty()
+                    || !hcatUser.isEmpty()
+                    || kerberosHCatServicePrincipal.isEmpty()
+                    || kerberosHdfsServicePrincipal.isEmpty()) {
+                throw new RuntimeException("If authentication type kerberos is specified, the properties KERBEROS_HCAT_SERVICE_PRINCIPAL and KERBEROS_HDFS_SERVICE_PRINCIPAL have to be specified and HDFS_USER and HCAT_USER must be empty.");
+            }
+        } else {
+            if (hdfsUser.isEmpty()
+                    || hcatUser.isEmpty()
+                    || !kerberosHCatServicePrincipal.isEmpty()
+                    || !kerberosHdfsServicePrincipal.isEmpty()) {
+                throw new RuntimeException("If standard basic authentication type is specified (no kerberos), the properties HDFS_USER and HCAT_USER have to be specified and KERBEROS_HCAT_SERVICE_PRINCIPAL and KERBEROS_HDFS_SERVICE_PRINCIPAL must be empty.");
+            }
+        }
+    }
+
     private static String getMandatoryParameter(Map<String, String> params, String key) {
         if (!params.containsKey(key)) {
             throw new RuntimeException("The mandatory property " + key + " was not defined. Please specify it and run the statement again.");

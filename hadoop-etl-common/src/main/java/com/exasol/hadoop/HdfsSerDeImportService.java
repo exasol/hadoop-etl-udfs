@@ -20,13 +20,10 @@ import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDe;
-import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.*;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableBinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveDecimalObjectInspector;
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapred.*;
@@ -60,7 +57,7 @@ public class HdfsSerDeImportService {
             String partitionColumnsJson,
             final String outputColumnsSpec,
             final List<String> hdfsUrls,
-            final String hdfsUser,
+            final String hdfsUserOrServicePrincipal,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
             final ExaIterator ctx) throws Exception {
@@ -87,16 +84,13 @@ public class HdfsSerDeImportService {
             final SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
             
             UserGroupInformation ugi = useKerberos ?
-                    KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+                    KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
                 public Void run() throws Exception {
-                    final Configuration conf = new Configuration();
-                    if (useKerberos) {
-                        conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                    }
+                    final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
                     FileSystem fs = HdfsService.getFileSystem(hdfsUrls,conf);
                     for (String file : files) {
-                        fs = importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsUrls, hdfsUser, columns, outputColumns, useKerberos, ctx);
+                        fs = importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsUrls, hdfsUserOrServicePrincipal, columns, outputColumns, useKerberos, ctx);
                     }
                     return null;
                 }
@@ -118,7 +112,7 @@ public class HdfsSerDeImportService {
             final SerDe serde,
             final List<HCatSerDeParameter> serDeParameters,
             final List<String> hdfsUrls,
-            final String hdfsUser,
+            final String hdfsUserOrServicePrincipal,
             final List<HCatTableColumn> columns,
             final List<OutputColumnSpec> outputColumns,
             final boolean useKerberos,
@@ -128,16 +122,13 @@ public class HdfsSerDeImportService {
         System.out.println("- partitionColumns: " + partitionColumns);
         System.out.println("- serDeParameters: " + serDeParameters);
         System.out.println("- hdfsUrl: " + org.apache.commons.lang.StringUtils.join(hdfsUrls, ","));
-        System.out.println("- hdfsUser: " + hdfsUser);
+        System.out.println("- hdfsUserOrServicePrincipal: " + hdfsUserOrServicePrincipal);
         System.out.println("- columnInfo: " + columns);
         System.out.println("- outputColumns: " + outputColumns);
         System.out.println("- useKerberos: " + useKerberos);
         
         final Properties props = new Properties();
-        final Configuration conf = new Configuration();
-        if (useKerberos) {
-            conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-        }
+        final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
         for (HCatSerDeParameter prop : serDeParameters) {
             System.out.println("Add serde prop " + prop.getName() + ": " + prop.getValue());
             props.put(prop.getName(), prop.getValue());
