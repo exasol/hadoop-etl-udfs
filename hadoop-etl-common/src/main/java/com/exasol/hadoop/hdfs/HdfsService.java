@@ -28,7 +28,8 @@ public class HdfsService {
             final List<HCatTableColumn> partitionColumns,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
-            final List<String> hdfsAddressesToUse) throws Exception {
+            final List<String> hdfsAddressesToUse,
+            boolean enableRPCEncryption) throws Exception {
 
 
         // Set login user. The value is actually not important, but something must be specified.
@@ -43,7 +44,7 @@ public class HdfsService {
         List<String> tableInfo = ugi.doAs(new PrivilegedExceptionAction<List<String>>() {
             @Override
             public List<String> run() throws Exception {
-                Configuration conf = getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
+                Configuration conf = getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                 // Get all directories (leafs only) of the table
                 FileSystem realFs = getFileSystem(hdfsAddressesToUse, conf);
                 FileSystemWrapper fs = new FileSystemWrapperImpl(realFs);
@@ -131,10 +132,13 @@ public class HdfsService {
      * @param useKerberos
      * @param kerberosHdfsServicePrincipal if kerberos is true, then service principal for Hdfs, otherwise null or empty string
      */
-    public static Configuration getHdfsConfiguration(boolean useKerberos, String kerberosHdfsServicePrincipal) {
+    public static Configuration getHdfsConfiguration(boolean useKerberos, String kerberosHdfsServicePrincipal, boolean enableRPCEncryption) {
         final Configuration conf = new Configuration();
         if (useKerberos) {
             conf.set("dfs.namenode.kerberos.principal", kerberosHdfsServicePrincipal);
+        }
+        if (enableRPCEncryption) {
+            conf.set("hadoop.rpc.protection", "privacy");
         }
         return conf;
     }

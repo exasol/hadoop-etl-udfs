@@ -42,6 +42,7 @@ public class ExportHCatTable {
         String jdbcAuthType = getParameter(params, "JDBC_AUTH_TYPE", "");
         String jdbcConnection = getParameter(params, "JDBC_CONNECTION", "");
         String compressionType = getParameter(params, "COMPRESSION_TYPE", "uncompressed");
+        String enableRCPEncryption = getParameter(params, "ENABLE_RPC_ENCRYPTION", "false");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
 
         boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
@@ -129,6 +130,7 @@ public class ExportHCatTable {
         exportUDFArgs.add(authenticationType);
         exportUDFArgs.add(kerberosConnection);
         exportUDFArgs.add(compressionType);
+        exportUDFArgs.add(enableRCPEncryption);
         exportUDFArgs.add(debugAddress);
 
         // Build the SQL statement for the Export UDF

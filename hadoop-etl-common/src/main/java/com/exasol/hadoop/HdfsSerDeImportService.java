@@ -60,6 +60,7 @@ public class HdfsSerDeImportService {
             final String hdfsUserOrServicePrincipal,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
+            final boolean enableRPCEncryption,
             final ExaIterator ctx) throws Exception {
 
         System.out.println("----------\nStarted importing files\n----------");
@@ -87,10 +88,10 @@ public class HdfsSerDeImportService {
                     KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
                 public Void run() throws Exception {
-                    final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
+                    final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                     FileSystem fs = HdfsService.getFileSystem(hdfsUrls,conf);
                     for (String file : files) {
-                        fs = importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsUrls, hdfsUserOrServicePrincipal, columns, outputColumns, useKerberos, ctx);
+                        fs = importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsUrls, hdfsUserOrServicePrincipal, columns, outputColumns, useKerberos, enableRPCEncryption, ctx);
                     }
                     return null;
                 }
@@ -116,6 +117,7 @@ public class HdfsSerDeImportService {
             final List<HCatTableColumn> columns,
             final List<OutputColumnSpec> outputColumns,
             final boolean useKerberos,
+            final boolean enableRPCEncryption,
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted importGeneric()\n----------");
         System.out.println("- file: " + file);
@@ -128,7 +130,7 @@ public class HdfsSerDeImportService {
         System.out.println("- useKerberos: " + useKerberos);
         
         final Properties props = new Properties();
-        final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
+        final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
         for (HCatSerDeParameter prop : serDeParameters) {
             System.out.println("Add serde prop " + prop.getName() + ": " + prop.getValue());
             props.put(prop.getName(), prop.getValue());

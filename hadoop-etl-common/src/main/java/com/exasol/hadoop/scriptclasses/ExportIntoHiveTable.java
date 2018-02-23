@@ -35,8 +35,9 @@ public class ExportIntoHiveTable {
     private static final int PARAM_IDX_AUTH_TYPE = 8;
     private static final int PARAM_IDX_AUTH_CONNECTION = 9;
     private static final int PARAM_IDX_COMPRESSION_TYPE = 10;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
-    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 12;
+    private static final int PARAM_IDX_ENABLE_RPC_ENCRYPTION = 11;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 12;
+    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 13;
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
@@ -50,6 +51,7 @@ public class ExportIntoHiveTable {
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_CONNECTION, "");
         String compressionType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_COMPRESSION_TYPE, "");
+        boolean enableRPCEncryption = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_ENABLE_RPC_ENCRYPTION, "false").equalsIgnoreCase("true");
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
 
@@ -101,7 +103,7 @@ public class ExportIntoHiveTable {
                 KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
         FileSystem fs = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
             public FileSystem run() throws Exception {
-                final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
+                final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                 return HdfsService.getFileSystem(hdfsAddresses, conf);
             }
         });
@@ -155,7 +157,7 @@ public class ExportIntoHiveTable {
 
         String fileFormat = tableMeta.getSerDeClass();
         if (fileFormat.toLowerCase().contains("parquet")) {
-            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUserOrServicePrincipal, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUserOrServicePrincipal, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, enableRPCEncryption, iter);
         } else {
             throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }

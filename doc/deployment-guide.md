@@ -95,6 +95,7 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
   auth_type VARCHAR(1000),
   conn_name VARCHAR(1000),
   output_columns VARCHAR(100000),
+  enable_rpc_encryption VARCHAR(100),
   debug_address VARCHAR(200))
  AS
 %scriptclass com.exasol.hadoop.scriptclasses.HCatTableFiles;

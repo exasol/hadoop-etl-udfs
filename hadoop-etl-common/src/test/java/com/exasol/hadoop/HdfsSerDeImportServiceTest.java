@@ -83,7 +83,7 @@ public class HdfsSerDeImportServiceTest {
         
         InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatClassName);
         SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
-        HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, ctx);
+        HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, false, ctx);
     }
     
     private List<HCatTableColumn> getSample07Columns() {

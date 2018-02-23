@@ -55,7 +55,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "
@@ -103,7 +103,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', 'part1=2015-01-01/part2=EU', '', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', 'part1=2015-01-01/part2=EU', '', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "
@@ -153,7 +153,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '1,2', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '1,2', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\", \"col2\", \"COL3\""
                 + ") "
                 + "FROM "
@@ -202,7 +202,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'snappy', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'snappy', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "

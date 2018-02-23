@@ -33,6 +33,7 @@ public class ImportHCatTable {
         String kerberosConnection = getParameter(params, "KERBEROS_CONNECTION", "");
         String kerberosHCatServicePrincipal = getParameter(params, "KERBEROS_HCAT_SERVICE_PRINCIPAL", "");
         String kerberosHdfsServicePrincipal = getParameter(params, "KERBEROS_HDFS_SERVICE_PRINCIPAL", "");
+        String enableRCPEncryption = getParameter(params, "ENABLE_RPC_ENCRYPTION", "false");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
 
         boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
@@ -81,6 +82,7 @@ public class ImportHCatTable {
         hcatUDFArgs.add("'" + hdfsURLs + "'");
         hcatUDFArgs.add("'" + authenticationType + "'");
         hcatUDFArgs.add("'" + kerberosConnection + "'");
+        hcatUDFArgs.add("'" + enableRCPEncryption + "'");
         hcatUDFArgs.add("'" + debugAddress + "'");
         
         List<String> importUDFArgs = new ArrayList<>();
@@ -95,6 +97,7 @@ public class ImportHCatTable {
         importUDFArgs.add("auth_type");
         importUDFArgs.add("conn_name");
         importUDFArgs.add("output_columns");
+        importUDFArgs.add("enable_rpc_encryption");
         importUDFArgs.add("debug_address");
 
         String sql = "SELECT"

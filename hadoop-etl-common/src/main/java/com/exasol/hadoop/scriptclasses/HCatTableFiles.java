@@ -30,7 +30,8 @@ public class HCatTableFiles {
     private static final int PARAM_IDX_HDFS_ADDRESS = 8;
     private static final int PARAM_IDX_AUTH_TYPE = 9;
     private static final int PARAM_IDX_KERBEROS_CONNECTION = 10;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
+    private static final int PARAM_IDX_ENABLE_RPC_ENCRYPTION = 11;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 12;
     
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
 
@@ -69,6 +70,7 @@ public class HCatTableFiles {
             byte[] keytabFile = UdfUtils.base64ToByteArray(confKeytab[2]);
             kerberosCredentials = new KerberosCredentials(principal, configFile, keytabFile);
         }
+        Boolean enableRPCEncryption = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_ENABLE_RPC_ENCRYPTION, "false").equalsIgnoreCase("true");
         // Optional: Define a udf debug service address to which stdout will be redirected
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         if (! debugAddress.isEmpty()) {
@@ -108,7 +110,8 @@ public class HCatTableFiles {
                 tableMeta.getPartitionColumns(),
                 useKerberos,
                 kerberosCredentials,
-                hdfsAddresses);
+                hdfsAddresses,
+                enableRPCEncryption);
 
         int numFilePaths = filePaths.size();
         for (int i = 0; i < numFilePaths; i++) {
@@ -125,6 +128,7 @@ public class HCatTableFiles {
                     authType,
                     connName,
                     outputColumnsSpec,
+                    enableRPCEncryption.toString(),
                     debugAddress);
         }
     }

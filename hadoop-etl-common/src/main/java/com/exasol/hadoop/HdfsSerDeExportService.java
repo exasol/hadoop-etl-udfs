@@ -38,6 +38,7 @@ public class HdfsSerDeExportService {
             final List<ExaParquetTypeInfo> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
             final int firstColumnIndex, // First column containing data to be exported. (see ExportIntoHiveTable.java)
             final List<Integer> dynamicPartitionExaColNums, // Exasol column numbers of dynamic partitions.
+            final boolean enableRPCEncryption,
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted export to hive Parquet table\n----------");
 
@@ -51,7 +52,7 @@ public class HdfsSerDeExportService {
             public Void run() throws Exception {
                 if (ctx.size() > 0) {
                     // Configure ParquetWriter
-                    Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal);
+                    Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                     Path path = new Path(hdfsUrl, file);
                     int rowsExported = 0;
 
