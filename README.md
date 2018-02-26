@@ -65,3 +65,7 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
 ```
 
 Please see the [EXPORT details](doc/export.md) for a full description.
+
+### Frequent Issues
+
+* In case you cannot connect to certain parts of Hadoop it is a good idea to test the DNS hostname resolution and TCP/IP connectivity to all hosts and ports of Hadoop (HCatalog, HDFS, and Kerberos servers if used). For this you can use the python script in [solution 325](https://www.exasol.com/support/browse/SOL-325). Note that this script is designed for testing http connections, so you can ignore the http check failures.

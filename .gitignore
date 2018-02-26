@@ -14,3 +14,4 @@ dependency-reduced-pom.xml
 # Intellij recommends to share iml files, however, better don't share files which might be outdated
 *.iml
 
+.DS_Store

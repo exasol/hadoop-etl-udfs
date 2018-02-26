@@ -66,7 +66,7 @@ public class ExportIntoHiveTable {
             }
         }
 
-        boolean useKerberos = authType != null ? authType.equalsIgnoreCase("kerberos") : false;
+        boolean useKerberos = authType.equalsIgnoreCase("kerberos");
         KerberosCredentials kerberosCredentials = null;
         if (!connName.isEmpty()) {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
