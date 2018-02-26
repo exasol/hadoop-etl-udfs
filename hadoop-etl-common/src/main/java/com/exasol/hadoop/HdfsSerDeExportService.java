@@ -3,6 +3,7 @@ package com.exasol.hadoop;
 import com.exasol.ExaIterator;
 import com.exasol.hadoop.hcat.HCatTableColumn;
 import com.exasol.hadoop.hcat.HCatTableMetadata;
+import com.exasol.hadoop.hdfs.HdfsService;
 import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.hadoop.parquet.ExaParquetTypeInfo;
@@ -28,7 +29,7 @@ public class HdfsSerDeExportService {
      */
     public static void exportToParquetTable(
             final String hdfsUrl,
-            final String hdfsUser,
+            final String hdfsUserOrServicePrincipal,
             final boolean useKerberos,
             final KerberosCredentials kerberosCredentials,
             final String file,
@@ -37,6 +38,7 @@ public class HdfsSerDeExportService {
             final List<ExaParquetTypeInfo> schemaTypes, // Only used if 'tableMeta' is null (e.g., testing)
             final int firstColumnIndex, // First column containing data to be exported. (see ExportIntoHiveTable.java)
             final List<Integer> dynamicPartitionExaColNums, // Exasol column numbers of dynamic partitions.
+            final boolean enableRPCEncryption,
             final ExaIterator ctx) throws Exception {
         System.out.println("----------\nStarted export to hive Parquet table\n----------");
 
@@ -44,16 +46,13 @@ public class HdfsSerDeExportService {
         if (useKerberos) {
             ugi = KerberosHadoopUtils.getKerberosUGI(kerberosCredentials);
         } else {
-            ugi = UserGroupInformation.createRemoteUser(hdfsUser);
+            ugi = UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
         }
         ugi.doAs(new PrivilegedExceptionAction<Void>() {
             public Void run() throws Exception {
                 if (ctx.size() > 0) {
                     // Configure ParquetWriter
-                    Configuration conf = new Configuration();
-                    if (useKerberos) {
-                        conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                    }
+                    Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                     Path path = new Path(hdfsUrl, file);
                     int rowsExported = 0;
 

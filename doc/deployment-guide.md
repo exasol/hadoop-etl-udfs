@@ -24,7 +24,7 @@ git clone https://github.com/EXASOL/hadoop-etl-udfs.git
 cd hadoop-etl-udfs
 ```
 
-You have to build the sources depending on your Hive and Hadoop version as follows. The resulting fat JAR (including all dependencies) is stored in ```hadoop-etl-dist/target/hadoop-etl-dist-0.0.1-SNAPSHOT.jar```.
+You have to build the sources depending on your Hive and Hadoop version as follows. The resulting fat JAR (including all dependencies) is stored in ```hadoop-etl-dist/target/hadoop-etl-dist-1.0.0-SNAPSHOT.jar```.
 
 #### Cloudera CDH
 You can look up the version numbers for Hadoop and Hive in the [CDH Maven documentation](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo.html) (search for the artifactId ```hadoop-common``` and ```hive-serde```).
@@ -56,8 +56,8 @@ Following steps are required to upload a file to a bucket:
 * Check if you have a bucket in the BucketFS. Simply click on the name of the BucketFS in EXAOperation and add a bucket there, e.g. ```bucket1```. Also make sure you know the write password. For simplicity we assume that the bucket is defined as a public bucket, i.e. it can be read by any script.
 * Now upload the file into this bucket, e.g. using curl (adapt the hostname, BucketFS port, bucket name and bucket write password).
 ```
-curl -X PUT -T target/hadoop-etl-dist-0.0.1-SNAPSHOT.jar \
- http://w:write-password@your.exasol.host.com:2580/bucket1/hadoop-etl-dist-0.0.1-SNAPSHOT.jar
+curl -X PUT -T target/hadoop-etl-dist-1.0.0-SNAPSHOT.jar \
+ http://w:write-password@your.exasol.host.com:2580/bucket1/hadoop-etl-dist-1.0.0-SNAPSHOT.jar
 ```
 
 See chapter 3.6.4. "The synchronous cluster file system BucketFS" in the EXASolution User Manual for more details about BucketFS.
@@ -71,20 +71,21 @@ CREATE SCHEMA ETL;
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHCatTable;
-%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HIVE_TABLE_FILES(...) EMITS (...) AS
 %env LD_LIBRARY_PATH=/tmp/;
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHiveTableFiles;
-%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
  EMITS (
   hdfs_server_port VARCHAR(200),
   hdfspath VARCHAR(200),
-  hdfs_user VARCHAR(100),
+  hdfs_user_or_service_principal VARCHAR(100),
+  hcat_user_or_service_principal VARCHAR(100),
   input_format VARCHAR(200),
   serde VARCHAR(200),
   column_info VARCHAR(100000),
@@ -94,20 +95,21 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
   auth_type VARCHAR(1000),
   conn_name VARCHAR(1000),
   output_columns VARCHAR(100000),
+  enable_rpc_encryption VARCHAR(100),
   debug_address VARCHAR(200))
  AS
 %scriptclass com.exasol.hadoop.scriptclasses.HCatTableFiles;
-%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportHCatTable;
-%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECTED INT) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
-%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-0.0.1-SNAPSHOT.jar;
+%jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 ```
 

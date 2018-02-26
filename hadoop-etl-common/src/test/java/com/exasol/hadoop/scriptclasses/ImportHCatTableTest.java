@@ -19,11 +19,22 @@ import org.junit.rules.ExpectedException;
 
 public class ImportHCatTableTest {
     
-    public void addMandatoryParams(Map<String, String> params) {
+    public void addMandatoryParamsBasicAuth(Map<String, String> params) {
         params.put("HCAT_DB", "hcat_db");
         params.put("HCAT_TABLE", "hcat_table");
         params.put("HCAT_ADDRESS", "hcat_address");
         params.put("HDFS_USER", "hdfs_user");
+        params.put("HCAT_USER", "hcat_user");
+    }
+
+    public void addMandatoryParamsKerberos(Map<String, String> params) {
+        params.put("HCAT_DB", "hcat_db");
+        params.put("HCAT_TABLE", "hcat_table");
+        params.put("HCAT_ADDRESS", "hcat_address");
+        params.put("AUTH_TYPE", "kerberos");
+        params.put("KERBEROS_CONNECTION", "MyKerberosConn");
+        params.put("KERBEROS_HDFS_SERVICE_PRINCIPAL", "hdfs_service_principal");
+        params.put("KERBEROS_HCAT_SERVICE_PRINCIPAL", "hcat_service_principal");
     }
     
     @Test
@@ -33,7 +44,7 @@ public class ImportHCatTableTest {
         ExaMetadata meta = mock(ExaMetadata.class);
         
         Map<String, String> params = new HashMap<>();
-        addMandatoryParams(params);
+        addMandatoryParamsBasicAuth(params);
         when(importSpec.getParameters()).thenReturn(params);
         
         when(importSpec.hasConnectionInformation()).thenReturn(false);
@@ -44,9 +55,9 @@ public class ImportHCatTableTest {
         sql = normalizeSql(sql);
         
         String sqlExpected = "SELECT"
-                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, debug_address)"
+                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user_or_service_principal, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
                 + " FROM ("
-                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', nproc(), '', '', '', '', '', '')"
+                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', 'hcat_user', nproc(), '', '', '', '', '', 'false', '')"
                 + ") GROUP BY import_partition;";
         sqlExpected = normalizeSql(sqlExpected);
         
@@ -70,13 +81,11 @@ public class ImportHCatTableTest {
         ExaMetadata meta = mock(ExaMetadata.class);
         
         Map<String, String> params = new HashMap<>();
-        addMandatoryParams(params);
+        addMandatoryParamsKerberos(params);
         params.put("PARALLELISM", "nproc()");
         params.put("PARTITIONS", "p1=01");
         params.put("OUTPUT_COLUMNS", "f1[0],f2");
         params.put("HDFS_URL", "hdfs://custom");
-        params.put("AUTH_TYPE", "kerberos");
-        params.put("AUTH_KERBEROS_CONNECTION", "MyKerberosConn");
         params.put("DEBUG_ADDRESS", "host:1234");
         when(importSpec.getParameters()).thenReturn(params);
         
@@ -97,9 +106,9 @@ public class ImportHCatTableTest {
         sql = normalizeSql(sql);
         
         String sqlExpected = "SELECT"
-                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, debug_address)"
+                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user_or_service_principal, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
                 + " EMITS (\"c1\" DECIMAL(16,0),\"c2\" VARCHAR(1000)) FROM ("
-                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', nproc(), 'p1=01', 'f1[0],f2', 'hdfs://custom', 'kerberos', 'MyKerberosConn', 'host:1234')"
+                + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_service_principal', 'hcat_service_principal', nproc(), 'p1=01', 'f1[0],f2', 'hdfs://custom', 'kerberos', 'MyKerberosConn', 'false', 'host:1234')"
                 + ") GROUP BY import_partition;";
         sqlExpected = normalizeSql(sqlExpected);
         
@@ -126,7 +135,7 @@ public class ImportHCatTableTest {
         ExaMetadata meta = mock(ExaMetadata.class);
         
         Map<String, String> params = new HashMap<>();
-        addMandatoryParams(params);
+        addMandatoryParamsBasicAuth(params);
         when(importSpec.getParameters()).thenReturn(params);
         
         List<String> subSelColNames = new ArrayList<>();
@@ -148,7 +157,7 @@ public class ImportHCatTableTest {
         ExaMetadata meta = mock(ExaMetadata.class);
         
         Map<String, String> params = new HashMap<>();
-        addMandatoryParams(params);
+        addMandatoryParamsBasicAuth(params);
         params.remove("HCAT_DB");
         when(importSpec.getParameters()).thenReturn(params);
         

@@ -25,6 +25,7 @@ public class ExportHCatTableTest {
         params.put("HCAT_TABLE", "hcat_table");
         params.put("HCAT_ADDRESS", "");
         params.put("HDFS_USER", "hdfs_user");
+        params.put("HCAT_USER", "hcat_user");
         params.put("UNIT_TEST_MODE", "true"); // Only used for unit testing
     }
 
@@ -54,7 +55,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', '', '', '', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "
@@ -102,7 +103,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', '', 'part1=2015-01-01/part2=EU', '', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', 'part1=2015-01-01/part2=EU', '', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "
@@ -152,7 +153,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', '', '', '1,2', '', '', 'uncompressed', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '1,2', '', '', 'uncompressed', 'false', ''"
                 + ", \"COL1\", \"col2\", \"COL3\""
                 + ") "
                 + "FROM "
@@ -201,7 +202,7 @@ public class ExportHCatTableTest {
 
         String sqlExpected = "SELECT"
                 + " \"" + meta.getScriptSchema() +"\".\"EXPORT_INTO_HIVE_TABLE\"("
-                + "'hcat_db', 'hcat_table', '', 'hdfs_user', '', '', '', '', '', 'snappy', ''"
+                + "'hcat_db', 'hcat_table', '', 'hdfs_user', 'hcat_user', '', '', '', '', '', 'snappy', 'false', ''"
                 + ", \"COL1\""
                 + ") "
                 + "FROM "

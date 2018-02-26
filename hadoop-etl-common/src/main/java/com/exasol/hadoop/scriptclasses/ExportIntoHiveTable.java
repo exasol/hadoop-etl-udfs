@@ -27,27 +27,31 @@ public class ExportIntoHiveTable {
     private static final int PARAM_IDX_HCAT_DB = 0;
     private static final int PARAM_IDX_HCAT_TABLE = 1;
     private static final int PARAM_IDX_HCAT_ADDRESS = 2;
-    private static final int PARAM_IDX_HDFS_USER = 3;
-    private static final int PARAM_IDX_HDFS_ADDRESS = 4;
-    private static final int PARAM_IDX_STATIC_PARTITION = 5;
-    private static final int PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS = 6;
-    private static final int PARAM_IDX_AUTH_TYPE = 7;
-    private static final int PARAM_IDX_AUTH_CONNECTION = 8;
-    private static final int PARAM_IDX_COMPRESSION_TYPE = 9;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 10;
-    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 11;
+    private static final int PARAM_IDX_HDFS_USER_OR_SERVICE_PRINCIPAL = 3;
+    private static final int PARAM_IDX_HCAT_USER_OR_SERVICE_PRINCIPAL = 4;
+    private static final int PARAM_IDX_HDFS_ADDRESS = 5;
+    private static final int PARAM_IDX_STATIC_PARTITION = 6;
+    private static final int PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS = 7;
+    private static final int PARAM_IDX_AUTH_TYPE = 8;
+    private static final int PARAM_IDX_AUTH_CONNECTION = 9;
+    private static final int PARAM_IDX_COMPRESSION_TYPE = 10;
+    private static final int PARAM_IDX_ENABLE_RPC_ENCRYPTION = 11;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 12;
+    private static final int PARAM_IDX_FIRST_DATA_COLUMN = 13;
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
         String hcatDB = iter.getString(PARAM_IDX_HCAT_DB);
         String hcatTable = iter.getString(PARAM_IDX_HCAT_TABLE);
         String hcatAddress = iter.getString(PARAM_IDX_HCAT_ADDRESS);
-        String hdfsUser = iter.getString(PARAM_IDX_HDFS_USER);
+        String hdfsUserOrServicePrincipal = iter.getString(PARAM_IDX_HDFS_USER_OR_SERVICE_PRINCIPAL);
+        String hcatUserOrServicePrincipal = iter.getString(PARAM_IDX_HCAT_USER_OR_SERVICE_PRINCIPAL);
         String hdfsServerUrls = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_HDFS_ADDRESS, "");
         String staticPartition = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_STATIC_PARTITION, "");
         String dynamicPartitionExaCols = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DYNAMIC_PARTITION_EXA_COLS, "");
         String authType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "");
         String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_CONNECTION, "");
         String compressionType = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_COMPRESSION_TYPE, "");
+        boolean enableRPCEncryption = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_ENABLE_RPC_ENCRYPTION, "false").equalsIgnoreCase("true");
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
         int firstColumnIndex = PARAM_IDX_FIRST_DATA_COLUMN;
 
@@ -69,7 +73,7 @@ public class ExportIntoHiveTable {
             kerberosCredentials = new KerberosCredentials(kerberosConnection);
         }
 
-        HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+        HCatTableMetadata tableMeta = HCatMetadataService.getMetadataForTable(hcatDB, hcatTable, hcatAddress, hcatUserOrServicePrincipal, useKerberos, kerberosCredentials);
         System.out.println("tableMeta: " + tableMeta);
 
         // Check partition specification
@@ -96,13 +100,10 @@ public class ExportIntoHiveTable {
         List<String> hdfsAddresses = hdfsServerUrls.equals("") ? Arrays.asList(tableMeta.getHdfsAddress()) : Arrays.asList(hdfsServerUrls.split(","));
 
         UserGroupInformation ugi = useKerberos ?
-                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUser);
+                KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
         FileSystem fs = ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
             public FileSystem run() throws Exception {
-                final Configuration conf = new Configuration();
-                if (useKerberos) {
-                    conf.set("dfs.namenode.kerberos.principal", hdfsUser);
-                }
+                final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
                 return HdfsService.getFileSystem(hdfsAddresses, conf);
             }
         });
@@ -116,7 +117,7 @@ public class ExportIntoHiveTable {
         List<Integer> dynamicPartitionExaColNums = new ArrayList<>();
         if (hasStaticPartition) {
             // Static partition
-            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, staticPartition, hcatAddress, hcatUserOrServicePrincipal, useKerberos, kerberosCredentials);
             hdfsPath.append("/").append(staticPartition);
         } else if (hasDynamicPartition) {
             // Dynamic partition
@@ -140,7 +141,7 @@ public class ExportIntoHiveTable {
                 dynamicPart.append("/").append(hivePartitions.get(i).getName()).append("=").append(iter.getString(colNum));
             }
             String dynamicPartition = dynamicPart.toString();
-            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hdfsUser, useKerberos, kerberosCredentials);
+            HCatMetadataService.createTablePartitionIfNotExists(hcatDB, hcatTable, dynamicPartition, hcatAddress, hcatUserOrServicePrincipal, useKerberos, kerberosCredentials);
             hdfsPath.append(dynamicPartition);
         }
 
@@ -156,7 +157,7 @@ public class ExportIntoHiveTable {
 
         String fileFormat = tableMeta.getSerDeClass();
         if (fileFormat.toLowerCase().contains("parquet")) {
-            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUser, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, iter);
+            HdfsSerDeExportService.exportToParquetTable(hdfsPath.toString(), hdfsUserOrServicePrincipal, useKerberos, kerberosCredentials, file.toString(), tableMeta, compressionType, null, firstColumnIndex, dynamicPartitionExaColNums, enableRPCEncryption, iter);
         } else {
             throw new RuntimeException("The file format is unsupported: " + fileFormat);
         }

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.exasol</groupId>
         <artifactId>exa-hadoop-etl-udfs</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
 	<artifactId>hadoop-etl-common</artifactId>
@@ -45,7 +45,7 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet-pre-1.7</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
+                    <version>1.0.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
             <repositories>
@@ -64,7 +64,7 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
+                    <version>1.0.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
             <repositories>
@@ -83,7 +83,7 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
+                    <version>1.0.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
             <repositories>
@@ -104,7 +104,7 @@
         <dependency>
             <groupId>com.exasol</groupId>
             <artifactId>exa-parquet-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.exasol</groupId>

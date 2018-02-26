@@ -25,9 +25,10 @@ public class ImportHiveTableFiles {
     private static final int PARAM_IDX_HDFS_ADDRESS = 6;
     private static final int PARAM_IDX_HDFS_USER = 7;
     private static final int PARAM_IDX_AUTH_TYPE = 8;
-    private static final int PARAM_IDX_AUTH_KERBEROS_CONNECTION = 9;
+    private static final int PARAM_IDX_KERBEROS_CONNECTION = 9;
     private static final int PARAM_IDX_OUTPUT_COLUMNS = 10;
-    private static final int PARAM_IDX_DEBUG_ADDRESS = 11;
+    private static final int PARAM_IDX_ENABLE_RPC_ENCRYPTION = 11;
+    private static final int PARAM_IDX_DEBUG_ADDRESS = 12;
 
     public static void run(ExaMetadata meta, ExaIterator iter) throws Exception {
 
@@ -45,7 +46,7 @@ public class ImportHiveTableFiles {
         // Optional: Kerberos authentication
         boolean useKerberos = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_TYPE, "").equalsIgnoreCase("kerberos");
         KerberosCredentials kerberosCredentials = null;
-        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_AUTH_KERBEROS_CONNECTION, "");
+        String connName = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_KERBEROS_CONNECTION, "");
         if (!connName.isEmpty()) {
             ExaConnectionInformation kerberosConnection = meta.getConnection(connName);
             String principal = kerberosConnection.getUser();
@@ -61,6 +62,8 @@ public class ImportHiveTableFiles {
         
         // Optional: Specify which columns to load, including JsonPath.
 	    String outputColumnsSpec = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_OUTPUT_COLUMNS, "");
+
+        Boolean enableRPCEncryption = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_ENABLE_RPC_ENCRYPTION, "false").equalsIgnoreCase("true");
         
         // Optional: Define a udf debug service address to which stdout will be redirected.
         String debugAddress = UdfUtils.getOptionalStringParameter(meta, iter, PARAM_IDX_DEBUG_ADDRESS, "");
@@ -78,6 +81,6 @@ public class ImportHiveTableFiles {
         do {
             files.add(iter.getString(PARAM_IDX_FILE));
         } while (iter.next());
-        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, hdfsAddresses, hdfsUser, useKerberos, kerberosCredentials, iter);
+        HdfsSerDeImportService.importFiles(files, inputFormatClassName, serDeClassName, serdeProps, colInfo, partInfo, outputColumnsSpec, hdfsAddresses, hdfsUser, useKerberos, kerberosCredentials, enableRPCEncryption, iter);
     }
 }

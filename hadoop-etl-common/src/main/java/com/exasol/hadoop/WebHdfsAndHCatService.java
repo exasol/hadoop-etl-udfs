@@ -46,11 +46,12 @@ public class WebHdfsAndHCatService {
         return hiveJavaTypes.get(hiveType);
     }
 
-    public static String getExtendedTableInfo(String webHCatServer, String dbName, String tableName, String hdfsAndHCatUser) throws Exception {
+    public static String getExtendedTableInfo(String webHCatServer, String dbName, String tableName, String hcatUser) throws Exception {
         String requestPath = "ddl/database/" + dbName + "/table/" + tableName;
         String requestQuery = "format=extended";
-        System.out.println("Retrieving table infos now. Request: " + requestPath + " query: " + requestQuery);
-        return get(WebHdfsAndHCatService.Service.HCAT, webHCatServer, requestPath, requestQuery, hdfsAndHCatUser);
+        System.out.println("Retrieving table infos now. Request: " +
+                "" + requestPath + " query: " + requestQuery);
+        return get(WebHdfsAndHCatService.Service.HCAT, webHCatServer, requestPath, requestQuery, hcatUser);
     }
 
     private static String buildUrl(Service service, String serverAndPort, String path, String query, String user) {

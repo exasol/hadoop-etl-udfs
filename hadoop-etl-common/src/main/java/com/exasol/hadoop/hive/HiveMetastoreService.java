@@ -19,22 +19,22 @@ import java.util.Map;
 public class HiveMetastoreService {
 
 
-    public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple){
+    public static HiveMetaStoreClient getHiveMetastoreClient(String hiveMetastoreUrl, boolean useKerberos, String hcatUserOrServicePrincipal){
         try {
-            return checkHiveMetaStoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
+            return checkHiveMetaStoreClient(hiveMetastoreUrl,useKerberos,hcatUserOrServicePrincipal);
         } catch (MetaException e) {
             throw new RuntimeException("Unknown MetaException occured when connecting to the Hive Metastore " + hiveMetastoreUrl + ": " + e.toString(), e);
         }
     }
 
-    public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String kerberosPrinciple) throws MetaException {
+    public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String hcatUserOrServicePrincipal) throws MetaException {
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
         hiveConf.set("hive.metastore.local", "false");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
         hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
         if (useKerberos) {
-            System.out.println("Add kerberosPrinciple: " + kerberosPrinciple);
-            hiveConf.set("hive.metastore.kerberos.principal", kerberosPrinciple);
+            System.out.println("Add hive.metastore.kerberos.principal: " + hcatUserOrServicePrincipal);
+            hiveConf.set("hive.metastore.kerberos.principal", hcatUserOrServicePrincipal);
             hiveConf.set("hive.metastore.sasl.enabled", "true");
         }
         return new HiveMetaStoreClient(hiveConf);
@@ -45,9 +45,9 @@ public class HiveMetastoreService {
      * Good example: https://github.com/apache/falcon/blob/master/common/src/main/java/org/apache/falcon/catalog/HiveCatalogService.java
      * There is an alternative higher level API, which does not deliver enough metadata: org.apache.hive.hcatalog.api.HCatClient (new version of org.apache.hcatalog.api.HCatClient)
      */
-    public static HCatTableMetadata getTableMetadata(String hiveMetastoreUrl, String dbName, String tableName, boolean useKerberos, String kerberosPrinciple) {
+    public static HCatTableMetadata getTableMetadata(String hiveMetastoreUrl, String dbName, String tableName, boolean useKerberos, String kerberosHCatServicePrinciple) {
 
-        HiveMetaStoreClient client = getHiveMetastoreClient(hiveMetastoreUrl,useKerberos,kerberosPrinciple);
+        HiveMetaStoreClient client = getHiveMetastoreClient(hiveMetastoreUrl,useKerberos,kerberosHCatServicePrinciple);
         Table table;
         try {
           table = client.getTable(dbName, tableName);
@@ -88,9 +88,9 @@ public class HiveMetastoreService {
      * Create a partition in Hive if it does not already exist.
      * We use the HiveMetaStoreClient API to access the Hive Metastore Thrift Server.
      */
-    public static boolean createPartitionIfNotExists(String hiveMetastoreUrl, boolean useKerberos, String kerberosPrincipal,
+    public static boolean createPartitionIfNotExists(String hiveMetastoreUrl, boolean useKerberos, String hcatUserOrServicePrincipal,
                                                      String dbName, String tableName, String partitionName) {
-        HiveMetaStoreClient hiveClient = getHiveMetastoreClient(hiveMetastoreUrl, useKerberos, kerberosPrincipal);
+        HiveMetaStoreClient hiveClient = getHiveMetastoreClient(hiveMetastoreUrl, useKerberos, hcatUserOrServicePrincipal);
         boolean createdPartition = false;
         try {
             hiveClient.appendPartition(dbName, tableName, partitionName);

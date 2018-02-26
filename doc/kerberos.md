@@ -5,13 +5,11 @@ These instructions only apply if your Hadoop installation is secured by Kerberos
 ### Prerequisites
 
 First, obtain the following information:
-* Kerberos principal for Hadoop (i.e., Hadoop user)
+* Kerberos user principal to be used for Hdfs and HCatalog/Hive authentication (typically a technical Hadoop user)
 * Kerberos configuration file (e.g., krb5.conf)
-* Kerberos keytab which contains keys for the Kerberos principal
-* Kerberos principal for the Hadoop NameNode (value of ```dfs.namenode.kerberos.principal``` in hdfs-site.xml)
-
-If you plan to use an optional JDBC connection for EXPORT:
-* Kerberos principal for Hive (value of ```hive.server2.authentication.kerberos.principal``` in hive-site.xml)
+* Kerberos keytab which contains keys for the user principal
+* Kerberos service principal for the Hadoop NameNode (value of ```dfs.namenode.kerberos.principal``` in hdfs-site.xml)
+* Kerberos service principal for HCatalog. Since HCatalog is accessed through Hive, use the Hive service principal. (value of ```hive.metastore.kerberos.principal```)
 
 ### Create a Connection
 
@@ -19,7 +17,7 @@ In order for the UDFs to have access to the necessary Kerberos information, a CO
 
 In order to simplify the creation of Kerberos CONNECTION objects, the [create_kerberos_conn.py](../tools/create_kerberos_conn.py) Python script has been provided. The script requires 4 arguments:
 * CONNECTION name
-* Kerberos principal
+* Kerberos user principal
 * Kerberos configuration file path
 * Kerberos keytab path
 
@@ -73,7 +71,7 @@ GRANT CONNECTION krb_conn TO exauser;
 
 ### Connection Usage
 
-Then, you can access the created CONNECTION from a UDF by passing the CONNECTION name as a UDF parameter as described above. Note: The ```hcat-and-hdfs-user``` UDF parameter must be set the NameNode principal, as described above.
+Then, you can access the created CONNECTION from a UDF by passing the CONNECTION name as a UDF parameter.
 
 IMPORT Example:
 ```sql
@@ -82,9 +80,10 @@ FROM SCRIPT ETL.IMPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'sample_07'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
- HDFS_USER       = 'hdfs/_HOST@EXAMPLE.COM'
  AUTH_TYPE       = 'kerberos'
- AUTH_KERBEROS_CONNECTION = 'krb_conn';
+ KERBEROS_CONNECTION = 'krb_conn'
+ KERBEROS_HDFS_SERVICE_PRINCIPAL = 'hdfs/_HOST@EXAMPLE.COM'
+ KERBEROS_HCAT_SERVICE_PRINCIPAL = 'hive/_HOST@EXAMPLE.COM';
 ```
 
 EXPORT Example:
@@ -95,9 +94,10 @@ INTO SCRIPT ETL.EXPORT_HCAT_TABLE WITH
  HCAT_DB         = 'default'
  HCAT_TABLE      = 'test_table'
  HCAT_ADDRESS    = 'thrift://hive-metastore-host:9083'
- HDFS_USER       = 'hdfs/_HOST@EXAMPLE.COM';
  AUTH_TYPE       = 'kerberos'
- AUTH_KERBEROS_CONNECTION = 'krb_conn';
+ KERBEROS_CONNECTION = 'krb_conn'
+ KERBEROS_HDFS_SERVICE_PRINCIPAL = 'hdfs/_HOST@EXAMPLE.COM'
+ KERBEROS_HCAT_SERVICE_PRINCIPAL = 'hive/_HOST@EXAMPLE.COM'
  JDBC_AUTH_TYPE  = 'kerberos'
  JDBC_CONNECTION = 'jdbc_krb_conn'
 CREATED BY 'CREATE TABLE default.test_table(col1 VARCHAR(200)) STORED AS PARQUET';
