@@ -55,7 +55,7 @@ public class ImportHCatTableTest {
         sql = normalizeSql(sql);
         
         String sqlExpected = "SELECT"
-                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
+                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user_or_service_principal, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
                 + " FROM ("
                 + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_user', 'hcat_user', nproc(), '', '', '', '', '', 'false', '')"
                 + ") GROUP BY import_partition;";
@@ -106,7 +106,7 @@ public class ImportHCatTableTest {
         sql = normalizeSql(sql);
         
         String sqlExpected = "SELECT"
-                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
+                + " " + meta.getScriptSchema() +".IMPORT_HIVE_TABLE_FILES(hdfspath, input_format, serde, column_info, partition_info, serde_props, hdfs_server_port, hdfs_user_or_service_principal, auth_type, conn_name, output_columns, enable_rpc_encryption, debug_address)"
                 + " EMITS (\"c1\" DECIMAL(16,0),\"c2\" VARCHAR(1000)) FROM ("
                 + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES('hcat_db', 'hcat_table', 'hcat_address', 'hdfs_service_principal', 'hcat_service_principal', nproc(), 'p1=01', 'f1[0],f2', 'hdfs://custom', 'kerberos', 'MyKerberosConn', 'false', 'host:1234')"
                 + ") GROUP BY import_partition;";

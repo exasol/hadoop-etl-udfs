@@ -35,6 +35,7 @@ public class ImportHCatTable {
         String kerberosHdfsServicePrincipal = getParameter(params, "KERBEROS_HDFS_SERVICE_PRINCIPAL", "");
         String enableRCPEncryption = getParameter(params, "ENABLE_RPC_ENCRYPTION", "false");
         String debugAddress = getParameter(params, "DEBUG_ADDRESS", "");
+        String showSql = getParameter(params, "SHOW_SQL", "");
 
         boolean useKerberos = authenticationType.equalsIgnoreCase("kerberos");
         checkAuthParameters(hdfsUser, hcatUser, kerberosHCatServicePrincipal, kerberosHdfsServicePrincipal, useKerberos);
@@ -93,7 +94,7 @@ public class ImportHCatTable {
         importUDFArgs.add("partition_info");
         importUDFArgs.add("serde_props");
         importUDFArgs.add("hdfs_server_port");
-        importUDFArgs.add("hdfs_user");
+        importUDFArgs.add("hdfs_user_or_service_principal");
         importUDFArgs.add("auth_type");
         importUDFArgs.add("conn_name");
         importUDFArgs.add("output_columns");
@@ -106,6 +107,11 @@ public class ImportHCatTable {
                 + " FROM ("
                 + " SELECT " + meta.getScriptSchema() +".HCAT_TABLE_FILES(" + Joiner.on(", ").join(hcatUDFArgs) + ")"
                 + ") GROUP BY import_partition;";
+
+
+        if (showSql.equalsIgnoreCase("true")){
+            return "SELECT " + "'" +sql.replace("'", "''") + "' AS GENERATED_SQL";
+        }
 
         return sql;
     }

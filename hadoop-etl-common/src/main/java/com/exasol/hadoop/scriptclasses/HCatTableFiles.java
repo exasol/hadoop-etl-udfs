@@ -119,6 +119,7 @@ public class HCatTableFiles {
                     StringUtils.join(hdfsAddresses, ","),
                     filePaths.get(i),
                     hdfsUserOrServicePrincipal,
+                    hcatUserOrServicePrincipal,
                     tableMeta.getInputFormatClass(),
                     tableMeta.getSerDeClass(),
                     WebHCatJsonSerializer.serializeColumnArray(tableMeta.getColumns()),
