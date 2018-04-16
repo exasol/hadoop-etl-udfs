@@ -4,7 +4,8 @@
 1. [Overview](#overview)
 2. [Using the IMPORT ETL UDFs](#using-the-import-etl-udfs)
 3. [Parameters](#parameters)
-4. [Debugging](#debugging)
+4. [Performance](#performance)
+5. [Debugging](#debugging)
 
 ## Overview
 Hadoop ETL UDFs are the main way to load data into EXASOL from Hadoop (HCatalog tables on HDFS).
@@ -77,11 +78,19 @@ Parameter           | Value
 Parameter           | Value
 ------------------- | -----------
 **ENABLE_RPC_ENCRYPTION**   |  Set to ```'true'```, if Hadoop RPC encryption is enabled. Default value is ```'false'```.
-**PARALLELISM**     | Degree of Parallelism, i.e. the maximum number of parallel JVM instances to be started for loading data. ```nproc()```, which is the total number of nodes in the EXASOL cluster, is the default value. This will start one importing UDF on each node.
+**PARALLELISM**     | Degree of Parallelism, i.e. the maximum number of parallel JVM instances to be started for loading data. The default value ```'nproc()'```, which is the total number of nodes in the EXASOL cluster, will start one importing UDF on each node. We also recommend testing with larger values for better performance, e.g. ```'nproc() * 8'```. In our experiences, a factor significantly higher than the number of cores will not further increase performance.
 **PARTITIONS**      | Partition Filter. E.g. ```'part1=2015-01-01/part2=EU'```. This parameter specifies which partitions should be loaded. For example, ```'part1=2015-01-01'``` will only load data with value ```2015-01-01``` for the partition ```part1```. Multiple partitions can be separated by ```/```. You can specify multiple comma-separated filters, e.g. ```'part1=2015-01-01/part2=EU, part1=2015-01-01/part2=UK'```. The default value ```''``` means all partitions should be loaded. Multiple values for a single partition are not supported(e.g. ```'part1=2015-01-01/part1=2015-01-02'```).
 **OUTPUT_COLUMNS**  | Specification of the desired columns to output, e.g. ```'col1, col2.field1, col3.field1[0]'```. Supports simple [JsonPath](http://goessner.net/articles/JsonPath/) expressions: 1. dot operator, to access fields in a struct or map data type and 2. subscript operator (brackets) to access elements in an array data type. The JsonPath expressions can be arbitrarily nested.
 **HDFS_URL**        | One or more URLs for HDFS/WebHDFS/HttpFS. E.g. ```'hdfs://hdfs-namenode:8020'``` (native HDFS) or ```'webhdfs://hdfs-namenode:50070'``` (WebHDFS) ```'webhdfs://hdfs-namenode:14000'``` (HttpFS). If you do not set this parameter the HDFS URL will be retrieved from HCatalog, but you have to set this parameter to overwrite the retrieved valie in several cases: First, if you have an HDFS HA environment you have to specify all namenodes (comma separated). Second, if you want to use WebHDFS instead of the native HDFS interface. And third, if HCatalog returns a non fully-qualified HDFS hostname unreachable from EXASOL. Make sure EXASOL can connect to the specified HDFS service (see prerequisites above).
 **SHOW_SQL**        | Show the SQL which will be executed internally (for debugging purposes). This will not actually run the import.
+
+## Performance
+The actual performance is depending on too many factors, such as the Hadoop version (we use the Hadoop Java libraries for loading and deserializing, which might greatly vary in different versions), the performance and size of the Exasol and Hadoop cluster, network, etc. For this reason we recommend making your own tests and play with the parameters. Please consider following things which all have an impact on performance:
+* Adjust the ```PARALLELISM``` parameter to increase the number of importing processes running at one one on each node (see table above).
+* The parallelization works over files, i.e. the total parallelism is limited by the number of files. Make sure you have enough files.
+* We recommend using Thrift for HDFS and HCatalog instead webHDFS or webHCAT, since the web-variants mean that data are streamed through an additional service on the Hadoop side which decreases performance and reliability.
+* If you want to load only a portion of the table, it is the fastest to use the ```PARTITIONS``` parameter to load only a subset of all partitions (see table above).
+* If your data are already stored in csv in HDFS, you can consider loading directly with ```IMPORT FROM CSV```, which will be faster compared to the Hadoop ETL UDFs. However, you will have to specify the files manually.
 
 ## Debugging
 To see debug output relating to Hadoop and the UDFs, you can use the Python script udf_debug.py located in the [tools](../tools) directory.
