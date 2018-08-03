@@ -33,7 +33,14 @@ mvn clean -DskipTests package -P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhiv
 ```
 
 #### Hortonworks HDP
-You can look up the version numbers in the HDP release notes.
+```
+You can look up the version numbers in the HDP release notes or use the command line:
+[maria_dev@sandbox-hdp ~]$ hadoop version
+Hadoop 2.7.3.2.6.3.0-235
+[maria_dev@sandbox-hdp ~]$ hive --version
+Hive 1.2.1000.2.6.3.0-235
+```
+Maven build command:
 ```
 mvn clean -DskipTests package -P hortonworks -Dhadoop.version=2.7.3.2.6.3.0-235 -Dhive.version=1.2.1000.2.6.3.0-235
 ```
