@@ -11,7 +11,7 @@ import com.exasol.jsonpath.OutputColumnSpecUtil;
 import com.exasol.utils.UdfUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.mapred.InputFormat;
 import org.junit.Rule;
 import org.junit.Test;
@@ -408,7 +408,7 @@ public class HdfsSerDeExportServiceTest {
         final Configuration conf = new Configuration();
         FileSystem fs = HdfsService.getFileSystem(hdfsServers, conf);
         InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatName);
-        SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serdeName);
+        AbstractSerDe serDe = (AbstractSerDe) UdfUtils.getInstanceByName(serdeName);
         List<OutputColumnSpec> outputColumns = OutputColumnSpecUtil.generateDefaultOutputSpecification(columns, new ArrayList<HCatTableColumn>());
         HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, false, ctx);
     }
