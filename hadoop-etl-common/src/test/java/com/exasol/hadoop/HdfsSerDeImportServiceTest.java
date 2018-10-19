@@ -9,7 +9,7 @@ import com.exasol.jsonpath.OutputColumnSpecUtil;
 import com.exasol.utils.UdfUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.mapred.InputFormat;
 import org.junit.Test;
 
@@ -82,7 +82,7 @@ public class HdfsSerDeImportServiceTest {
         FileSystem fs = HdfsService.getFileSystem(hdfsServers,conf);
         
         InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatClassName);
-        SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
+        AbstractSerDe serDe = (AbstractSerDe) UdfUtils.getInstanceByName(serDeClassName);
         HdfsSerDeImportService.importFile(fs, file, partitionColumns, inputFormat, serDe, serDeParameters, hdfsServers, hdfsUser, columns, outputColumns, useKerberos, false, ctx);
     }
     

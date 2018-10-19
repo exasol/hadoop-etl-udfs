@@ -19,7 +19,7 @@ import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
-import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.objectinspector.*;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveDecimalObjectInspector;
@@ -82,8 +82,8 @@ public class HdfsSerDeImportService {
 
             System.out.println("run import");
             final InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) UdfUtils.getInstanceByName(inputFormatClassName);
-            final SerDe serDe = (SerDe) UdfUtils.getInstanceByName(serDeClassName);
-            
+            final AbstractSerDe serDe = (AbstractSerDe) UdfUtils.getInstanceByName(serDeClassName);
+
             UserGroupInformation ugi = useKerberos ?
                     KerberosHadoopUtils.getKerberosUGI(kerberosCredentials) : UserGroupInformation.createRemoteUser(hdfsUserOrServicePrincipal);
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
@@ -110,7 +110,7 @@ public class HdfsSerDeImportService {
             final String file,
             final List<HCatTableColumn> partitionColumns,
             final InputFormat<?, ?> inputFormat,
-            final SerDe serde,
+            final AbstractSerDe serde,
             final List<HCatSerDeParameter> serDeParameters,
             final List<String> hdfsUrls,
             final String hdfsUserOrServicePrincipal,
