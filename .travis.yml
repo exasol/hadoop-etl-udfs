@@ -4,13 +4,13 @@ matrix:
   include:
     - jdk: "oraclejdk8"   # Maven build with default Hadoop (CDH)
     - jdk: "oraclejdk8"   # Cloudera
-      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.12.1 -Dhive.version=1.1.0-cdh5.12.1"
+      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.16.0 -Dhive.version=1.1.0-cdh5.16.0"
     - jdk: "oraclejdk8"   # Cloudera
-      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2"
+      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.16.0 -Dhive.version=1.1.0-cdh5.16.0"
     - jdk: "oraclejdk8"   # Hortonworks HDP Sandbox 2.6.3 (11.10.2017)
-      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.3.0-235 -Dhive.version=1.2.1000.2.6.3.0-235"
+      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13"
     - jdk: "oraclejdk8"   # Apache Hadoop 2.8.4 Apache Hive 2.3.3 (for AWS EMR Release 5.17.0)
-      env: MVN_ARGS="-P cloudera-parquet -Dhadoop.version=2.8.4 -Dhive.version=2.3.3"
+      env: MVN_ARGS="-P cloudera-parquet -Dhadoop.version=2.8.5 -Dhive.version=2.3.4"
 
 # build a jar with all dependencies. Will also run tests.
 script: "mvn $MVN_ARGS install"
