@@ -11,8 +11,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.8</java.version>
-		<hadoop.version>2.6.0-cdh5.16.0</hadoop.version>
-		<hive.version>1.1.0-cdh5.16.0</hive.version>
+		<hadoop.version>2.8.5</hadoop.version>
+		<hive.version>2.3.4</hive.version>
 	</properties>
 
     <repositories>
@@ -34,7 +34,7 @@
 
     <profiles>
         <profile>
-            <id>cloudera</id>
+            <id>apache</id>
             <!-- If true, this profile is automatically active for all builds, unless another profile gets activated-->
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -42,19 +42,19 @@
             <modules>
                 <module>hadoop-etl-common</module>
                 <module>exa-parquet-api</module>
-                <module>parquet-pre-1.7</module>
+                <module>parquet</module>
                 <module>hadoop-etl-dist</module>
             </modules>
         </profile>
         <profile>
-            <id>cloudera-parquet</id>
+            <id>cloudera</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
                 <module>hadoop-etl-common</module>
                 <module>exa-parquet-api</module>
-                <module>parquet</module>
+                <module>parquet-pre-1.7</module>
                 <module>hadoop-etl-dist</module>
             </modules>
         </profile>

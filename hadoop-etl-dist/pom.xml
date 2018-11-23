@@ -17,27 +17,27 @@
 
     <profiles>
         <profile>
-            <id>cloudera</id>
+            <id>apache</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>
                     <groupId>com.exasol</groupId>
-                    <artifactId>parquet-pre-1.7</artifactId>
+                    <artifactId>parquet</artifactId>
                     <version>1.0.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
         </profile>
         <profile>
-            <id>cloudera-parquet</id>
+            <id>cloudera</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>
                     <groupId>com.exasol</groupId>
-                    <artifactId>parquet</artifactId>
+                    <artifactId>parquet-pre-1.7</artifactId>
                     <version>1.0.0-SNAPSHOT</version>
                 </dependency>
             </dependencies>
