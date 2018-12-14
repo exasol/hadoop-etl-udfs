@@ -15,3 +15,7 @@ matrix:
 
 # build a jar with all dependencies. Will also run tests.
 script: "mvn $MVN_ARGS install"
+
+cache:
+  directories:
+    - $HOME/.m2
