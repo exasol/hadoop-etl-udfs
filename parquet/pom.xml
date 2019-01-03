@@ -71,6 +71,18 @@
 				</repository>
 			</repositories>
 		</profile>
+		<profile>
+			<id>mapr</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<repositories>
+				<repository>
+                                        <id>mapr-releases</id>
+                                        <url>http://repository.mapr.com/maven/</url>
+				</repository>
+			</repositories>
+		</profile>
 	</profiles>
 
 	<dependencies>
