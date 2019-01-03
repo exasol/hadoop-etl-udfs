@@ -19,6 +19,11 @@ matrix:
 # build a jar with all dependencies. Will also run tests.
 script: "mvn $MVN_ARGS install"
 
+# remove install outputs so that cache is stable
+before_cache:
+  - rm -rf $HOME/.m2/repository/com/exasol
+  - find $HOME/.m2 -name resolver-status.properties -exec rm {} \;
+
 cache:
   directories:
     - $HOME/.m2
