@@ -13,8 +13,16 @@ matrix:
     - jdk: "oraclejdk8"   # Hortonworks HDP
       env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13"
 
+    - jdk: "oraclejdk8"   # MapR
+      env: MVN_ARGS="-P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605 -DskipTests=true"
+
 # build a jar with all dependencies. Will also run tests.
 script: "mvn $MVN_ARGS install"
+
+# remove install outputs so that cache is stable
+before_cache:
+  - rm -rf $HOME/.m2/repository/com/exasol
+  - find $HOME/.m2 -name resolver-status.properties -exec rm {} \;
 
 cache:
   directories:
