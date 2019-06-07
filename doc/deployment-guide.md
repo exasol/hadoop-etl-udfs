@@ -76,17 +76,20 @@ Then run the following SQL commands to deploy the UDF scripts in the database:
 ```
 CREATE SCHEMA ETL;
 
+--/
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHCatTable;
 %jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
+--/
 CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HIVE_TABLE_FILES(...) EMITS (...) AS
 %env LD_LIBRARY_PATH=/tmp/;
 %scriptclass com.exasol.hadoop.scriptclasses.ImportHiveTableFiles;
 %jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
+--/
 CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
  EMITS (
   hdfs_server_port VARCHAR(200),
@@ -109,11 +112,13 @@ CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
 %jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
+--/
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_HCAT_TABLE(...) EMITS (...) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportHCatTable;
 %jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
 /
 
+--/
 CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECTED INT) AS
 %scriptclass com.exasol.hadoop.scriptclasses.ExportIntoHiveTable;
 %jar /buckets/your-bucket-fs/your-bucket/hadoop-etl-dist-1.0.0-SNAPSHOT.jar;
