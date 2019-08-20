@@ -6,14 +6,17 @@ import com.exasol.ExaIterator;
 import com.exasol.ExaMetadata;
 
 import javax.xml.bind.DatatypeConverter;
+import java.lang.management.ManagementFactory;
 import java.io.*;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.stream.Stream;
 
 public class UdfUtils {
-    
+
     /**
      * Forward stdout to the an debug output service
      */
@@ -57,18 +60,36 @@ public class UdfUtils {
         out.close();
         return file.getCanonicalPath();
     }
-    
+
     public static void printClassPath() {
         System.out.println("Classpath:");
         ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-        URL[] urls = ((URLClassLoader)cl).getURLs();
+        URL[] urls = urlsFromClassLoader(cl);
 
         for(URL url: urls){
             System.out.println(". " + url.getFile());
         }
     }
-    
+
+    private static URL[] urlsFromClassLoader(ClassLoader classLoader) {
+        if (classLoader instanceof URLClassLoader) {
+            return ((URLClassLoader) classLoader).getURLs();
+        }
+
+        return Stream
+            .of(ManagementFactory.getRuntimeMXBean().getClassPath().split(File.pathSeparator))
+            .map(UdfUtils::toURL).toArray(URL[]::new);
+    }
+
+    private static URL toURL(String path) {
+        try {
+            return new File(path).toURI().toURL();
+        } catch (MalformedURLException exception) {
+            throw new IllegalArgumentException("URL could not be created from path " + path, exception);
+        }
+    }
+
     public static Object getInstanceByName(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
         Class<?> clazz = Class.forName(className);
         return clazz.newInstance();
