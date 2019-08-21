@@ -13,9 +13,9 @@ env:
   - MVN_ARGS="-P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605 -DskipTests=true"
 
 # Builds an uber-jar with all dependencies.
-script: "mvn $MVN_ARGS install"
+script: "mvn $MVN_ARGS clean install"
 
-# Removes install outputs so that cache is stable.
+# Removes install outputs so that the cache is stable.
 before_cache:
   - rm -rf $HOME/.m2/repository/com/exasol
   - find $HOME/.m2 -name resolver-status.properties -exec rm {} \;
