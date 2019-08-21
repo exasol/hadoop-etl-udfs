@@ -1,25 +1,21 @@
 language: java
+dist: trusty
 
-matrix:
-  include:
-    - jdk: "oraclejdk8"   # Maven build with default Apache Hadoop
+jdk:
+  - oraclejdk8
+  - openjdk8
 
-    - jdk: "oraclejdk8"   # Apache Hadoop 2.8.5 Apache Hive 2.3.4
-      env: MVN_ARGS="-P apache -Dhadoop.version=2.8.5 -Dhive.version=2.3.4"
+env:
+  - MVN_ARGS=
+  - MVN_ARGS="-P apache -Dhadoop.version=2.8.5 -Dhive.version=2.3.4"
+  - MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.16.0 -Dhive.version=1.1.0-cdh5.16.0"
+  - MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13"
+  - MVN_ARGS="-P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605 -DskipTests=true"
 
-    - jdk: "oraclejdk8"   # Cloudera CDH
-      env: MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.16.0 -Dhive.version=1.1.0-cdh5.16.0"
-
-    - jdk: "oraclejdk8"   # Hortonworks HDP
-      env: MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13"
-
-    - jdk: "oraclejdk8"   # MapR
-      env: MVN_ARGS="-P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605 -DskipTests=true"
-
-# build a jar with all dependencies. Will also run tests.
+# Builds an uber-jar with all dependencies.
 script: "mvn $MVN_ARGS install"
 
-# remove install outputs so that cache is stable
+# Removes install outputs so that cache is stable.
 before_cache:
   - rm -rf $HOME/.m2/repository/com/exasol
   - find $HOME/.m2 -name resolver-status.properties -exec rm {} \;
