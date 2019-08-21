@@ -15,7 +15,7 @@ env:
 # Builds an uber-jar with all dependencies.
 script: "mvn $MVN_ARGS install"
 
-# Removes install outputs so that cache is stable.
+# Removes install outputs so that the cache is stable.
 before_cache:
   - rm -rf $HOME/.m2/repository/com/exasol
   - find $HOME/.m2 -name resolver-status.properties -exec rm {} \;
