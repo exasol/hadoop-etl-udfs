@@ -70,26 +70,12 @@ public class HdfsSerDeImportServiceDateTimeTest {
     @Test
     public void testImportDateTypeAsSQLDate() throws Exception {
         final RCFileWriter.Type type = RCFileWriter.Type.DATE;
-        final RCFileWriter rcWriter = new RCFileWriter(conf, fileSystem, type);
-
         final List<Date> values = new ArrayList<>();
-        int count = 0;
         for (int i = 31230; i <= 31234; i++) {
-            count++;
             values.add(Date.ofEpochDay(i));
         }
-        rcWriter.writeValues(temporaryFile, values);
-
-        ExaIterator ctx = mock(ExaIterator.class);
-        final List<HCatTableColumn> columns = Arrays.asList(
-                new HCatTableColumn(type.getColumnName(), type.getColumnType()));
-        final List<OutputColumnSpec> outputColumns = OutputColumnSpecUtil
-            .generateDefaultOutputSpecification(columns, Collections.emptyList());
-
-        runImportRCFile(ctx, columns, Collections.emptyList(), outputColumns,
-                temporaryFile.toURI().toString());
-
-        verify(ctx, times(count)).emit(anyVararg());
+        final ExaIterator ctx = mock(ExaIterator.class);
+        valuesWriteReadAssert(ctx, type, values);
         for (final Date date : values) {
             verify(ctx, times(1)).emit(eq(new java.sql.Date(date.toEpochMilli())));
         }
@@ -98,17 +84,22 @@ public class HdfsSerDeImportServiceDateTimeTest {
     @Test
     public void testImportTimestampTypeAsSQLTimestamp() throws Exception {
         final RCFileWriter.Type type = RCFileWriter.Type.TIMESTAMP;
-        final RCFileWriter rcWriter = new RCFileWriter(conf, fileSystem, type);
-
         final List<Timestamp> values = new ArrayList<>();
-        int count = 0;
         for (int i = 31230; i <= 31234; i++) {
-            count++;
             values.add(Timestamp.ofEpochMilli(i));
         }
+        final ExaIterator ctx = mock(ExaIterator.class);
+        valuesWriteReadAssert(ctx, type, values);
+        for (final Timestamp ts : values) {
+            verify(ctx, times(1)).emit(eq(new java.sql.Timestamp(ts.toEpochMilli())));
+        }
+    }
+
+    private void valuesWriteReadAssert(final ExaIterator ctx, final RCFileWriter.Type type,
+            final List<?> values) throws Exception {
+        final RCFileWriter rcWriter = new RCFileWriter(conf, fileSystem, type);
         rcWriter.writeValues(temporaryFile, values);
 
-        ExaIterator ctx = mock(ExaIterator.class);
         final List<HCatTableColumn> columns = Arrays.asList(
                 new HCatTableColumn(type.getColumnName(), type.getColumnType()));
         final List<OutputColumnSpec> outputColumns = OutputColumnSpecUtil
@@ -117,10 +108,7 @@ public class HdfsSerDeImportServiceDateTimeTest {
         runImportRCFile(ctx, columns, Collections.emptyList(), outputColumns,
                 temporaryFile.toURI().toString());
 
-        verify(ctx, times(count)).emit(anyVararg());
-        for (final Timestamp ts : values) {
-            verify(ctx, times(1)).emit(eq(new java.sql.Timestamp(ts.toEpochMilli())));
-        }
+        verify(ctx, times(values.size())).emit(anyVararg());
     }
 
 }

@@ -9,6 +9,7 @@ import com.exasol.hadoop.kerberos.KerberosCredentials;
 import com.exasol.hadoop.kerberos.KerberosHadoopUtils;
 import com.exasol.jsonpath.*;
 import com.exasol.utils.UdfUtils;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -333,12 +334,12 @@ public class HdfsSerDeImportService {
         if (obj instanceof Date) {
             final Date hiveDate = (Date)obj;
             return new java.sql.Date(hiveDate.toEpochMilli());
-        }
-        if (obj instanceof Timestamp) {
+        } else if (obj instanceof Timestamp) {
             final Timestamp hiveTimestamp = (Timestamp)obj;
             return hiveTimestamp.toSqlTimestamp();
+        } else {
+            return obj;
         }
-        return obj;
     }
 
     private static void initProperties(
@@ -538,25 +539,25 @@ public class HdfsSerDeImportService {
             obj = value;
             break;
         case "java.lang.Byte":
-            obj = Byte.valueOf(value);
+            obj = java.lang.Byte.valueOf(value);
             break;
         case "java.lang.Short":
-            obj = Short.valueOf(value);
+            obj = java.lang.Short.valueOf(value);
             break;
         case "java.lang.Integer":
-            obj = Integer.valueOf(value);
+            obj = java.lang.Integer.valueOf(value);
             break;
         case "java.lang.Long":
-            obj = Long.valueOf(value);
+            obj = java.lang.Long.valueOf(value);
             break;
         case "java.lang.Float":
-            obj = Float.valueOf(value);
+            obj = java.lang.Float.valueOf(value);
             break;
         case "java.lang.Double":
-            obj = Double.valueOf(value);
+            obj = java.lang.Double.valueOf(value);
             break;
         case "java.math.BigDecimal":
-            obj = new BigDecimal(value);
+            obj = new java.math.BigDecimal(value);
             break;
         case "java.sql.Timestamp":
             obj = java.sql.Timestamp.valueOf(value);
@@ -565,7 +566,7 @@ public class HdfsSerDeImportService {
             obj = java.sql.Date.valueOf(value);
             break;
         case "java.lang.Boolean":
-            obj = Boolean.valueOf(value);
+            obj = java.lang.Boolean.valueOf(value);
             break;
         default:
             throw new RuntimeException("Hive type '" + type + "' is unsupported for partitions");
