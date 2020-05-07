@@ -7,10 +7,8 @@ jdk:
 
 env:
   - MVN_ARGS=
-  - MVN_ARGS="-P apache -Dhadoop.version=2.8.5 -Dhive.version=2.3.4"
-  - MVN_ARGS="-P cloudera -Dhadoop.version=2.6.0-cdh5.16.0 -Dhive.version=1.1.0-cdh5.16.0"
-  - MVN_ARGS="-P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13"
-  - MVN_ARGS="-P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605 -DskipTests=true"
+  - MVN_ARGS="-P apache -Dhadoop.version=3.0.0 -Dhive.version=3.1.0"
+  - MVN_ARGS="-P hortonworks -Dhadoop.version=3.0.0.3.0.0.3-2 -Dhive.version=3.1.0.3.1.0.6-1"
 
 # Builds an uber-jar with all dependencies.
 script: "mvn $MVN_ARGS clean install"

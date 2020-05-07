@@ -14,9 +14,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.type.Date;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
+import org.apache.hadoop.hive.common.type.Timestamp;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
@@ -37,13 +39,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.security.PrivilegedExceptionAction;
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
  * Retrieves files from (web)HDFS and decodes them using the appropriate Hadoop InputFormat and Hive SerDe.
- * 
+ *
  * TODO org.apache.hadoop.hive.serde2.SerDe is deprecated and should be replaced with org.apache.hadoop.hive.serde2.AbstractSerDe
  * Problem: Some SerDes like OrcInputFormat support only deprecated SerDe class (not AbstractSerDe)
  */
@@ -65,7 +65,7 @@ public class HdfsSerDeImportService {
 
         System.out.println("----------\nStarted importing files\n----------");
         UdfUtils.printClassPath();
-        
+
         try {
             System.out.println("read column info");
             final List<HCatTableColumn> columns = WebHCatJsonParser.parseColumnArray(colInfoJson);
@@ -76,7 +76,7 @@ public class HdfsSerDeImportService {
             final List<OutputColumnSpec> outputColumns = outputColumnsSpec.isEmpty() ?
                     OutputColumnSpecUtil.generateDefaultOutputSpecification(columns, partitionColumns)
                     : OutputColumnSpecUtil.parseOutputSpecification(outputColumnsSpec, columns, partitionColumns);
-            
+
             // We need the native hadoop libraries for snappy.
             NativeHadoopLibUtils.initHadoopNativeLib();
 
@@ -128,7 +128,7 @@ public class HdfsSerDeImportService {
         System.out.println("- columnInfo: " + columns);
         System.out.println("- outputColumns: " + outputColumns);
         System.out.println("- useKerberos: " + useKerberos);
-        
+
         final Properties props = new Properties();
         final Configuration conf = HdfsService.getHdfsConfiguration(useKerberos, hdfsUserOrServicePrincipal, enableRPCEncryption);
         for (HCatSerDeParameter prop : serDeParameters) {
@@ -213,7 +213,7 @@ public class HdfsSerDeImportService {
             // If we have vectorized processing, we should go further visiting the tree via ObjectInspector (if any of the elements in the array has a non-null value)
             return;
         }
-        
+
         // Shall we output exactly this path?
         for (OutputColumnSpec spec : outputColumns) {
             if (spec.getPath().equals(curPath)) {
@@ -238,7 +238,7 @@ public class HdfsSerDeImportService {
         if (objInspector.getCategory() == Category.PRIMITIVE) {
             return;
         }
-        
+
         // Special case UNION: We might have multiple nested unions and should resolve them.
         while (objInspector.getCategory() == Category.UNION) {
             // Type may vary for each row, we have to be careful. If we vectorize and we find a union we have to set vector size to 1.
@@ -329,6 +329,14 @@ public class HdfsSerDeImportService {
             obj = obj.toString();
         } else if (obj instanceof byte[]) {
             obj = Hex.encodeHexString((byte[]) obj);
+        }
+        if (obj instanceof Date) {
+            final Date hiveDate = (Date)obj;
+            return new java.sql.Date(hiveDate.toEpochMilli());
+        }
+        if (obj instanceof Timestamp) {
+            final Timestamp hiveTimestamp = (Timestamp)obj;
+            return hiveTimestamp.toSqlTimestamp();
         }
         return obj;
     }
@@ -551,10 +559,10 @@ public class HdfsSerDeImportService {
             obj = new BigDecimal(value);
             break;
         case "java.sql.Timestamp":
-            obj = Timestamp.valueOf(value);
+            obj = java.sql.Timestamp.valueOf(value);
             break;
         case "java.sql.Date":
-            obj = Date.valueOf(value);
+            obj = java.sql.Date.valueOf(value);
             break;
         case "java.lang.Boolean":
             obj = Boolean.valueOf(value);
