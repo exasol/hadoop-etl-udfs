@@ -110,7 +110,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.13.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -165,9 +165,15 @@
 			<version>${hive.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hive</groupId>
-			<artifactId>hive-jdbc</artifactId>
-			<version>${hive.version}</version>
+                        <groupId>org.apache.hive</groupId>
+                        <artifactId>hive-jdbc</artifactId>
+                        <version>${hive.version}</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>org.apache.slider</groupId>
+                                <artifactId>slider-core</artifactId>
+                            </exclusion>
+                        </exclusions>
 		</dependency>
 		<!--
         <dependency>
