@@ -30,6 +30,7 @@ public class HiveMetastoreService {
     public static HiveMetaStoreClient checkHiveMetaStoreClient(String hiveMetastoreUrl,boolean useKerberos, String hcatUserOrServicePrincipal) throws MetaException {
         HiveConf hiveConf = new HiveConf(new Configuration(), HiveConf.class);
         hiveConf.set("hive.metastore.local", "false");
+        hiveConf.set("hive.metastore.uri.selection", "SEQUENTIAL");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, hiveMetastoreUrl);
         hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
         if (useKerberos) {
