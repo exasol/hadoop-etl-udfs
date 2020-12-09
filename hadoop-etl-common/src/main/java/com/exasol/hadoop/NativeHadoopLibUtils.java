@@ -7,8 +7,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 public class NativeHadoopLibUtils {
-    
-    public static void initHadoopNativeLib() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+
+    public static void initHadoopNativeLib() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, IOException {
         // This path must exist at program startup and must be in LD_LIBRARY_PATH. Otherwise the dynamic linker seems to ignore it
         final String nativeHadoopLibDir = "/tmp/";
         NativeHadoopLibUtils.writeNativeHadoopLibs(nativeHadoopLibDir);
@@ -36,7 +36,7 @@ public class NativeHadoopLibUtils {
             e.printStackTrace();
         }
     }
-    
+
     private static void writeNativeHadoopLib(String resourceName, String targetFileName, String targetPath) throws Exception {
         File dirFile = new File(targetPath + targetFileName);
         if (dirFile.exists()) {
@@ -65,23 +65,9 @@ public class NativeHadoopLibUtils {
     }
 
     /**
-     * This enables the java.library.path to be modified at runtime, which is required to load java native libraries
-     * From a Sun engineer at http://forums.sun.com/thread.jspa?threadID=707176
-     * See http://stackoverflow.com/questions/5419039/is-djava-library-path-equivalent-to-system-setpropertyjava-library-path
-     * and http://fahdshariff.blogspot.jp/2011/08/changing-java-library-path-at-runtime.html
+     * This enables the java.library.path to be modified at runtime, which is required to load java native libraries.
      */
-    private static void addDirToJavaLibraryPath(String path) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-        System.setProperty("java.library.path", path );
-        Field fieldSysPath = ClassLoader.class.getDeclaredField( "sys_paths" );
-        fieldSysPath.setAccessible( true );
-        fieldSysPath.set( null, null );
-    }
-    
-    /**
-     * This is another variant of addDirToJavaLibraryPath(). Currently unused, because the other should work.
-     */
-    @SuppressWarnings("unused")
-    private static void addDirToJavaLibraryPath2(String s) throws IOException {
+    private static void addDirToJavaLibraryPath(String s) throws IOException {
         try {
             Field field = ClassLoader.class.getDeclaredField("usr_paths");
             field.setAccessible(true);
