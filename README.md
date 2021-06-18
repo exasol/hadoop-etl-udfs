@@ -1,6 +1,6 @@
 # Hadoop ETL UDFs
 
-[![Build Status](https://travis-ci.org/exasol/hadoop-etl-udfs.svg?branch=master)](https://travis-ci.org/exasol/hadoop-etl-udfs)
+[![Build Status](https://travis-ci.com/exasol/hadoop-etl-udfs.svg?branch=main)](https://travis-ci.com/exasol/hadoop-etl-udfs)
 
 
 ###### Please note that this is an open source project which is officially supported by Exasol. For any questions, you can contact our support team. Please note, however, that the EXPORT functionality is still in BETA mode.
