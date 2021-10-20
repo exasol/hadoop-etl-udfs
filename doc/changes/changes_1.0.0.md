@@ -1,4 +1,4 @@
-# Hadoo ETL UDFs 1.0.0, released 2020-12-DD
+# Hadoo ETL UDFs 1.0.0, released 2021-10-21
 
 ## Bugfixes
 

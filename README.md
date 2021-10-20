@@ -1,11 +1,10 @@
 # Hadoop ETL UDFs
 
-[![Build Status](https://travis-ci.com/exasol/hadoop-etl-udfs.svg?branch=main)](https://travis-ci.com/exasol/hadoop-etl-udfs)
-
-
-###### Please note that this is an open source project which is officially supported by Exasol. For any questions, you can contact our support team. Please note, however, that the EXPORT functionality is still in BETA mode.
+[![Build Status](https://github.com/exasol/hadoop-etl-udfs/actions/workflows/ci-build.yml/badge.svg)](https://github.com/exasol/hadoop-etl-udfs/actions/workflows/ci-build.yml)
+[![GitHub Release](https://img.shields.io/github/release/exasol/hadoop-etl-udfs.svg?logo=github)](https://github.com/exasol/hadoop-etl-udfs/releases/latest)
 
 ## Overview
+
 Hadoop ETL UDFs are the main way to transfer data between Exasol and Hadoop (HCatalog tables on HDFS). The SQL syntax for calling the UDFs is similar to that of Exasol's native IMPORT and EXPORT commands, but with added UDF paramters for specifying the various necessary and optional Hadoop properties.
 
 A brief overview of features includes support for:
