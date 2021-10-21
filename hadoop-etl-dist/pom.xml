@@ -39,6 +39,19 @@
             </dependencies>
         </profile>
         <profile>
+            <id>cloudera6x</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.exasol</groupId>
+                    <artifactId>parquet</artifactId>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>hortonworks</id>
             <activation>
                 <activeByDefault>false</activeByDefault>

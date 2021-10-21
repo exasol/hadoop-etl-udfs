@@ -51,6 +51,18 @@
             </repositories>
         </profile>
         <profile>
+            <id>cloudera6x</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
             <id>hortonworks</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -58,12 +70,12 @@
             <repositories>
                 <repository>
                     <id>hortonworks releases</id>
-                    <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+                    <url>https://repo.hortonworks.com/content/repositories/releases/</url>
                 </repository>
                 <!-- Hortonworks introduces a strange dependency to org.mortbay.jetty:jetty:jar:6.1.26.hwx, available in a special repo -->
                 <repository>
                     <id>hortonworks jetty</id>
-                    <url>http://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
+                    <url>https://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
                 </repository>
             </repositories>
         </profile>
@@ -75,7 +87,7 @@
             <repositories>
                 <repository>
                     <id>mapr-releases</id>
-                    <url>http://repository.mapr.com/maven/</url>
+                    <url>https://repository.mapr.com/maven/</url>
                 </repository>
             </repositories>
         </profile>
@@ -156,6 +168,10 @@
             <version>${hive.version}</version>
             <exclusions>
                 <exclusion>
+                    <groupId>eigenbase</groupId>
+                    <artifactId>eigenbase-properties</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.pentaho</groupId>
                     <artifactId>pentaho-aggdesigner-algorithm</artifactId>
                 </exclusion>
@@ -169,6 +185,10 @@
                 <exclusion>
                     <groupId>org.apache.slider</groupId>
                     <artifactId>slider-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

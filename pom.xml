@@ -57,6 +57,18 @@
             </modules>
         </profile>
         <profile>
+            <id>cloudera6x</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>hadoop-etl-common</module>
+                <module>exa-parquet-api</module>
+                <module>parquet</module>
+                <module>hadoop-etl-dist</module>
+            </modules>
+        </profile>
+        <profile>
             <id>hortonworks</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
