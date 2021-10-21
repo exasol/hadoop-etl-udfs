@@ -1,16 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-	<modelVersion>4.0.0</modelVersion>
-
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.exasol</groupId>
         <artifactId>exa-hadoop-etl-udfs</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
-
-	<artifactId>hadoop-etl-common</artifactId>
-
+    <artifactId>hadoop-etl-common</artifactId>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
@@ -45,7 +41,7 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -58,7 +54,26 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet-pre-1.7</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
+                    <version>1.0.0</version>
+                </dependency>
+            </dependencies>
+            <repositories>
+                <repository>
+                    <id>cloudera</id>
+                    <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>cloudera6x</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.exasol</groupId>
+                    <artifactId>parquet</artifactId>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
             <repositories>
@@ -77,18 +92,18 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
             <repositories>
                 <repository>
                     <id>hortonworks releases</id>
-                    <url>http://repo.hortonworks.com/content/repositories/releases/</url>
+                    <url>https://repo.hortonworks.com/content/repositories/releases/</url>
                 </repository>
                 <!-- Hortonworks introduces a strange dependency to org.mortbay.jetty:jetty:jar:6.1.26.hwx, available in a special repo -->
                 <repository>
                     <id>hortonworks jetty</id>
-                    <url>http://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
+                    <url>https://repo.hortonworks.com/content/repositories/jetty-hadoop/</url>
                 </repository>
             </repositories>
         </profile>
@@ -101,13 +116,13 @@
                 <dependency>
                     <groupId>com.exasol</groupId>
                     <artifactId>parquet</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
+                    <version>1.0.0</version>
                 </dependency>
             </dependencies>
             <repositories>
                 <repository>
                     <id>mapr-releases</id>
-                    <url>http://repository.mapr.com/maven/</url>
+                    <url>https://repository.mapr.com/maven/</url>
                 </repository>
             </repositories>
         </profile>
@@ -117,7 +132,7 @@
         <dependency>
             <groupId>com.exasol</groupId>
             <artifactId>exa-parquet-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.exasol</groupId>
@@ -191,6 +206,16 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>eigenbase</groupId>
+                    <artifactId>eigenbase-properties</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.pentaho</groupId>
+                    <artifactId>pentaho-aggdesigner-algorithm</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hive</groupId>
@@ -201,15 +226,12 @@
                     <groupId>org.apache.slider</groupId>
                     <artifactId>slider-core</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.anarres.lzo</groupId>
-            <artifactId>lzo-hadoop</artifactId>
-            <version>1.0.4</version>
-        </dependency>
-        -->
     </dependencies>
 
     <build>
@@ -225,5 +247,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
