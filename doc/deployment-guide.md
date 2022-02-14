@@ -1,8 +1,9 @@
-## Deploying the Hadoop ETL UDFs Step By Step
+# Deploying the Hadoop ETL UDFs
 
-Run the following steps to deploy your UDFs:
+Run the following steps to deploy your User Defined Functions (UDFs).
 
-### 1. Prerequisites:
+## 1. Prerequisites
+
 * EXASOL Advanced Edition (version 6.0 or newer) or Free Small Business Edition.
 * JDK & Maven to build from source
 * Connectivity from EXASOL to Hadoop: Make sure that following Hadoop services can be accessed from EXASOL. In case of problems please use an [UDF to check the connectivity](https://www.exasol.com/support/browse/SOL-307).
@@ -16,7 +17,7 @@ Run the following steps to deploy your UDFs:
   * EXPORT Options: If you plan to use the EXPORT options which require ```JDBC_CONNECTION```, JDBC access from each EXASOL node to Hadoop must be provided. The JDBC driver usually connects to Hadoop using port ```10000```.
   * Kerberos: If your Hadoop uses Kerberos authentication, the UDFs will authenticate using a keytab file. Each EXASOL node needs access to the Kerberos KDC (key distribution center), running on port ```88```. The KDC is configured in the kerberos config file which is used for the authentication, as described in the [Kerberos Authentication](#5-kerberos-authentication) section.
 
-### 2. Building from Source
+## 2. Building from Source
 
 First clone the repository on your computer.
 ```
@@ -26,35 +27,60 @@ cd hadoop-etl-udfs
 
 You have to build the sources depending on your Hive and Hadoop version as follows. The resulting fat JAR (including all dependencies) is stored in ```hadoop-etl-dist/target/hadoop-etl-dist-1.0.0-SNAPSHOT.jar```.
 
-#### Cloudera CDH
+### Cloudera CDH
+
 You can look up the version numbers for Hadoop and Hive in the [CDH Maven documentation](https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo.html) (search for the artifactId ```hadoop-common``` and ```hive-serde```).
+
 ```
 mvn clean -DskipTests package -P cloudera -Dhadoop.version=2.6.0-cdh5.11.2 -Dhive.version=1.1.0-cdh5.11.2
 ```
 
-#### Hortonworks HDP
+#### Cloudera CDH Versions Above 6.x.x
+
+If your Cloudera distribution is above CDH 6.x version, then use the `cloudera6x` profile name:
+
+```
+mvn clean -DskipTests package -P cloudera6x -Dhadoop.version=3.0.0-cdh6.2.0 -Dhive.version=2.1.1-cdh6.2.0
+```
+
+Or using [Cloudera Repository versions](https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common?repo=cloudera-repos) that do not contain `cdh` prefix:
+
+```
+mvn clean -DskipTests package -P cloudera6x -Dhadoop.version=3.1.1.7.1.6.0-297 -Dhive.version=3.1.3000.7.1.6.0-297
+```
+
+In this case, the first `3.1.1` is Hadoop artifact version, and the `7.1.6` is Cloudera distribution version.
+
+### Hortonworks HDP
+
 You can look up the version numbers in the HDP release notes or use the command line:
+
 ```
 [maria_dev@sandbox-hdp ~]$ hadoop version
 Hadoop 2.7.3.2.6.3.0-235
 [maria_dev@sandbox-hdp ~]$ hive --version
 Hive 1.2.1000.2.6.3.0-235
 ```
+
 Maven build command:
+
 ```
 mvn clean -DskipTests package -P hortonworks -Dhadoop.version=2.7.3.2.6.3.0-235 -Dhive.version=1.2.1000.2.6.3.0-235
 ```
 
-#### Other Hadoop Distributions
+### Other Hadoop Distributions
+
 You may have to add a Maven repository to pom.xml for your distribution. Then you can compile similarly to examples above for other distributions.
 
-#### Standard Apache Hadoop and Hive (no distribution)
+### Standard Apache Hadoop and Hive Distributions
+
 ```
 mvn clean -DskipTests package assembly:single -P cloudera -Dhadoop.version=1.2.1 -Dhive.version=1.2.1
 ```
+
 This command deactivates the Cloudera Maven profile which is active by default.
 
-### 3. Upload Jar
+## 3. Upload Jar
 
 You have to upload the jar to a bucket of your choice in the EXASOL bucket file system (BucketFS). This will allow using the jar in the UDF scripts.
 
@@ -69,10 +95,10 @@ curl -X PUT -T target/hadoop-etl-dist-1.0.0-SNAPSHOT.jar \
 
 See chapter 3.6.4. "The synchronous cluster file system BucketFS" in the EXASolution User Manual for more details about BucketFS.
 
-
-### 4. Deploy UDF Scripts
+## 4. Deploy UDF Scripts
 
 Then run the following SQL commands to deploy the UDF scripts in the database:
+
 ```
 CREATE SCHEMA ETL;
 
@@ -93,7 +119,7 @@ CREATE OR REPLACE JAVA SET SCRIPT IMPORT_HIVE_TABLE_FILES(...) EMITS (...) AS
 CREATE OR REPLACE JAVA SCALAR SCRIPT HCAT_TABLE_FILES(...)
  EMITS (
   hdfs_server_port VARCHAR(200),
-  hdfspath VARCHAR(200),
+  hdfspath VARCHAR(2000),
   hdfs_user_or_service_principal VARCHAR(100),
   hcat_user_or_service_principal VARCHAR(100),
   input_format VARCHAR(200),
@@ -125,6 +151,6 @@ CREATE OR REPLACE JAVA SET SCRIPT EXPORT_INTO_HIVE_TABLE(...) EMITS (ROWS_AFFECT
 /
 ```
 
-### 5. Kerberos Authentication
+## 5. Kerberos Authentication
 
 If your Hadoop installation is secured by Kerberos, please see [Kerberos Authentication](kerberos.md) for setup details.

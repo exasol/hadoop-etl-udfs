@@ -8,6 +8,11 @@ Code name:
 
 * #73: Updated vulnerable Hadoop dependencies
 
+## Documentation
+
+* #60: Increased the file length in deployment script
+* #69: Added documentation on building for Cloudera 6.x and above versions
+
 ## Features
 
 ## Dependency Updates
@@ -23,5 +28,4 @@ Code name:
 ### Test Dependency Updates
 
 ### Plugin Updates
-
 

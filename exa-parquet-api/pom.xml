@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.exasol</groupId>
         <artifactId>exa-hadoop-etl-udfs</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </parent>
     <artifactId>exa-parquet-api</artifactId>
     <properties>
