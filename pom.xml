@@ -5,7 +5,7 @@
     <packaging>pom</packaging>
     <groupId>com.exasol</groupId>
     <artifactId>exa-hadoop-etl-udfs</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
