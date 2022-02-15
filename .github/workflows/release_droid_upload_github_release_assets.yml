@@ -1,0 +1,74 @@
+name: Release Droid - Upload GitHub Release Assets
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_url:
+        description: 'Assets upload URL'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - maven_opts: -P apache -Dhadoop.version=3.2.2 -Dhive.version=2.3.9
+            release_suffix: apache-hadoop-3.2.2-hive-2.3.9
+
+          - maven_opts: -P cloudera -Dhadoop.version=2.6.0-cdh5.16.2 -Dhive.version=1.1.0-cdh5.16.2
+            release_suffix: cloudera-hadoop-2.6.0-cdh5.16.2-hive-1.1.0-cdh5.16.2
+
+          - maven_opts: -P cloudera6x -Dhadoop.version=3.0.0-cdh6.2.0 -Dhive.version=2.1.1-cdh6.2.0
+            release_suffix: cloudera-hadoop-3.0.0-cdh6.2.0-hive-2.1.1-cdh6.2.0
+
+          - maven_opts: -P cloudera6x -Dhadoop.version=3.1.1.7.1.6.0-297 -Dhive.version=3.1.3000.7.1.6.0-297
+            release_suffix: cloudera-hadoop-3.1.1.7.1.6.0-297-hive-3.1.3000.7.1.6.0-297
+
+          - maven_opts: -P hortonworks -Dhadoop.version=2.7.3.2.6.5.3004-13 -Dhive.version=2.1.0.2.6.5.3004-13
+            release_suffix: hortonworks-hadoop-2.7.3.2.6.5.3004-13-hive-2.1.0.2.6.5.3004-13
+
+          - maven_opts: -P mapr -Dhadoop.version=2.7.0-mapr-1602 -Dhive.version=2.0.0-mapr-1605
+            release_suffix: mapr-hadoop-2.7.0-mapr-1602-hive-2.0.0-mapr-1605
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 8
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Run package using maven skipping tests
+        run: mvn --batch-mode clean package -DskipTests=true ${{ matrix.maven_opts }}
+      - name: Prepare jar and generate sha256sum files
+        run: |
+          cd hadoop-etl-dist/target/
+          rm original-hadoop-etl-udfs*.jar
+          for f in *.jar; do mv -- "$f" "${f%.jar}-${{ matrix.release_suffix }}.jar"; done
+          find *.jar -exec bash -c 'sha256sum {} > {}.sha256' \;
+      - name: Upload assets to the GitHub release draft
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.inputs.upload_url }}
+          asset_path: hadoop-etl-dist/target/*.jar
+      - name: Upload sha256sum files
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.inputs.upload_url }}
+          asset_path: hadoop-etl-dist/target/*.sha256
+      - name: Upload error-code-report
+        uses: shogo82148/actions-upload-release-asset@v1
+        if: ${{ false }}
+        with:
+          upload_url: ${{ github.event.inputs.upload_url }}
+          asset_path: target/error_code_report.json

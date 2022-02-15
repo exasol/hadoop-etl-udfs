@@ -18,6 +18,7 @@ public class KerberosHadoopUtils {
         System.setProperty("java.security.krb5.conf", confPath);
         Configuration conf = new Configuration();
         conf.set("hadoop.security.authentication", "kerberos");
+        conf.set("hadoop.security.auth_to_local.mechanism", "mit");
         UserGroupInformation.setConfiguration(conf);
         String keytabPath = writeTempKeytabFile(kerberosCredentials.getKeytabFile(), tmpDir);
         ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(kerberosCredentials.getPrincipal(), keytabPath);
