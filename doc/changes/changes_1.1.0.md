@@ -1,12 +1,18 @@
-# Hadoop ETL UDFs 1.1.0, released 2022-??-??
+# Hadoop ETL UDFs 1.1.0, released 2022-02-15
 
-Code name:
+Code name: Updated Kerberos `auth_to_local` mechanism to use MIT
 
 ## Summary
+
+In this release, we have updated Kerberos [`auth_to_local`](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SecureMode.html) mechanism to use MIT configuration file. Additionally, we updated vulnerable dependencies and improved documentation.
 
 ## Bug Fixes
 
 * #73: Updated vulnerable Hadoop dependencies
+
+## Features
+
+* #74: Updated Kerberos `auth_to_local` mechanism property to MIT
 
 ## Documentation
 
@@ -28,4 +34,3 @@ Code name:
 ### Test Dependency Updates
 
 ### Plugin Updates
-
