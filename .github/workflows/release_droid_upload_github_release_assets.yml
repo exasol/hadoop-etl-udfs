@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build with Hadoop distribution ${{ matrix.release_suffix }}
+    name: Release for Hadoop distribution ${{ matrix.release_suffix }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
