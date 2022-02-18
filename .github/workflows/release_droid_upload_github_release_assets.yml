@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Release for Hadoop distribution ${{ matrix.release_suffix }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
