@@ -3,6 +3,14 @@
 [![Build Status](https://github.com/exasol/hadoop-etl-udfs/actions/workflows/ci-build.yml/badge.svg)](https://github.com/exasol/hadoop-etl-udfs/actions/workflows/ci-build.yml)
 [![GitHub Release](https://img.shields.io/github/release/exasol/hadoop-etl-udfs.svg?logo=github)](https://github.com/exasol/hadoop-etl-udfs/releases/latest)
 
+## Deprecation Warning
+
+**⚠️This project is no longer maintained.**
+
+As an alternative, please check out our [cloud-storage-extension](https://github.com/exasol/cloud-storage-extension/) project. It allows you import formatted (Avro, Orc, Parquet) data from Hadoop Distributed File System (HDFS) or Cloud Storage Systems (S3, Azure Blob or GCS).
+
+For Kerberos based access to Hadoop cluster you can use our [Hive Virtual Schema](https://github.com/exasol/hive-virtual-schema) or [Impala Virtual Schema](https://github.com/exasol/impala-virtual-schema) projects.
+
 ## Overview
 
 Hadoop ETL UDFs are the main way to transfer data between Exasol and Hadoop (HCatalog tables on HDFS). The SQL syntax for calling the UDFs is similar to that of Exasol's native IMPORT and EXPORT commands, but with added UDF paramters for specifying the various necessary and optional Hadoop properties.
